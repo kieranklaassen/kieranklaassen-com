@@ -1,9 +1,14 @@
+const resolveConfig = require("tailwindcss/resolveConfig")
+const tailwindConfig = require("./tailwind.config.js")
+
+const fullConfig = resolveConfig(tailwindConfig)
+
 module.exports = {
   siteMetadata: {
     title: `Kieran Klaassen`,
     author: {
       name: `Kieran Klaassen`,
-      summary: `who is an entrepreneur, programmer and composer living in Chicago.`,
+      summary: `who is an entrepreneur, coder and composer living in Chicago.`,
     },
     description: `Personal blog about code, ideas and music by Kieran Klaassen.`,
     siteUrl: `https://kieranklaassen.com/`,
@@ -73,9 +78,15 @@ module.exports = {
     },
     `gatsby-plugin-react-helmet`,
     {
-      resolve: `gatsby-plugin-typography`,
+      resolve: `gatsby-plugin-postcss`,
       options: {
-        pathToConfigModule: `src/utils/typography`,
+        postCssPlugins: [
+          require(`tailwindcss`)(tailwindConfig),
+          require(`autoprefixer`),
+          ...(process.env.NODE_ENV === `production`
+            ? [require(`cssnano`)]
+            : []),
+        ],
       },
     },
     // this (optional) plugin enables Progressive Web App + Offline functionality

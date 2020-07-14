@@ -1,7 +1,6 @@
 import React from "react"
 import { Link } from "gatsby"
-
-import { rhythm, scale } from "../utils/typography"
+import "../styles/index.css"
 
 const Layout = ({ location, title, children }) => {
   const rootPath = `${__PATH_PREFIX__}/`
@@ -9,56 +8,28 @@ const Layout = ({ location, title, children }) => {
 
   if (location.pathname === rootPath) {
     header = (
-      <h1
-        style={{
-          ...scale(1.5),
-          marginBottom: rhythm(1.5),
-          marginTop: 0,
-        }}
-      >
-        <Link
-          style={{
-            boxShadow: `none`,
-            color: `inherit`,
-          }}
-          to={`/`}
-        >
-          {title}
-        </Link>
+      <h1 className="mt-8 text-6xl font-black tracking-tighter text-gray-800">
+        <Link to={`/`}>{title}</Link>
       </h1>
     )
   } else {
     header = (
-      <h3
-        style={{
-          fontFamily: `Montserrat, sans-serif`,
-          marginTop: 0,
-        }}
-      >
-        <Link
-          style={{
-            boxShadow: `none`,
-            color: `inherit`,
-          }}
-          to={`/`}
-        >
-          {title}
-        </Link>
+      <h3 className="text-5xl font-bold tracking-tighter">
+        <Link to={`/`}>{title}</Link>
       </h3>
     )
   }
   return (
-    <div
-      style={{
-        marginLeft: `auto`,
-        marginRight: `auto`,
-        maxWidth: rhythm(24),
-        padding: `${rhythm(1.5)} ${rhythm(3 / 4)}`,
-      }}
-    >
-      <header>{header}</header>
-      <main>{children}</main>
-      <footer>© {new Date().getFullYear()} Kieran Klaassen</footer>
+    <div className="min-h-screen px-4 mx-auto font-sans antialiased text-gray-900 bg-gray-100 max-w-7xl sm:px-6 lg:px-8">
+      <div className="flex flex-col max-w-3xl mx-auto text-lg">
+        <header>{header}</header>
+        <main className="flex-1">{children}</main>
+        <footer className="py-8 mt-12 border-t border-gray-300">
+          <p className="text-base leading-6 text-gray-600 xl:text-center">
+            © {new Date().getFullYear()} Kieran Klaassen
+          </p>
+        </footer>
+      </div>
     </div>
   )
 }
