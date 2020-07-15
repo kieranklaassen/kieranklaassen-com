@@ -2,7 +2,9 @@
 title: Automatically add tokens to your ActiveRecord models with a Tokenizable concern
 date: "2020-07-15"
 formattedDate: "July 15, 2020"
-description: "If you are adding a unique token field to your ActiveRecord models this concern will help you set it up quickly."
+description: "When exposing an API you most likely don't want your identifier to be incrementing Ids.
+To solve this problem you can add a unique `token` field to your Active Record for identifying
+your records via the API layer."
 tags: code, rails, ruby, concerns
 ---
 
