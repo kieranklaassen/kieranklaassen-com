@@ -4,3 +4,12 @@
 /*! purgecss end ignore */
 
 @import "tailwindcss/utilities";
+
+code[class*="language-"],
+pre[class*="language-"] {
+  text-shadow: none !important;
+}
+.prose pre {
+  @apply bg-gray-200 shadow;
+  color: inherit;
+}
