@@ -19,7 +19,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
       <article className="prose lg:prose-xl">
         <header>
           <h1>{post.frontmatter.title}</h1>
-          <p>{post.frontmatter.date}</p>
+          <p>{post.frontmatter.formattedDate}</p>
         </header>
         <section dangerouslySetInnerHTML={{ __html: post.html }} />
         <hr />
@@ -65,7 +65,8 @@ export const pageQuery = graphql`
       html
       frontmatter {
         title
-        date(formatString: "MMMM DD, YYYY")
+        date
+        formattedDate
         description
       }
     }

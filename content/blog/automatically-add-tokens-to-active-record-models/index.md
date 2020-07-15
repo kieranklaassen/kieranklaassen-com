@@ -1,6 +1,7 @@
 ---
 title: Automatically add tokens to your ActiveRecord models with a Tokenizable concern
-date: "2020-07-14T22:12:03.284Z"
+date: "2020-07-15"
+formattedDate: "July 5, 2020"
 description: "If you are adding a unique token field to your ActiveRecord models this concern will help you set it up quickly."
 tags: code, rails, ruby, concerns
 ---

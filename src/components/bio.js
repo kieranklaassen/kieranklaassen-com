@@ -39,10 +39,10 @@ const Bio = () => {
       <Image
         fixed={data.avatar.childImageSharp.fixed}
         alt={author.name}
-        className="inline-block rounded-full h-14 w-14"
+        className="flex-none inline-block rounded-full shadow h-14 w-14"
       />
       <p>
-        Written by <strong>{author.name}</strong> {author.summary}
+        Stories created by <strong>{author.name}</strong> {author.summary}
         {` `}
         <a className="underline" href={`https://twitter.com/${social.twitter}`}>
           You should follow him on Twitter

@@ -13,26 +13,39 @@ const BlogIndex = ({ data, location }) => {
     <Layout location={location} title={siteTitle}>
       <SEO title="All posts" />
       <Bio />
-      {posts.map(({ node }) => {
-        const title = node.frontmatter.title || node.fields.slug
-        return (
-          <article key={node.fields.slug}>
-            <header>
-              <h3>
-                <Link to={node.fields.slug}>{title}</Link>
-              </h3>
-              <small>{node.frontmatter.date}</small>
-            </header>
-            <section>
-              <p
-                dangerouslySetInnerHTML={{
-                  __html: node.frontmatter.description || node.excerpt,
-                }}
-              />
-            </section>
-          </article>
-        )
-      })}
+      <div className="mt-16 space-y-8">
+        {posts.map(({ node }) => {
+          const title = node.frontmatter.title || node.fields.slug
+          return (
+            <article key={node.fields.slug}>
+              <p className="text-sm leading-5 text-gray-500">
+                <time datetime={node.frontmatter.date}>
+                  {node.frontmatter.formattedDate}
+                </time>
+              </p>
+              <Link to={node.fields.slug}>
+                <h3 className="mt-2 text-xl font-semibold leading-7 text-gray-900">
+                  {title}
+                </h3>
+                <p
+                  className="mt-3 text-base leading-6 text-gray-500"
+                  dangerouslySetInnerHTML={{
+                    __html: node.frontmatter.description || node.excerpt,
+                  }}
+                />
+              </Link>
+              <div className="mt-3">
+                <Link
+                  className="text-base font-semibold leading-6 text-green-600 transition duration-150 ease-in-out hover:text-green-500"
+                  to={node.fields.slug}
+                >
+                  Read full story
+                </Link>
+              </div>
+            </article>
+          )
+        })}
+      </div>
     </Layout>
   )
 }
@@ -54,7 +67,8 @@ export const pageQuery = graphql`
             slug
           }
           frontmatter {
-            date(formatString: "MMMM DD, YYYY")
+            date
+            formattedDate
             title
             description
           }

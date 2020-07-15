@@ -5,7 +5,7 @@ const fullConfig = resolveConfig(tailwindConfig)
 
 module.exports = {
   siteMetadata: {
-    title: `Kieran Klaassen`,
+    title: `Created By Kieran`,
     author: {
       name: `Kieran Klaassen`,
       summary: `who is an entrepreneur, coder and composer living in Chicago.`,
@@ -87,6 +87,14 @@ module.exports = {
             ? [require(`cssnano`)]
             : []),
         ],
+      },
+    },
+    {
+      resolve: `gatsby-plugin-purgecss`,
+      options: {
+        tailwind: true,
+        whitelistPatterns: [/[\w-/.:]+(?<!:)/g],
+        purgeOnly: [`src/css/style.css`],
       },
     },
     // this (optional) plugin enables Progressive Web App + Offline functionality
