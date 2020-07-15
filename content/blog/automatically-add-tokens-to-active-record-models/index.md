@@ -6,6 +6,11 @@ description: "If you are adding a unique token field to your ActiveRecord models
 tags: code, rails, ruby, concerns
 ---
 
+<!-- FIXME: add github source -->
+<!-- FIXME: add co-authors for code projects -->
+<!-- FIXME: check if github project works correctly -->
+<!-- FIXME: Add blogpost to github project -->
+
 ## Use case
 
 When exposing an API you most likely don't want your identifier to be incrementing Ids.
@@ -18,7 +23,7 @@ transparency.
 First, we generate, a new model that will use the token field.
 
 ```shell
-$ rails generate model Productw title description price:decimal token:string:index:null
+$ rails generate model Product title description price:decimal token:string:index:null
 $ rails db:migrate
 ```
 
@@ -49,7 +54,7 @@ end
 
 ## Show me the code!
 
-The above magic is achieved by this Tokenizable concern that you can include in your projects.
+The above magic is achieved by this Tokenizable concern that you can include in your Ruby on Rails projects.
 
 You can also [view it on Github](https://github.com/kieranklaassen/tokenizable-example/blob/master/app/models/concerns/tokenizable.rb)
 
@@ -122,7 +127,7 @@ module Tokenizable
   # Creates a token if not set
   def generate_token
     self.token = loop do
-      token = CodeGen.generate('*' * (self.class.token_length_var || DEFAULT_LENGTH))
+      token = SecureRandom.urlsafe_base64(self.class.token_length_var || DEFAULT_LENGTH).downcase
       break token unless self.class.exists?(token: token)
     end
   end

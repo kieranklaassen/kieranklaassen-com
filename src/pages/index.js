@@ -34,6 +34,7 @@ const BlogIndex = ({ data, location }) => {
                   }}
                 />
               </Link>
+              {/* FIXME: add tags */}
               <div className="mt-3">
                 <Link
                   className="text-base font-semibold leading-6 text-green-600 transition duration-150 ease-in-out hover:text-green-500"
