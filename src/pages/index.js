@@ -13,6 +13,7 @@ const BlogIndex = ({ data, location }) => {
     <Layout location={location} title={siteTitle}>
       <SEO title="All posts" />
       <Bio />
+      {/* TODO: add discography https://codepen.io/nrjmadan/pen/ykiCd/ */}
       <div className="mt-16 space-y-8">
         {posts.map(({ node }) => {
           const title = node.frontmatter.title || node.fields.slug
