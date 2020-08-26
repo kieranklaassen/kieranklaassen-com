@@ -65,20 +65,15 @@ I ended up requiring my dependencies and library like this:
 [lib/laters.rb](https://github.com/kieranklaassen/laters/blob/master/lib/laters.rb)
 
 ```rb
-require 'laters/version'
 require 'active_model'
 require 'active_job'
-require 'zeitwerk'
-loader = Zeitwerk::Loader.for_gem
-loader.push_dir('app/models/concerns')
-loader.push_dir('app/jobs')
-loader.setup
+require 'laters/version'
+require 'laters/concern'
+require 'laters/instance_method_job'
 
 module Laters
   class Error < StandardError; end
 end
-
-loader.eager_load
 ```
 
 You can check out on [Github](https://github.com/kieranklaassen/laters) what the implementation of the concern and job are. That is not important for the Gem creation.
