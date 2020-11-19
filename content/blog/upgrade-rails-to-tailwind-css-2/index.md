@@ -78,4 +78,4 @@ module.exports = {
 
 [Read more about upgrading on the official tailwind ui docs](https://tailwindui.com/changes-for-v2#updating-your-tailwind-ui-projects)
 
-Hopw this helps you and let me know if there any problems you might still have. 🚀
+Hope this helps you and let me know if there any problems you might still have. 🚀
