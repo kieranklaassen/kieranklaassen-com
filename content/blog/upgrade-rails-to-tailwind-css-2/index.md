@@ -1,8 +1,8 @@
 ---
-title: How to upgrade rails to Tailwind CSS 2
+title: How to upgrade Rails to Tailwind CSS 2
 date: "2020-11-19"
 formattedDate: "November 19, 2020"
-description: "Guide to upgrade your rails project to Tailwind CSS 2 🚀"
+description: "Guide to upgrade your Rails project to Tailwind CSS 2 🚀"
 tags: tailwindcss2, rails, webpacker, webpack
 ---
 
