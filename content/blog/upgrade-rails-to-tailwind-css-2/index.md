@@ -19,6 +19,12 @@ yarn remove @rails/webpacker
 yarn add rails/webpacker
 ```
 
+And in your gemfile
+
+```rb
+gem "webpacker", github: "rails/webpacker"
+```
+
 [Thanks, @excid3 for patching Webpacker so quickly!](https://github.com/rails/webpacker/pull/2783)
 
 also note, your postcss.config.js should look something like this:
