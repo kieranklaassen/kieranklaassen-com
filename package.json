@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@hotwired/turbo": "^7.0.0-rc.4",
+    "@tailwindcss/typography": "^0.4.1",
     "stimulus": "^2.0.0"
   }
 }
