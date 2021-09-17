@@ -2,7 +2,7 @@
 layout: post
 title: I wrote a Gem! It runs instance_methods in a job
 date: "2020-08-23"
-categories: Gem, ruby, rubygems, later
+categories: code
 ---
 
 I've been writing Ruby for 12 years now but I never wrote a Ruby Gem 💎! So I set a goal for myself to write one that I

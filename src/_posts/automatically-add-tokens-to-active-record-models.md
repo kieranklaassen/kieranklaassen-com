@@ -2,7 +2,7 @@
 layout: post
 title: Automatically add tokens to your ActiveRecord models with a Tokenizable concern
 date: "2020-07-15"
-categories: updates
+categories: code
 ---
 
 ## Use case
