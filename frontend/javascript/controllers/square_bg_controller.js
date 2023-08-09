@@ -13,7 +13,7 @@ export default class extends Controller {
     p.setup = () => {
       p.createCanvas(window.innerWidth, window.innerHeight);
       this.baseColor = [this.random(255), this.random(255), this.random(255)];
-      this.squareSize = 64;
+      this.squareSize = 134;
       this.setupSquares(p);
       this.setupNoise(p);
       p.noStroke(); // No border
