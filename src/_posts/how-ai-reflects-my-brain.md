@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Thriving as a Dreamer Using AI
+title: How AI reflects the way my brain works
 date: "2023-11-08"
 categories: ai, personal-development, technology
 ---
