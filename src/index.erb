@@ -2,10 +2,15 @@
 layout: default
 title: Hi
 ---
-<ul>
-  <% collections.posts.resources.each do |post| %>
-    <li>
-      <a href="<%= post.relative_url %>"><%= post.data.title %></a>
-    </li>
-  <% end %>
-</ul>
+<section class="p-8" data-turbo-permanent>
+  <h2 class="mb-4 text-2xl font-bold">Blogs</h2>
+  <ul class="text-black list-disc list-inside">
+    <% collections.posts.resources.each_with_index do |post, index| %>
+      <li>
+        <a href="<%= post.relative_url %>" class="text-xl text-black no-underline hover:text-blue-800">
+          <%= post.data.title %>
+        </a>
+      </li>
+    <% end %>
+  </ul>
+</section>
