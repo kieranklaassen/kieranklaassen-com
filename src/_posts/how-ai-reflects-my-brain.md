@@ -2,7 +2,7 @@
 layout: post
 title: How AI reflects the way my brain works
 date: "2023-11-08"
-categories: ai, personal-development, technology
+categories: ai,personal-development,technology
 ---
 
 As a person who has always been fascinated by the endless possibilities of the human mind, I find the emergence of AI to be a truly transformative event. It's as if the technological advancements have finally caught up with the boundless aspirations of the human imagination. The arrival of AI is not just exciting; it's a reflection of the way my brain works. I'm thrilled to be living in a time where the external limitations on our imagination are being dismantled by AI.
