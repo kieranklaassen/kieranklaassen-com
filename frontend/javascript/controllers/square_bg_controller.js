@@ -6,12 +6,35 @@ export default class extends Controller {
 
   connect() {
     this.p5 = new p5((p) => this.sketch(p), this.canvasTarget);
-    window.addEventListener("resize", () => this.windowResized());
+    this.debouncedWindowResized = this.debounce(() => this.windowResized(), 250);
+    window.addEventListener("resize", this.debouncedWindowResized);
+  }
+
+  debounce(func, wait, immediate) {
+    let timeout;
+    return function () {
+      const context = this,
+        args = arguments;
+      const later = function () {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      const callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
+  }
+
+  windowResized() {
+    this.p5.resizeCanvas(document.body.clientWidth, document.body.clientHeight);
+    this.setupSquares(this.p5);
+    this.setupNoise(this.p5); // Re-create noise when window is resized
   }
 
   sketch(p) {
     p.setup = () => {
-      p.createCanvas(window.innerWidth, window.innerHeight);
+      p.createCanvas(document.body.clientWidth, document.body.clientHeight);
       this.baseColor = [this.random(255), this.random(255), this.random(255)];
       this.squareSize = 134;
       this.setupSquares(p);
@@ -32,7 +55,7 @@ export default class extends Controller {
   setupSquares(p) {
     this.squares = [];
     for (let x = 0; x < p.width; x += this.squareSize) {
-      for (let y = 0; y < p.height; y += this.squareSize) {
+      for (let y = 0; y < document.body.clientHeight; y += this.squareSize) {
         let gradientOffset = this.random(-30, 30);
         this.squares.push({
           x,
@@ -93,7 +116,7 @@ export default class extends Controller {
   }
 
   windowResized() {
-    this.p5.resizeCanvas(window.innerWidth, window.innerHeight);
+    this.p5.resizeCanvas(document.body.clientWidth, document.body.clientHeight);
     this.setupSquares(this.p5);
     this.setupNoise(this.p5); // Re-create noise when window is resized
   }
