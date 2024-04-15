@@ -1,6 +1,6 @@
 ---
 layout: post
-title: The Joy of Micro-Improvement: How AI Fuels My Constant Growth
+title: The Joy of Micro-Improvement
 date: "2024-02-15"
 categories: personal-development, ai, productivity
 ---
