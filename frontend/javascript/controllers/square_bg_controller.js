@@ -1,61 +1,47 @@
 import { Controller } from "@hotwired/stimulus";
-import p5 from "p5";
 
 export default class extends Controller {
   static targets = ["canvas"];
 
   connect() {
-    this.p5 = new p5((p) => this.sketch(p), this.canvasTarget);
-    this.debouncedWindowResized = this.debounce(() => this.windowResized(), 250);
-    window.addEventListener("resize", this.debouncedWindowResized);
-  }
-
-  debounce(func, wait, immediate) {
-    let timeout;
-    return function () {
-      const context = this,
-        args = arguments;
-      const later = function () {
-        timeout = null;
-        if (!immediate) func.apply(context, args);
-      };
-      const callNow = immediate && !timeout;
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-      if (callNow) func.apply(context, args);
-    };
-  }
-
-  windowResized() {
-    this.p5.resizeCanvas(document.body.clientWidth, document.body.clientHeight);
-    this.setupSquares(this.p5);
-    this.setupNoise(this.p5); // Re-create noise when window is resized
-  }
-
-  sketch(p) {
-    p.setup = () => {
-      p.createCanvas(document.body.clientWidth, document.body.clientHeight);
+    this.canvas = this.canvasTarget;
+    if (this.canvas) {
+      this.context = this.canvas.getContext("2d");
+      this.noiseFilter = document.getElementById("noiseFilter");
       this.baseColor = [this.random(255), this.random(255), this.random(255)];
       this.squareSize = 134;
-      this.setupSquares(p);
-      this.setupNoise(p);
-      p.noStroke(); // No border
-    };
 
-    p.draw = () => {
-      this.drawBackgroundAndSquares(p);
-      p.image(this.noiseGraphics, 0, 0);
-    };
-
-    p.mouseMoved = () => {
-      this.mouseMoved(p);
-    };
+      // Initialize the canvas and start rendering
+      this.initializeCanvas();
+    } else {
+      console.error("Canvas element not found.");
+    }
   }
 
-  setupSquares(p) {
+  disconnect() {
+    window.removeEventListener("resize", this.resizeCanvas.bind(this));
+    this.canvas.removeEventListener("mousemove", this.mouseMoved.bind(this));
+    cancelAnimationFrame(this.animationFrame);
+  }
+
+  initializeCanvas() {
+    this.resizeCanvas();
+    this.setupSquares();
+    window.addEventListener("resize", this.resizeCanvas.bind(this));
+    this.canvas.addEventListener("mousemove", this.mouseMoved.bind(this));
+    this.animationFrame = requestAnimationFrame(this.draw.bind(this));
+  }
+
+  resizeCanvas() {
+    this.canvas.width = document.body.clientWidth;
+    this.canvas.height = document.body.scrollHeight; // Change to scrollHeight
+    this.setupSquares();
+  }
+
+  setupSquares() {
     this.squares = [];
-    for (let x = 0; x < p.width; x += this.squareSize) {
-      for (let y = 0; y < document.body.clientHeight; y += this.squareSize) {
+    for (let x = 0; x < this.canvas.width; x += this.squareSize) {
+      for (let y = 0; y < this.canvas.height; y += this.squareSize) {
         let gradientOffset = this.random(-30, 30);
         this.squares.push({
           x,
@@ -68,42 +54,45 @@ export default class extends Controller {
     }
   }
 
-  setupNoise(p) {
-    this.noiseGraphics = p.createGraphics(p.width, p.height);
-    this.noiseGraphics.loadPixels();
-    for (let i = 0; i < this.noiseGraphics.pixels.length; i += 4) {
-      let noiseVal = this.random(255);
-      this.noiseGraphics.pixels[i] = noiseVal;
-      this.noiseGraphics.pixels[i + 1] = noiseVal;
-      this.noiseGraphics.pixels[i + 2] = noiseVal;
-      this.noiseGraphics.pixels[i + 3] = 50;
-    }
-    this.noiseGraphics.updatePixels();
-  }
-
-  drawBackgroundAndSquares(p) {
-    p.background(255); // White background
+  draw() {
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.squares.forEach((square) => {
       if (square.opacity !== square.targetOpacity) {
-        square.opacity = p.lerp(square.opacity, square.targetOpacity, 0.05);
+        square.opacity += (square.targetOpacity - square.opacity) * 0.05;
       }
 
-      // Create gradient effect with random variation
       for (let i = 0; i < this.squareSize; i++) {
-        let gradientAlpha = p.map(i, 0, this.squareSize, square.opacity, square.opacity - 40 + square.gradientOffset);
-        p.fill(this.baseColor[0], this.baseColor[1], this.baseColor[2], gradientAlpha);
-        p.rect(square.x, square.y + i, this.squareSize, 1);
+        let gradientAlpha = this.map(
+          i,
+          0,
+          this.squareSize,
+          square.opacity,
+          square.opacity - 40 + square.gradientOffset
+        );
+        this.context.fillStyle = `rgba(${this.baseColor[0]}, ${this.baseColor[1]}, ${this.baseColor[2]}, ${
+          gradientAlpha / 255
+        })`;
+        this.context.fillRect(square.x, square.y + i, this.squareSize, 1);
       }
     });
+
+    // Apply the noise filter to the canvas
+    this.canvas.style.filter = "url(#noiseFilter)";
+
+    this.animationFrame = requestAnimationFrame(this.draw.bind(this));
   }
 
-  mouseMoved(p) {
+  mouseMoved(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+
     this.squares.forEach((square) => {
       if (
-        p.mouseX >= square.x &&
-        p.mouseX < square.x + this.squareSize &&
-        p.mouseY >= square.y &&
-        p.mouseY < square.y + this.squareSize
+        mouseX >= square.x &&
+        mouseX < square.x + this.squareSize &&
+        mouseY >= square.y &&
+        mouseY < square.y + this.squareSize
       ) {
         if (!square.hovered) {
           square.targetOpacity = this.random(255);
@@ -115,13 +104,11 @@ export default class extends Controller {
     });
   }
 
-  windowResized() {
-    this.p5.resizeCanvas(document.body.clientWidth, document.body.clientHeight);
-    this.setupSquares(this.p5);
-    this.setupNoise(this.p5); // Re-create noise when window is resized
-  }
-
   random(max, min = 0) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  map(value, start1, stop1, start2, stop2) {
+    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
   }
 }
