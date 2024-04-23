@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Grounding Ideas in Writing: Leaving Breadcrumbs for the Mind"
+title: "Grounding Ideas in Writing"
 date: "2024-04-23"
 categories: writing
 ---
