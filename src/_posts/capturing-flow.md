@@ -73,7 +73,7 @@ This metacognitive aspect adds another layer to our creative process. It encoura
 
 As we embrace these new tools and methods, it's worth considering the broader implications for creativity and human cognition. Are we enhancing our creative capabilities, or becoming overly reliant on artificial aids?
 
-Philosopher Marshall McLuhan famously said, "We shape our tools and thereafter our tools shape us." This is particularly relevant in the context of AI-assisted creativity. As we integrate these tools into our creative processes, they're not just helping us capture ideas – they're potentially reshaping how we think and create.
+Father John Culkin, a friend and colleague of Marshall McLuhan, once wrote, "We shape our tools and then our tools shape us." This idea, which echoes McLuhan's own philosophy, is particularly relevant in the context of AI-assisted creativity. As we integrate these tools into our creative processes, they're not just helping us capture ideas – they're potentially reshaping how we think and create.
 
 The optimistic view, championed by philosophers like Andy Clark and David Chalmers, frames this as a natural extension of human cognition. Their "extended mind" thesis suggests that external tools can become so integrated into our cognitive processes that they essentially function as part of our minds. From this perspective, AI-assisted creativity tools aren't making us less creative or more dependent – they're expanding the boundaries of what our minds can do, much like how writing expanded our ability to store and transmit knowledge.
 
