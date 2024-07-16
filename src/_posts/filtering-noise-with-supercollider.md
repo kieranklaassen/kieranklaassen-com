@@ -3,6 +3,7 @@ layout: post
 title: Filtering Noise with SuperCollider
 date: "2024-03-04"
 categories: code, music
+description: "I explore the creative process of using SuperCollider to filter pink noise, creating an evolving and organic soundscape. This post breaks down the code and techniques used to generate a unique audio experience, blending filtered noise with a drone for depth and texture."
 ---
 
 Sometimes, you need a moment to switch off the goals and expectations and play. For me, that often means turning to making music. The world of noise is exciting, with its minimal, primal energy begging to be sculpted into something pure and beautiful. Lately, I've had an itch to dive back into SuperCollider with this exploration in mind. My goal was simple: take pink noise and use filtering to create an evolving, organic tone.

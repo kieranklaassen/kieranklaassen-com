@@ -2,13 +2,13 @@
 layout: default
 title: Hi
 ---
-<section class="p-8" data-turbo-permanent>
-  <h2 class="col-span-12 text-2xl font-bold mb-6 text-gray-700">Blogs</h2>
-  <div class="col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+<section class="md:pl-1b" data-turbo-permanent>
+  <h2 class="text-2xl font-bold mt-8 mb-4">Thoughts</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     <% collections.posts.resources.each do |post| %>
-      <a href="<%= post.relative_url %>" class="block p-4 bg-white bg-opacity-80 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out backdrop-blur-sm aspect-square">
-        <h3 class="text-lg font-semibold mb-2 text-gray-800 line-clamp-2"><%= post.data.title %></h3>
-        <div class="text-sm text-gray-600 line-clamp-4"><%= post.data.description || 'No description available' %></div>
+      <a href="<%= post.relative_url %>" class="block p-4 bg-white">
+        <h3 class="text-lg font-semibold mb-2 underline"><%= post.data.title %></h3>
+        <div class="text-sm text-gray-600"><%= post.data.description || 'No description available' %></div>
       </a>
     <% end %>
   </div>

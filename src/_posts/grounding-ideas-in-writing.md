@@ -3,6 +3,7 @@ layout: post
 title: "Grounding Ideas in Writing"
 date: "2024-04-23"
 categories: writing
+description: "Chasing fleeting thoughts led me down a philosophical rabbit hole. Here's what I discovered about the power of the written word."
 ---
 
 In the whirlwind of our minds, ideas come and go like fleeting sparks. Some illuminate for a brief moment, others threaten to light a fire, but all too often they fade before we can grasp their full potential. It's a challenge that has haunted me throughout my life as a thinker and creator: how do we capture and nurture these seeds of thought? The answer, I've found, lies in the simple yet profound act of writing.

@@ -3,6 +3,7 @@ layout: post
 title: Building Software We Love
 date: "2024-04-19"
 categories: creating
+description: "What if the key to better software isn't in the code, but in the heart? My unexpected revelation about development and passion."
 ---
 
 As a lifelong builder of companies and products, I've embarked on a quest to understand the essence of what makes software development truly fulfilling. Through the trials and triumphs of this journey, a profound realization has emerged: the key to unlocking boundless energy and joy in our coding endeavors lies in building software that we ourselves love.

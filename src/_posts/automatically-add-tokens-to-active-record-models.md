@@ -3,13 +3,12 @@ layout: post
 title: Automatically add tokens to your ActiveRecord models with a Tokenizable concern
 date: "2020-07-15"
 categories: code
+description: "A simple addition to your Rails models could be the key to better API security. Here's how I solved a common problem with an elegant solution."
 ---
 
 ## Use case
 
-When exposing an API you most likely don't want your identifier to be incrementing Ids. To solve this problem you can
-add a unique `token` field to your Active Record for identifying your records via the API layer. This brings some more
-security and removes some unwanted transparency.
+When exposing an API you most likely don't want your identifier to be incrementing Ids. To solve this problem you can add a unique `token` field to your Active Record for identifying your records via the API layer. This brings some more security and removes some unwanted transparency.
 
 ## Setup
 
@@ -49,8 +48,7 @@ end
 
 The above magic is achieved by this Tokenizable concern that you can include in your Ruby on Rails projects.
 
-You can also
-[view it on Github](https://github.com/kieranklaassen/tokenizable-example/blob/master/app/models/concerns/tokenizable.rb)
+You can also [view it on Github](https://github.com/kieranklaassen/tokenizable-example/blob/master/app/models/concerns/tokenizable.rb)
 
 ```ruby
 #

@@ -3,6 +3,7 @@ layout: post
 title: Enthusiasm
 date: "2024-05-07"
 categories: productivity
+description: "What happens when your greatest strength becomes your biggest obstacle? I explore the double-edged sword of enthusiasm and share my unconventional solution."
 ---
 
 **The Enthusiast's Dilemma:** As someone brimming with exciting ideas and projects, I often find myself facing a unique challenge - the frustration of feeling scattered by the sheer abundance of my inspiration. Sound familiar? If you're a fellow enthusiast, you likely know this feeling all too well. But here's the thing: our love for getting things done and being productive is our secret superpower. It's time to harness that energy and make it work for us.

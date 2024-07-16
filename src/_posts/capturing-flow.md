@@ -3,6 +3,7 @@ layout: post
 title: "Capturing Flow with Voice Memos and AI"
 date: "2024-07-15"
 categories: creativity, technology, productivity
+description: "A walk, a sudden idea, and a race against time. How I stumbled upon a method to capture creativity in its purest form."
 ---
 
 I'm walking down the street when suddenly, an idea hits me. It's brilliant, complex, full of potential. In the past, I might have scrambled for a notebook, fumbled with my phone's notes app, or worse – trusted my memory to retain this spark of inspiration. More often than not, by the time I could properly capture it, the idea had faded, leaving only a fuzzy outline of what once seemed profound.

@@ -2,8 +2,8 @@
 layout: post
 title: "Whispers of Silence: Sharing My Musical Self-Expression"
 date: "2023-11-10"
-
 categories: music,creativity,personal-journey
+description: "A month in San Diego, three tracks, and a journey inward. This is the story behind my most personal musical project yet."
 ---
 
 I made an EP: "Whispers of Silence," available on all major streaming platforms. This release isn't about making grand statements; it's a step towards embracing my musical journey as an integral part of who I am, independent of external validation. It's about the joy of creation, the freedom of expression, and the courage to share despite the doubts and fears that often accompany the creative process.

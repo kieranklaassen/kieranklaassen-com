@@ -3,6 +3,7 @@ layout: post
 title: Systems, Structure, and Creative Freedom
 date: "2024-02-11"
 categories: art
+description: "Can constraints truly set us free? My journey through music and art reveals a counterintuitive truth about creativity."
 ---
 
 ![Creative Process](https://res.cloudinary.com/dhcx3vzmg/image/upload/v1708099423/acinziwryumm1luzumdn.jpg)
