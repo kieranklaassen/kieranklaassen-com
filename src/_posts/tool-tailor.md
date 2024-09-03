@@ -8,6 +8,8 @@ description: "Discover how ToolTailor, my latest Ruby gem, bridges the gap betwe
 
 I created ToolTailor, a Ruby gem designed to convert Ruby methods and classes into OpenAI-compatible JSON schemas.
 
+[https://github.com/kieranklaassen/tool_tailor](https://github.com/kieranklaassen/tool_tailor)
+
 ## The Power of ToolTailor
 
 At its core, ToolTailor does one thing: it takes Ruby methods or classes and converts them into OpenAI-compatible JSON schemas. Here's a simple example:
