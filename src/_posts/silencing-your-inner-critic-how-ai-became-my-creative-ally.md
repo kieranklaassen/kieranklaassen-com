@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Silencing Your Inner Critic: How AI Became My Creative Ally
+title: "Silencing Your Inner Critic: How AI Became My Creative Ally"
 date: "2025-01-01"
 categories: creativity
 description: "Discover how AI tools can help silence your inner critic and unlock your most authentic creative work."
