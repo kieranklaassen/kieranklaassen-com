@@ -32,7 +32,7 @@ The mental clarity this creates is liberating. When I'm on a morning walk, I no 
 
 The practical implementation of this philosophy is timeboxing – allocating specific blocks of time to specific activities. Rather than maintaining a never-ending to-do list that grows faster than I can check items off, I divide my day into dedicated chunks, and I focus my attention on each.
 
-I use an app called Structured that helps me timebox my day. Unlike my calendar (which tends to fill up with meetings and external commitments), Structured is my personal roadmap. It reminds me through my phone and earbuds when certain blocks are ending and new ones beginning. The app creates a rhythm to my day that feels like a gentle guide rather than a harsh taskmaster.
+I use an app called [Structured](https://structured.app/) that helps me timebox my day. Unlike my calendar (which tends to fill up with meetings and external commitments), Structured is my personal roadmap. It reminds me through my phone and earbuds when certain blocks are ending and new ones beginning. The app creates a rhythm to my day that feels like a gentle guide rather than a harsh taskmaster.
 
 These time blocks are typically one to two hours long – enough time to achieve meaningful progress but not so long that my energy flags. During these periods, I have clarity about what I should be doing, which makes it much easier to say "no" to distractions. This approach also helps combat procrastination because the parameters are clear: "For the next 90 minutes, I'm working on implementing this specific feature."
 
