@@ -6,7 +6,7 @@ categories: personal-development
 description: "Discover how structure can actually create more freedom in your life."
 ---
 
-I'm staring at my to-do list on a Tuesday morning, and it feels like I'm looking at a small mountain range. Build and grow Cora. Spend quality time with my two daughters. Finish setting up the new house we moved into. Fix that persistent bug that's been bothering our users. Plan the product roadmap. The list goes on, seemingly without end. If I were to schedule everything that "needs" to get done, my calendar would be packed solid for months – and that's before I even consider making space for the things I enjoy doing.
+I'm staring at my to-do list on a Tuesday morning, and it feels like I'm looking at a small mountain range. Build and grow Cora. Spend quality time with my two daughters. Finish setting up the new house we moved into. Fix that persistent bug that's been bothering our users. Plan the product roadmap. The list goes on, seemingly without end. If I were to schedule everything that "needs" to get done, my calendar would be packed solid for months – and that's before I even consider making space for other things I enjoy doing.
 
 We all experience this overwhelming feeling. That sensation of drowning in responsibilities, of never quite catching up. But over time, I've come to realize something important: this state of being overwhelmed isn't unpleasant – it's counterproductive. It's not a state where we do our best work. It's not a state where we're truly present for our families. It's merely a survival state, and it's certainly not sustainable.
 
