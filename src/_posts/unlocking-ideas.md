@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Unlocking Ideas"
-date: "2025-04-12"
+title: Unlocking Ideas
+date: "2025-04-11"
 categories: creativity, breathwork
 description: "In a world where execution is easy but imagination remains the bottleneck, conscious breathing offers a pathway to access our deepest creative potential. This ancient practice creates a sanctuary for ideas to emerge, free from judgment and distraction, unlocking insights that remain hidden in our everyday consciousness."
 ---
