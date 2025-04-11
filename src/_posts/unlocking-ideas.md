@@ -1,9 +1,9 @@
 ---
 layout: post
-title: Breathwork: Unlocking Ideas
+title: "Unlocking Ideas"
 date: "2025-04-12"
 categories: creativity, breathwork
-description: In a world where execution is easy but imagination remains the bottleneck, conscious breathing offers a pathway to access our deepest creative potential. This ancient practice creates a sanctuary for ideas to emerge, free from judgment and distraction, unlocking insights that remain hidden in our everyday consciousness.
+description: "In a world where execution is easy but imagination remains the bottleneck, conscious breathing offers a pathway to access our deepest creative potential. This ancient practice creates a sanctuary for ideas to emerge, free from judgment and distraction, unlocking insights that remain hidden in our everyday consciousness."
 ---
 
 I'm on my deck in the sun. Inhale for 4 seconds. Exhale for 6. My mind clears. The idea that's been stuck for days suddenly appears – complete, clear, actionable. This moment of insight didn't come from more research or forced brainstorming. It arrived through the simplest and most ancient of practices: conscious breathing.
