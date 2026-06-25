@@ -36,6 +36,19 @@ class PostRepositoryTest < ActiveSupport::TestCase
     assert_includes tokenizable.html, '<pre lang="ruby"><code>'
   end
 
+  test "renders the systems article SoundCloud player with a valid external source" do
+    post = PostRepository.all.find do |candidate|
+      candidate.slug == "systems-structure-and-creative-freedom"
+    end
+    document = Nokogiri::HTML.fragment(post.html)
+    iframe = document.at_css("iframe")
+    source = iframe["src"]
+
+    assert_equal "https://w.soundcloud.com/player/", URI(source).then { |uri| "#{uri.scheme}://#{uri.host}#{uri.path}" }
+    assert_includes source, "api.soundcloud.com/tracks/151415958"
+    refute_includes post.html, "<div]("
+  end
+
   test "every post has required metadata and a unique slug" do
     posts = PostRepository.all
 

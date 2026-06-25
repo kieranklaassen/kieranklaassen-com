@@ -23,15 +23,15 @@ export function SquareBackground() {
 
     const context = canvas.getContext('2d')
     if (!context) return
+    const shell = canvas.parentElement
+    if (!shell) return
 
     const baseColor = [random(0, 255), random(0, 255), random(0, 255)]
     let squares: Square[] = []
     let animationFrame = 0
+    let hoveredSquare: Square | undefined
 
     const resize = () => {
-      const shell = canvas.parentElement
-      if (!shell) return
-
       const ratio = window.devicePixelRatio || 1
       const width = shell.clientWidth
       const height = Math.max(shell.scrollHeight, window.innerHeight)
@@ -42,6 +42,7 @@ export function SquareBackground() {
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
 
       squares = []
+      hoveredSquare = undefined
       for (let x = 0; x < width; x += SQUARE_SIZE) {
         for (let y = 0; y < height; y += SQUARE_SIZE) {
           squares.push({
@@ -89,18 +90,22 @@ export function SquareBackground() {
           y >= candidate.y &&
           y < candidate.y + SQUARE_SIZE,
       )
-      if (square) square.targetOpacity = random(0, 255)
+      if (square && square !== hoveredSquare) square.targetOpacity = random(0, 255)
+      hoveredSquare = square
     }
 
     resize()
     draw()
+    const resizeObserver = new ResizeObserver(resize)
+    resizeObserver.observe(shell)
     window.addEventListener('resize', resize)
-    canvas.addEventListener('pointermove', move)
+    window.addEventListener('pointermove', move, { passive: true })
 
     return () => {
       window.cancelAnimationFrame(animationFrame)
+      resizeObserver.disconnect()
       window.removeEventListener('resize', resize)
-      canvas.removeEventListener('pointermove', move)
+      window.removeEventListener('pointermove', move)
     }
   }, [])
 

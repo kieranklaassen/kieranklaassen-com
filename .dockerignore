@@ -10,7 +10,7 @@
 !/tmp/.keep
 /tmp/pids/*
 !/tmp/pids/.keep
-/node_modules
+node_modules
 /public/assets
 /public/vite
 /public/vite-ssr

@@ -1,5 +1,4 @@
 import { Head, Link } from '@inertiajs/react'
-import { SiteShell } from '../../components/site_shell'
 import type { Post } from '../../types/page'
 
 const LONG_DATE_FORMAT = new Intl.DateTimeFormat('en', {
@@ -9,7 +8,7 @@ const LONG_DATE_FORMAT = new Intl.DateTimeFormat('en', {
 
 export default function PostShow({ post }: { post: Post }) {
   return (
-    <SiteShell>
+    <>
       <Head title={post.title}>
         <meta head-key="description" name="description" content={post.description} />
       </Head>
@@ -30,6 +29,6 @@ export default function PostShow({ post }: { post: Post }) {
           dangerouslySetInnerHTML={{ __html: post.html }}
         />
       </article>
-    </SiteShell>
+    </>
   )
 }

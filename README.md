@@ -43,6 +43,7 @@ trusted and may include raw HTML for embeds.
 ```bash
 bin/rails test
 npm run check
+npm run test:frontend
 npm run build
 bin/rubocop
 bin/brakeman --no-pager

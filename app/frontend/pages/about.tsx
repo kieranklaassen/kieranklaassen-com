@@ -1,9 +1,8 @@
 import { Head } from '@inertiajs/react'
-import { SiteShell } from '../components/site_shell'
 
 export default function About() {
   return (
-    <SiteShell>
+    <>
       <Head title="About">
         <meta
           head-key="description"
@@ -23,6 +22,6 @@ export default function About() {
           leadership, and personal growth.
         </p>
       </article>
-    </SiteShell>
+    </>
   )
 }

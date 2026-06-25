@@ -36,6 +36,8 @@ jobs:
         run: bin/rubocop -f github
       - name: Check TypeScript
         run: npm run check
+      - name: Test frontend interaction
+        run: npm run test:frontend
 
   test:
     runs-on: ubuntu-latest
