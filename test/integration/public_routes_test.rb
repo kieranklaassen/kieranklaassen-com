@@ -11,6 +11,15 @@ class PublicRoutesTest < ActionDispatch::IntegrationTest
     assert_equal PostRepository.all.map(&:path), summaries.map { |post| post.fetch("path") }
   end
 
+  test "public content remains available to older browsers" do
+    get root_path, headers: {
+      "User-Agent" => "Mozilla/5.0 AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36"
+    }
+
+    assert_response :success
+    assert_inertia_component "home"
+  end
+
   test "about and posts index remain public" do
     get about_path
     assert_response :success
