@@ -1,0 +1,2 @@
+vite: bin/vite dev
+web: PORT="$APP_PORT" bin/rails server

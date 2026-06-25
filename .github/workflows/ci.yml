@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  scan_ruby:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Scan Rails code
+        run: bin/brakeman --no-pager
+      - name: Audit gems
+        run: bin/bundler-audit
+
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      RUBOCOP_CACHE_ROOT: tmp/rubocop
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint Ruby
+        run: bin/rubocop -f github
+      - name: Check TypeScript
+        run: npm run check
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build browser and SSR assets
+        run: npm run build
+      - name: Start Inertia SSR server
+        run: |
+          node public/vite-ssr/ssr.js > tmp/inertia-ssr.log 2>&1 &
+          echo $! > tmp/inertia-ssr.pid
+          for attempt in {1..20}; do
+            curl --fail --silent http://127.0.0.1:13714/health && exit 0
+            sleep 0.25
+          done
+          cat tmp/inertia-ssr.log
+          exit 1
+      - name: Run Rails and strict SSR tests
+        env:
+          INERTIA_SSR_URL: http://127.0.0.1:13714
+          SSR_STRICT: "1"
+        run: bin/rails test
+      - name: Show SSR log on failure
+        if: failure()
+        run: cat tmp/inertia-ssr.log
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build production image
+        run: docker build --tag kieranklaassen-com:test .

@@ -1,27 +1,26 @@
 {
-  "name": "kieranklaassen2023",
-  "version": "1.0.0",
+  "name": "kieranklaassen-com",
   "private": true,
+  "type": "module",
   "scripts": {
-    "esbuild": "node esbuild.config.js --minify",
-    "esbuild-dev": "node esbuild.config.js --watch"
-  },
-  "devDependencies": {
-    "esbuild": "^0.17.19",
-    "glob": "^10.2.6",
-    "postcss": "^8.4.23",
-    "postcss-flexbugs-fixes": "^5.0.2",
-    "postcss-import": "^15.1.0",
-    "postcss-load-config": "^4.0.1",
-    "postcss-preset-env": "^8.4.1",
-    "read-cache": "^1.0.0",
-    "tailwindcss": "^3.3.3"
+    "build": "vite build && vite build --ssr",
+    "check": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json"
   },
   "dependencies": {
-    "@hotwired/stimulus": "^3.2.2",
-    "@hotwired/turbo": "^7.3.0",
-    "@tailwindcss/typography": "^0.5.10",
-    "p5": "^1.7.0",
-    "turbo-shadow": "^1.1.0"
+    "@inertiajs/react": "^3.5.0",
+    "@inertiajs/vite": "^3.5.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.3.1",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.0",
+    "vite-plugin-ruby": "^5.2.0"
   }
 }

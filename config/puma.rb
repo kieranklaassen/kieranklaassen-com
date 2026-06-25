@@ -1,31 +1,42 @@
-# Puma is a fast, concurrent web server for Ruby & Rack
+# This configuration file will be evaluated by Puma. The top-level methods that
+# are invoked here are part of Puma's configuration DSL. For more information
+# about methods provided by the DSL, see https://puma.io/puma/Puma/DSL.html.
 #
-# Learn more at: https://puma.io
-# Bridgetown configuration documentation:
-# https://edge.bridgetownrb.com/docs/configuration/puma
-
-# This port number can be overriden by a bind configuration option
+# Puma starts a configurable number of processes (workers) and each process
+# serves each request in a thread from an internal thread pool.
 #
-port ENV.fetch("BRIDGETOWN_PORT") { 4000 }
-
-# You can adjust the number of workers (separate processes) and threads
-# (per process) based on your production system
+# You can control the number of workers using ENV["WEB_CONCURRENCY"]. You
+# should only set this value when you want to run 2 or more workers. The
+# default is already 1. You can set it to `auto` to automatically start a worker
+# for each available processor.
 #
-if ENV["BRIDGETOWN_ENV"] == "production"
-  workers ENV.fetch("BRIDGETOWN_CONCURRENCY") { 4 }
-end
-
-max_threads_count = ENV.fetch("BRIDGETOWN_MAX_THREADS") { 5 }
-min_threads_count = ENV.fetch("BRIDGETOWN_MIN_THREADS") { max_threads_count }
-threads min_threads_count, max_threads_count
-
-# Preload the application for maximum performance
+# The ideal number of threads per worker depends both on how much time the
+# application spends waiting for IO operations and on how much you wish to
+# prioritize throughput over latency.
 #
-preload_app!
-
-# Use the Bridgetown logger format
+# As a rule of thumb, increasing the number of threads will increase how much
+# traffic a given process can handle (throughput), but due to CRuby's
+# Global VM Lock (GVL) it has diminishing returns and will degrade the
+# response time (latency) of the application.
 #
-require "bridgetown-core/rack/logger"
-log_formatter do |msg|
-  Bridgetown::Rack::Logger.message_with_prefix msg
-end
+# The default is set to 3 threads as it's deemed a decent compromise between
+# throughput and latency for the average Rails application.
+#
+# Any libraries that use a connection pool or another resource pool should
+# be configured to provide at least as many connections as the number of
+# threads. This includes Active Record's `pool` parameter in `database.yml`.
+threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
+threads threads_count, threads_count
+
+# Specifies the `port` that Puma will listen on to receive requests; default is 3000.
+port ENV.fetch("PORT", 3000)
+
+# Allow puma to be restarted by `bin/rails restart` command.
+plugin :tmp_restart
+
+# Supervise the production Inertia renderer and restart it after crashes.
+plugin :inertia_ssr
+
+# Specify the PID file. Defaults to tmp/pids/server.pid in development.
+# In other environments, only set the PID file if requested.
+pidfile ENV["PIDFILE"] if ENV["PIDFILE"]

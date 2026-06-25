@@ -1,0 +1,47 @@
+minimum_version: 2.12.0
+
+service: <%= ENV.fetch("KAMAL_SERVICE") %>
+image: <%= ENV.fetch("KAMAL_IMAGE") %>
+
+servers:
+  web:
+<% ENV.fetch("KAMAL_HOSTS").split(",").map(&:strip).reject(&:empty?).each do |host| %>
+    - <%= host %>
+<% end %>
+
+proxy:
+  ssl: true
+  hosts:
+<% ENV.fetch("KAMAL_PROXY_HOSTS").split(",").map(&:strip).reject(&:empty?).each do |host| %>
+    - <%= host %>
+<% end %>
+  healthcheck:
+    path: /up
+
+registry:
+  server: <%= ENV.fetch("KAMAL_REGISTRY_SERVER", "ghcr.io") %>
+  username: <%= ENV.fetch("KAMAL_REGISTRY_USERNAME") %>
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  secret:
+    - RAILS_MASTER_KEY
+  clear:
+    APP_HOSTS: <%= ENV.fetch("KAMAL_PROXY_HOSTS") %>
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+
+asset_path: /rails/public/vite
+
+builder:
+  arch: <%= ENV.fetch("KAMAL_BUILDER_ARCH", "amd64") %>
+<% unless ENV["KAMAL_BUILDER_REMOTE"].to_s.empty? %>
+  remote: <%= ENV.fetch("KAMAL_BUILDER_REMOTE") %>
+<% end %>
+
+ssh:
+  user: <%= ENV.fetch("KAMAL_SSH_USER", "root") %>
