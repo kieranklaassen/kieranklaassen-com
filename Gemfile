@@ -1,36 +1,51 @@
 source "https://rubygems.org"
-git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-####
-# Welcome to your project's Gemfile, used by Rubygems & Bundler.
-#
-# To install a plugin, run:
-#
-#   bundle add new-plugin-name -g bridgetown_plugins
-#
-# This will ensure the plugin is added to the correct Bundler group.
-#
-# When you run Bridgetown commands, we recommend using a binstub like so:
-#
-#   bin/bridgetown start (or console, etc.)
-#
-# This will help ensure the proper Bridgetown version is running.
-####
+# Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
+gem "rails", "~> 8.1.3"
+# The modern asset pipeline for Rails [https://github.com/rails/propshaft]
+gem "propshaft"
+# Use the Puma web server [https://github.com/puma/puma]
+gem "puma", ">= 5.0"
 
-# If you need to upgrade/switch Bridgetown versions, change the line below
-# and then run `bundle update bridgetown`
-gem "bridgetown", "~> 1.3.0"
+# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
+# gem "bcrypt", "~> 3.1.7"
 
-# Uncomment to add file-based dynamic routing to your project:
-# gem "bridgetown-routes", "~> 1.3.0"
+# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
+gem "tzinfo-data", platforms: %i[ windows jruby ]
 
-# Puma is the Rack-compatible web server used by Bridgetown
-# (you can optionally limit this to the "development" group)
-gem "puma", "< 7"
+# Reduces boot times through caching; required in config/boot.rb
+gem "bootsnap", require: false
 
-# Uncomment to use the Inspectors API to manipulate the output
-# of your HTML or XML resources:
-# gem "nokogiri", "~> 1.13"
+# Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
+gem "kamal", "~> 2.12.0", require: false
 
-# Or for faster parsing of HTML-only resources via Inspectors, use Nokolexbor:
-# gem "nokolexbor", "~> 0.4"
+# Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
+gem "thruster", require: false
+
+# Connect Rails controllers to React pages without a separate API.
+gem "inertia_rails", "~> 3.21.2"
+
+# Build browser and server-rendering bundles with Vite.
+gem "vite_rails", "~> 3.11"
+
+# Render the site's trusted, version-controlled Markdown posts.
+gem "commonmarker", "~> 2.8"
+
+group :development, :test do
+  # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
+  gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+
+  # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
+  gem "bundler-audit", require: false
+
+  # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
+  gem "brakeman", require: false
+
+  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+  gem "rubocop-rails-omakase", require: false
+end
+
+group :development do
+  # Use console on exceptions pages [https://github.com/rails/web-console]
+  gem "web-console"
+end

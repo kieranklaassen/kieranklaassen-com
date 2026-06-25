@@ -1,70 +1,65 @@
-# Bridgetown Website README
+# kieranklaassen.com
 
-Welcome to your new Bridgetown website! You can update this README file to provide additional context and setup information for yourself or other contributors.
+Kieran Klaassen's personal site, built with Rails 8.1, Inertia 3, React 19,
+Vite, and server-side rendering. Posts remain Markdown files in the repository;
+the production container is deployed with Kamal.
 
-## Table of Contents
+## Requirements
 
-- [Prerequisites](#prerequisites)
-- [Install](#install)
-- [Development](#development)
-- [Commands](#commands)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
+- Ruby 3.4.2
+- Node.js 22 or newer
+- npm
 
-## Prerequisites
+## Set up and run
 
-- [GCC](https://gcc.gnu.org/install/)
-- [Make](https://www.gnu.org/software/make/)
-- [Ruby](https://www.ruby-lang.org/en/downloads/)
-  - `>= 2.7`
-- [Bridgetown Gem](https://rubygems.org/gems/bridgetown)
-  - `gem install bridgetown -N`
-- [Node](https://nodejs.org)
-  - `>= 12`
-- [Yarn](https://yarnpkg.com)
-
-## Install
-
-```sh
-cd bridgetown-site-folder
-bundle install && yarn install
-```
-> Learn more: [Bridgetown Getting Started Documentation](https://www.bridgetownrb.com/docs/).
-
-## Development
-
-To start your site in development mode, run `bin/bridgetown start` and navigate to [localhost:4000](https://localhost:4000/)!
-
-Use a [theme](https://github.com/topics/bridgetown-theme) or add some [plugins](https://www.bridgetownrb.com/plugins/) to get started quickly.
-
-### Commands
-
-```sh
-# running locally
-bin/bridgetown start
-
-# build & deploy to production
-bin/bridgetown deploy
-
-# load the site up within a Ruby console (IRB)
-bin/bridgetown console
+```bash
+bin/setup --skip-server
+bin/dev
 ```
 
-> Learn more: [Bridgetown CLI Documentation](https://www.bridgetownrb.com/docs/command-line-usage)
+Open <http://localhost:3000>. `bin/dev` starts Rails and Vite together. Keep
+Vite Ruby's development proxy enabled so local and tunneled requests load
+assets and SSR from one origin.
 
-## Deployment
+## Add a post
 
-You can deploy Bridgetown sites on hosts like Render or Vercel as well as traditional web servers by simply building and copying the output folder to your HTML root.
+Add a Markdown file to `content/posts/` with this frontmatter:
 
-> Read the [Bridgetown Deployment Documentation](https://www.bridgetownrb.com/docs/deployment) for more information.
+```yaml
+---
+title: A useful title
+date: "2026-06-25"
+categories: creativity, technology
+description: A concise summary for lists and search previews.
+---
+```
 
-## Contributing
+The filename becomes the slug. The category spelling and date are part of the
+public URL, so changing them changes the canonical path. Repository content is
+trusted and may include raw HTML for embeds.
 
-If repo is on GitHub:
+## Verify
 
-1. Fork it
-2. Clone the fork using `git clone` to your local development machine.
-3. Create your feature branch (`git checkout -b my-new-feature`)
-4. Commit your changes (`git commit -am 'Add some feature'`)
-5. Push to the branch (`git push origin my-new-feature`)
-6. Create a new Pull Request
+```bash
+bin/rails test
+npm run check
+npm run build
+bin/rubocop
+bin/brakeman --no-pager
+```
+
+The strict SSR integration tests require a built bundle and a running renderer.
+Start the renderer in one terminal:
+
+```bash
+node public/vite-ssr/ssr.js
+```
+
+Then run the strict tests in another terminal:
+
+```bash
+INERTIA_SSR_URL=http://127.0.0.1:13714 SSR_STRICT=1 \
+  bin/rails test test/integration/inertia_ssr_test.rb
+```
+
+See [DEPLOYING.md](DEPLOYING.md) for the Kamal workflow.

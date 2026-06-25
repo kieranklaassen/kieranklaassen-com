@@ -1,38 +1,36 @@
-# Bridgetown
-output
-.bridgetown-cache
-.bridgetown-metadata
-.bridgetown-webpack
-.routes.json
+# Dependencies
+/node_modules
+/vendor/bundle
 
-# Dependency folders
-node_modules
-bower_components
-vendor
+# Logs, cache, and temp files
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+!/tmp/pids
+/tmp/pids/*
+!/tmp/pids/.keep
 
-# Caches
-.sass-cache
-.npm
-.node_repl_history
+# Generated assets
+/app/assets/builds/*
+!/app/assets/builds/.keep
+/public/assets
+/public/vite*
+/app/frontend/.vite
 
-# Ignore bundler config.
+# Secrets and local environment
+/config/master.key
+/config/credentials/*.key
+/.env*
+/.kamal/deploy.env
+/.kamal/secrets
+
+# Local tooling
 /.bundle
-
-# Ignore Byebug command history file.
-.byebug_history
-
-# dotenv environment variables file
-.env
-
-# Mac files
-.DS_Store
-
-# Yarn
-yarn-error.log
-yarn-debug.log*
-.pnp/
-.pnp.js
-# Yarn Integrity file
-.yarn-integrity
-
-frontend/styles/jit-refresh.css
+/.ruby-lsp
+/.DS_Store
+/output
+/.bridgetown-cache
+/.bridgetown-metadata
+/.bridgetown-webpack
+/.routes.json
