@@ -48,10 +48,16 @@ bin/rubocop
 bin/brakeman --no-pager
 ```
 
-The strict SSR integration tests require a built bundle and a running renderer:
+The strict SSR integration tests require a built bundle and a running renderer.
+Start the renderer in one terminal:
 
 ```bash
 node public/vite-ssr/ssr.js
+```
+
+Then run the strict tests in another terminal:
+
+```bash
 INERTIA_SSR_URL=http://127.0.0.1:13714 SSR_STRICT=1 \
   bin/rails test test/integration/inertia_ssr_test.rb
 ```
