@@ -19,13 +19,14 @@ export function SquareBackground() {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (!canvas) return
 
     const context = canvas.getContext('2d')
     if (!context) return
     const shell = canvas.parentElement
     if (!shell) return
 
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const baseColor = [random(0, 255), random(0, 255), random(0, 255)]
     let squares: Square[] = []
     let animationFrame = 0
@@ -76,7 +77,7 @@ export function SquareBackground() {
         context.fillRect(square.x, square.y, SQUARE_SIZE, SQUARE_SIZE)
       }
 
-      animationFrame = window.requestAnimationFrame(draw)
+      if (!reducedMotion) animationFrame = window.requestAnimationFrame(draw)
     }
 
     const move = (event: PointerEvent) => {
@@ -96,15 +97,19 @@ export function SquareBackground() {
 
     resize()
     draw()
-    const resizeObserver = new ResizeObserver(resize)
+    const resizeAndDraw = () => {
+      resize()
+      if (reducedMotion) draw()
+    }
+    const resizeObserver = new ResizeObserver(resizeAndDraw)
     resizeObserver.observe(shell)
-    window.addEventListener('resize', resize)
-    window.addEventListener('pointermove', move, { passive: true })
+    window.addEventListener('resize', resizeAndDraw)
+    if (!reducedMotion) window.addEventListener('pointermove', move, { passive: true })
 
     return () => {
       window.cancelAnimationFrame(animationFrame)
       resizeObserver.disconnect()
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', resizeAndDraw)
       window.removeEventListener('pointermove', move)
     }
   }, [])

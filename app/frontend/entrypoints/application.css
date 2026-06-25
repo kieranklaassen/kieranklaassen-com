@@ -86,9 +86,3 @@ a {
   padding: 0.1em 0.25em;
   font-weight: 500;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .square-background {
-    display: none;
-  }
-}

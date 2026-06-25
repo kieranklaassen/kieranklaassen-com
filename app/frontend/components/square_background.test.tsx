@@ -11,6 +11,7 @@ import NotFound from '../pages/not_found'
 import PostsIndex from '../pages/posts/index'
 import PostShow from '../pages/posts/show'
 import type { Post } from '../types/page'
+import applicationCss from '../entrypoints/application.css?raw'
 import { SiteShell } from './site_shell'
 
 declare global {
@@ -30,6 +31,7 @@ const POST: Post = {
 describe('interactive square background', () => {
   let container: HTMLDivElement
   let root: Root
+  let fillRect: ReturnType<typeof vi.fn>
   let resizeDisconnect: ReturnType<typeof vi.fn>
   let resizeObserve: ReturnType<typeof vi.fn>
 
@@ -37,6 +39,7 @@ describe('interactive square background', () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     resizeDisconnect = vi.fn()
     resizeObserve = vi.fn()
+    fillRect = vi.fn()
     container = document.createElement('div')
     document.body.append(container)
     root = createRoot(container)
@@ -45,7 +48,7 @@ describe('interactive square background', () => {
     const context = {
       clearRect: vi.fn(),
       createLinearGradient: vi.fn(() => gradient),
-      fillRect: vi.fn(),
+      fillRect,
       fillStyle: '',
       setTransform: vi.fn(),
     }
@@ -108,6 +111,17 @@ describe('interactive square background', () => {
     expect(markup).toContain('<feTurbulence')
     expect(renderedShell.querySelector<HTMLCanvasElement>('canvas')?.style.filter).toBe(
       'url("#square-noise")',
+    )
+  })
+
+  it('keeps a static background visible when reduced motion is enabled', () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true }) as MediaQueryList))
+
+    act(() => root.render(<SiteShell>Page</SiteShell>))
+
+    expect(fillRect).toHaveBeenCalled()
+    expect(applicationCss).not.toMatch(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.square-background\s*\{[\s\S]*?display:\s*none/,
     )
   })
 
