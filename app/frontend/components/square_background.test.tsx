@@ -125,6 +125,16 @@ describe('interactive square background', () => {
     )
   })
 
+  it('renders at CSS-pixel resolution so the full-page noise filter stays responsive', () => {
+    vi.stubGlobal('devicePixelRatio', 2)
+
+    act(() => root.render(<SiteShell>Page</SiteShell>))
+
+    const canvas = container.querySelector('canvas')
+    expect(canvas?.width).toBe(268)
+    expect(canvas?.height).toBe(768)
+  })
+
   it('resizes with persistent layout content changes', () => {
     act(() => root.render(<SiteShell>Page</SiteShell>))
 

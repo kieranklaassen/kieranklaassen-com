@@ -33,14 +33,13 @@ export function SquareBackground() {
     let hoveredSquare: Square | undefined
 
     const resize = () => {
-      const ratio = window.devicePixelRatio || 1
       const width = shell.clientWidth
       const height = Math.max(shell.scrollHeight, window.innerHeight)
-      canvas.width = width * ratio
-      canvas.height = height * ratio
+      canvas.width = width
+      canvas.height = height
       canvas.style.width = `${width}px`
       canvas.style.height = `${height}px`
-      context.setTransform(ratio, 0, 0, ratio, 0, 0)
+      context.setTransform(1, 0, 0, 1, 0, 0)
 
       squares = []
       hoveredSquare = undefined
