@@ -109,5 +109,12 @@ export function SquareBackground() {
     }
   }, [])
 
-  return <canvas ref={canvasRef} className="square-background" aria-hidden="true" />
+  return (
+    <canvas
+      ref={canvasRef}
+      className="square-background"
+      style={{ filter: 'url(#square-noise)' }}
+      aria-hidden="true"
+    />
+  )
 }

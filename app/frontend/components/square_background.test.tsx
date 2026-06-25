@@ -101,9 +101,14 @@ describe('interactive square background', () => {
 
   it('includes the original noise texture filter', () => {
     const markup = renderToStaticMarkup(<SiteShell>Page</SiteShell>)
+    const renderedShell = document.createElement('div')
+    renderedShell.innerHTML = markup
 
     expect(markup).toContain('id="square-noise"')
     expect(markup).toContain('<feTurbulence')
+    expect(renderedShell.querySelector<HTMLCanvasElement>('canvas')?.style.filter).toBe(
+      'url("#square-noise")',
+    )
   })
 
   it('resizes with persistent layout content changes', () => {

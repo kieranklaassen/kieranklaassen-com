@@ -35,6 +35,7 @@ class InertiaSsrTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal 1, response.body.scan('class="site-shell"').size
     assert_includes response.body, '<filter id="square-noise">'
+    assert_includes response.body, 'style="filter:url(#square-noise)"'
     assert_includes response.body, 'src="https://w.soundcloud.com/player/?url='
     refute_includes response.body, 'src="[https://w.soundcloud.com/player/'
   end
