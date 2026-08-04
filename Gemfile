@@ -23,7 +23,7 @@ gem "kamal", "~> 2.12.0", require: false
 gem "thruster", require: false
 
 # Connect Rails controllers to React pages without a separate API.
-gem "inertia_rails", "~> 3.21.2"
+gem "inertia_rails", "~> 3.22.0"
 
 # Build browser and server-rendering bundles with Vite.
 gem "vite_rails", "~> 3.11"
