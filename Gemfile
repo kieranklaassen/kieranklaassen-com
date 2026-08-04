@@ -29,7 +29,7 @@ gem "inertia_rails", "~> 3.21.2"
 gem "vite_rails", "~> 3.11"
 
 # Render the site's trusted, version-controlled Markdown posts.
-gem "commonmarker", "~> 2.8"
+gem "commonmarker", "~> 2.9"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
