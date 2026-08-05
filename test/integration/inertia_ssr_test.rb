@@ -10,6 +10,8 @@ class InertiaSsrTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'data-server-rendered="true"'
     assert_includes response.body, "Thoughts"
     assert_includes response.body, "Unlocking Ideas"
+    assert_includes response.body, "How I Polish Software That Agents Built"
+    assert_includes response.body, 'target="_blank"'
   end
 
   test "raw article HTML contains its body and metadata" do

@@ -9,6 +9,7 @@ export interface PostSummary {
   categories: string[]
   description: string
   path: string
+  external_url?: string
 }
 
 export interface Post extends PostSummary {

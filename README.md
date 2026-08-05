@@ -40,6 +40,10 @@ public URL, so changing them changes the canonical path. Repository content is
 trusted and may include raw HTML for embeds. Keep `ai_assisted: true` on new
 AI-assisted writing so the article displays the authorship disclosure.
 
+External Every publications are listed in `content/external_posts.yml`. They
+appear alongside local posts in date order and open their Every page in a new
+tab.
+
 ## Verify
 
 ```bash

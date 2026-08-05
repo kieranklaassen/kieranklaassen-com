@@ -1,0 +1,77 @@
+- slug: every-how-i-polish-software-that-agents-built
+  title: How I Polish Software That Agents Built
+  date: "2026-07-13"
+  description: "Polish is the final step of compound engineering: using the app myself and telling the agent what feels off until it doesn't."
+  external_url: https://every.to/source-code/how-i-polish-software-that-agents-built
+
+- slug: every-compound-engineering-gets-an-upgrade
+  title: Compound Engineering Gets an Upgrade
+  date: "2026-05-29"
+  description: The AI-native engineering philosophy has expanded from four steps to eight.
+  external_url: https://every.to/p/compound-engineering-gets-an-upgrade
+
+- slug: every-the-folder-is-the-agent
+  title: The Folder Is the Agent
+  date: "2026-04-13"
+  description: "I'm running 44 AI agents across multiple projects. Each one is just a model pointed at a folder."
+  external_url: https://every.to/source-code/the-folder-is-the-agent
+
+- slug: every-i-stopped-reading-code-my-code-reviews-got-better
+  title: I Stopped Reading Code. My Code Reviews Got Better.
+  date: "2026-01-23"
+  description: How 13 AI agents reviewing in parallel caught a critical bug I would have otherwise missed.
+  external_url: https://every.to/source-code/i-stopped-reading-code-my-code-reviews-got-better
+
+- slug: every-compound-engineering
+  title: Compound Engineering
+  date: "2026-01-17"
+  description: The AI-native engineering philosophy.
+  external_url: https://every.to/guides/compound-engineering
+
+- slug: every-vibe-check-opus-4-5
+  title: "Vibe Check: Opus 4.5 Is the Coding Model We've Been Waiting For"
+  date: "2025-11-24"
+  description: "But it’s not perfect—it failed our editing test."
+  external_url: https://every.to/vibe-check/vibe-check-opus-4-5-is-the-coding-model-we-ve-been-waiting-for
+
+- slug: every-teach-your-ai-to-think-like-a-senior-engineer
+  title: Teach Your AI to Think Like a Senior Engineer
+  date: "2025-11-07"
+  description: These are the eight strategies I use to help my AI learn my codebase, my patterns, and my preferences.
+  external_url: https://every.to/source-code/teach-your-ai-to-think-like-a-senior-engineer
+
+- slug: every-stop-coding-and-start-planning
+  title: Stop Coding and Start Planning
+  date: "2025-11-06"
+  description: Spend an hour teaching AI how you think, and it gets smarter with every feature you build.
+  external_url: https://every.to/source-code/stop-coding-and-start-planning
+
+- slug: every-vibe-check-claude-haiku-4-5
+  title: "Vibe Check: Anthropic Cooked on Claude Haiku 4.5"
+  date: "2025-10-15"
+  description: This one’s for the developers.
+  external_url: https://every.to/vibe-check/vibe-check-claude-haiku-4-5-anthropic-cooked
+
+- slug: every-my-ai-had-already-fixed-the-code-before-i-saw-it
+  title: My AI Had Already Fixed the Code Before I Saw It
+  date: "2025-08-18"
+  description: Compounding engineering turns every pull request, bug fix, and code review into permanent lessons your development tools apply automatically.
+  external_url: https://every.to/source-code/my-ai-had-already-fixed-the-code-before-i-saw-it
+
+- slug: every-how-i-use-claude-code-to-ship-like-a-team-of-five
+  title: How I Use Claude Code to Ship Like a Team of Five
+  date: "2025-07-16"
+  description: "It's the first AI tool that feels like delegating to a colleague, not prompting a chatbot."
+  external_url: https://every.to/source-code/how-i-use-claude-code-to-ship-like-a-team-of-five
+
+- slug: every-cora-is-out-of-beta
+  title: "Cora Is Out of Beta: Give AI Your Inbox, Take Back Your Life"
+  date: "2025-06-26"
+  description: "Now publicly available: A chief of staff for your email for $15 per month."
+  external_url: https://every.to/on-every/cora-is-out-of-beta-give-ai-your-inbox-take-back-your-life
+
+- slug: every-how-i-10x-my-engineering-with-ai
+  title: How I 10x My Engineering With AI
+  date: "2025-06-03"
+  description: What used to take me a week of coding now happens in hours. The secret is knowing which AI workflow fits your problem.
+  external_url: https://every.to/source-code/the-three-ways-i-work-with-llms

@@ -3,7 +3,7 @@
 class PagesController < InertiaController
   def home
     render inertia: "home", props: {
-      posts: PostRepository.all.map(&:summary)
+      posts: ThoughtRepository.all
     }
   end
 

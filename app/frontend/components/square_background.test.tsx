@@ -12,6 +12,7 @@ import PostsIndex from '../pages/posts/index'
 import PostShow, { AiAssistanceDisclosure } from '../pages/posts/show'
 import type { Post } from '../types/page'
 import applicationCss from '../entrypoints/application.css?raw'
+import { PostList } from './post_list'
 import { SiteShell } from './site_shell'
 
 declare global {
@@ -164,5 +165,26 @@ describe('Inertia page layout', () => {
 
   it('omits the disclosure on unmarked articles', () => {
     expect(renderToStaticMarkup(<AiAssistanceDisclosure visible={false} />)).toBe('')
+  })
+})
+
+describe('post list', () => {
+  it('opens Every publications in a new tab', () => {
+    const markup = renderToStaticMarkup(
+      <PostList
+        posts={[
+          {
+            ...POST,
+            slug: 'every-test-post',
+            path: 'https://every.to/source-code/test-post',
+            external_url: 'https://every.to/source-code/test-post',
+          },
+        ]}
+      />,
+    )
+
+    expect(markup).toContain('target="_blank"')
+    expect(markup).toContain('rel="noopener noreferrer"')
+    expect(markup).toContain('Every ↗')
   })
 })

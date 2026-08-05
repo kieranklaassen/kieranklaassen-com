@@ -10,6 +10,9 @@
 - New AI-assisted articles must include `ai_assisted: true` in their
   frontmatter. The article page uses it to disclose that the writing was
   AI-assisted while the original ideas and experiences are Kieran's.
+- External Every publications live in `content/external_posts.yml`. Keep one
+  entry per unique work; profile aliases and revised duplicate URLs should not
+  create repeated cards on the Thoughts page.
 
 # Deploying
 

@@ -7,8 +7,9 @@ class PublicRoutesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_inertia_component "home"
     summaries = inertia.props.fetch("posts")
-    assert_equal PostRepository.all.map(&:title), summaries.map { |post| post.fetch("title") }
-    assert_equal PostRepository.all.map(&:path), summaries.map { |post| post.fetch("path") }
+    assert_equal ThoughtRepository.all.map { |post| post.fetch(:title) }, summaries.map { |post| post.fetch("title") }
+    assert_equal ThoughtRepository.all.map { |post| post.fetch(:path) }, summaries.map { |post| post.fetch("path") }
+    assert_equal 13, summaries.count { |post| post.key?("external_url") }
   end
 
   test "public content remains available to older browsers" do
@@ -28,6 +29,7 @@ class PublicRoutesTest < ActionDispatch::IntegrationTest
     get posts_path
     assert_response :success
     assert_inertia_component "posts/index"
+    assert_equal ThoughtRepository.all.size, inertia.props.fetch("posts").size
   end
 
   test "every characterized Bridgetown article URL resolves" do

@@ -3,7 +3,7 @@
 class PostsController < InertiaController
   def index
     render inertia: "posts/index", props: {
-      posts: PostRepository.all.map(&:summary)
+      posts: ThoughtRepository.all
     }
   end
 
