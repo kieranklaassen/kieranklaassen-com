@@ -12,9 +12,9 @@ export function SiteHeader() {
         <p className="max-w-[536px] px-4 text-center text-base leading-relaxed lg:mt-[134px] lg:text-left lg:text-lg">
           I&apos;m <strong>Kieran</strong>, a <strong>creator</strong> and <strong>engineer</strong>,{' '}
           <strong>composer</strong> and <strong>baker</strong>. I <strong>craft</strong> with love, creating{' '}
-          <strong>code</strong> to <strong>croissants</strong>. My journey is one of{' '}
-          <strong>curiosity</strong> and <strong>discovery</strong>, guided by a simple vision: to{' '}
-          <strong>inspire</strong> and be <strong>true</strong> to myself.
+          <strong>code</strong> to <strong>croissants</strong>. <strong>Curiosity</strong> and{' '}
+          <strong>discovery</strong> shape my life. I try to <strong>inspire</strong> others and stay{' '}
+          <strong>true</strong> to myself.
         </p>
         <nav aria-label="Primary" className="mt-5 flex gap-5 px-4 text-sm font-semibold">
           <Link href="/posts" className="underline decoration-1 underline-offset-4">
