@@ -147,7 +147,7 @@ describe('interactive square background', () => {
 describe('Inertia page layout', () => {
   it('keeps the site shell outside page components so Inertia can persist it', () => {
     const pages: ReactElement[] = [
-      Home({ posts: [] }),
+      Home({ posts: [], repositories: [] }),
       About(),
       PostsIndex({ posts: [] }),
       NotFound({ requestedPath: '/missing' }),

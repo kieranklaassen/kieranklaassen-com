@@ -1,15 +1,29 @@
 require "test_helper"
 
 class PublicRoutesTest < ActionDispatch::IntegrationTest
-  test "home exposes every post through the Inertia page" do
+  test "home exposes seven recent thoughts and the repository snapshot" do
     get root_path
 
     assert_response :success
     assert_inertia_component "home"
     summaries = inertia.props.fetch("posts")
-    assert_equal ThoughtRepository.all.map { |post| post.fetch(:title) }, summaries.map { |post| post.fetch("title") }
-    assert_equal ThoughtRepository.all.map { |post| post.fetch(:path) }, summaries.map { |post| post.fetch("path") }
-    assert_equal 13, summaries.count { |post| post.key?("external_url") }
+    repositories = inertia.props.fetch("repositories")
+    assert_equal ThoughtRepository.all.first(7).map { |post| post.fetch(:title) },
+      summaries.map { |post| post.fetch("title") }
+    assert_equal ThoughtRepository.all.first(7).map { |post| post.fetch(:path) },
+      summaries.map { |post| post.fetch("path") }
+    assert_equal GithubRepository.all.map { |repository| repository.fetch(:name) },
+      repositories.map { |repository| repository.fetch("name") }
+  end
+
+  test "home succeeds with an empty repository snapshot" do
+    GithubRepository.instance_variable_set(:@all, [].freeze)
+    get root_path
+
+    assert_response :success
+    assert_empty inertia.props.fetch("repositories")
+  ensure
+    GithubRepository.reset!
   end
 
   test "public content remains available to older browsers" do

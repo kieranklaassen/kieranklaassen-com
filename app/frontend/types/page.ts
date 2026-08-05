@@ -12,6 +12,14 @@ export interface PostSummary {
   external_url?: string
 }
 
+export interface GithubRepositorySummary {
+  name: string
+  description: string | null
+  language: string | null
+  stars: number
+  url: string
+}
+
 export interface Post extends PostSummary {
   ai_assisted: boolean
   html: string

@@ -9,9 +9,12 @@ class InertiaSsrTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'data-server-rendered="true"'
     assert_includes response.body, "Thoughts"
-    assert_includes response.body, "Unlocking Ideas"
+    assert_includes response.body, "Code"
     assert_includes response.body, "How I Polish Software That Agents Built"
+    assert_includes response.body, "leva"
     assert_includes response.body, 'target="_blank"'
+    assert_includes response.body, ThoughtRepository.recent(limit: 7).last.fetch(:title)
+    refute_includes response.body, ThoughtRepository.all.fetch(7).fetch(:title)
   end
 
   test "raw article HTML contains its body and metadata" do
