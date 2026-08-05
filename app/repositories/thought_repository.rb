@@ -8,5 +8,9 @@ class ThoughtRepository
         .reverse
         .freeze
     end
+
+    def recent(limit:)
+      all.first(limit).freeze
+    end
   end
 end

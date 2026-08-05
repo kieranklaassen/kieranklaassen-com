@@ -3,7 +3,8 @@
 class PagesController < InertiaController
   def home
     render inertia: "home", props: {
-      posts: ThoughtRepository.all
+      posts: ThoughtRepository.recent(limit: 7),
+      repositories: GithubRepository.all
     }
   end
 
