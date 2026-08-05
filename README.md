@@ -45,10 +45,11 @@ appear alongside local posts in date order and open their Every page in a new
 tab.
 
 Featured public code projects are listed in `content/github_repositories.yml`.
-The site validates the checked-in snapshot, removes forks and archived entries,
-sorts the remainder by stars, and shows the first seven. Refresh descriptions,
-languages, star counts, and eligibility flags manually when the featured
-projects materially change; the home page never calls GitHub at runtime.
+The file mirrors the repositories pinned on Kieran's GitHub profile and its
+order controls the cards on the home page. The site validates the checked-in
+snapshot, removes forks and archived entries, and shows up to seven pins.
+Refresh the list and metadata manually when the profile pins change; the home
+page never calls GitHub at runtime.
 
 ## Verify
 
