@@ -4,6 +4,7 @@ title: Finding Freedom in Structure
 date: "2025-03-27"
 categories: personal-development
 description: "How timeboxing gives me enough structure to focus on work, family, and whatever is in front of me."
+ai_assisted: true
 ---
 
 On a Tuesday morning, my to-do list says: Build and grow Cora. Spend quality time with my two daughters. Finish setting up the new house. Fix the persistent bug that's bothering our users. Plan the product roadmap. The list keeps going. If I scheduled everything that "needs" to get done, my calendar would be packed for months—before I made room for anything else I enjoy.

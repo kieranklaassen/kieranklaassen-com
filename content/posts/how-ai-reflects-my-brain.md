@@ -4,6 +4,7 @@ title: How AI reflects the way my brain works
 date: "2023-11-08"
 categories: ai,personal-development,technology
 description: "AI feels familiar to my restless brain: endless possibilities, followed by the harder work of choosing what to pursue."
+ai_assisted: true
 ---
 
 My brain has always run ahead of what I could make. One idea would spark three more, and most of them stayed out of reach. AI has closed some of that gap. The speed and range of the tools feel familiar because they resemble the way my mind already moves.

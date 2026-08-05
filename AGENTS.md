@@ -7,6 +7,9 @@
   not required for each local edit.
 - Posts live in `content/posts/`. Preserve their frontmatter dates, category
   spelling, and filenames unless a URL migration is intentional.
+- New AI-assisted articles must include `ai_assisted: true` in their
+  frontmatter. The article page uses it to disclose that the writing was
+  AI-assisted while the original ideas and experiences are Kieran's.
 
 # Deploying
 

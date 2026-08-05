@@ -9,7 +9,7 @@ import About from '../pages/about'
 import Home from '../pages/home'
 import NotFound from '../pages/not_found'
 import PostsIndex from '../pages/posts/index'
-import PostShow from '../pages/posts/show'
+import PostShow, { AiAssistanceDisclosure } from '../pages/posts/show'
 import type { Post } from '../types/page'
 import applicationCss from '../entrypoints/application.css?raw'
 import { SiteShell } from './site_shell'
@@ -25,6 +25,7 @@ const POST: Post = {
   categories: ['testing'],
   description: 'Test post.',
   path: '/testing/2026/06/25/test-post/',
+  ai_assisted: true,
   html: '<p>Body</p>',
 }
 
@@ -153,5 +154,15 @@ describe('Inertia page layout', () => {
     ]
 
     for (const page of pages) expect(page.type).not.toBe(SiteShell)
+  })
+
+  it('discloses AI assistance on marked articles', () => {
+    const markup = renderToStaticMarkup(<AiAssistanceDisclosure visible />)
+
+    expect(markup).toContain('AI-assisted writing. The original ideas and experiences are mine.')
+  })
+
+  it('omits the disclosure on unmarked articles', () => {
+    expect(renderToStaticMarkup(<AiAssistanceDisclosure visible={false} />)).toBe('')
   })
 })

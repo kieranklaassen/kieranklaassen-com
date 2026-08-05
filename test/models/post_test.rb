@@ -14,6 +14,13 @@ class PostTest < ActiveSupport::TestCase
     post = PostRepository.all.first
 
     assert_equal post.html, post.as_props[:html]
+    assert_equal post.ai_assisted, post.as_props[:ai_assisted]
     assert_includes post.as_props[:html], "<p>"
+  end
+
+  test "summaries do not include the article-only AI disclosure flag" do
+    post = PostRepository.all.first
+
+    assert_not post.summary.key?(:ai_assisted)
   end
 end

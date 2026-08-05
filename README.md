@@ -31,12 +31,14 @@ title: A useful title
 date: "2026-06-25"
 categories: creativity, technology
 description: A concise summary for lists and search previews.
+ai_assisted: true
 ---
 ```
 
 The filename becomes the slug. The category spelling and date are part of the
 public URL, so changing them changes the canonical path. Repository content is
-trusted and may include raw HTML for embeds.
+trusted and may include raw HTML for embeds. Keep `ai_assisted: true` on new
+AI-assisted writing so the article displays the authorship disclosure.
 
 ## Verify
 

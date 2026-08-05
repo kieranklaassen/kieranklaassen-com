@@ -4,6 +4,7 @@ title: Systems, Structure, and Creative Freedom
 date: "2024-02-11"
 categories: art
 description: "How musical miniatures, grids, and a Rebecca Morris painting taught me to use structure as a creative tool."
+ai_assisted: true
 ---
 
 ![Creative Process](https://res.cloudinary.com/dhcx3vzmg/image/upload/v1708099423/acinziwryumm1luzumdn.jpg)

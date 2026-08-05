@@ -6,6 +6,16 @@ const LONG_DATE_FORMAT = new Intl.DateTimeFormat('en', {
   timeZone: 'UTC',
 })
 
+export function AiAssistanceDisclosure({ visible }: { visible: boolean }) {
+  if (!visible) return null
+
+  return (
+    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600">
+      AI-assisted writing. The original ideas and experiences are mine.
+    </p>
+  )
+}
+
 export default function PostShow({ post }: { post: Post }) {
   return (
     <>
@@ -23,6 +33,7 @@ export default function PostShow({ post }: { post: Post }) {
           <time dateTime={post.date} className="mt-5 block text-sm font-medium tracking-wide text-gray-600 uppercase">
             {LONG_DATE_FORMAT.format(new Date(`${post.date}T00:00:00Z`))}
           </time>
+          <AiAssistanceDisclosure visible={post.ai_assisted} />
         </header>
         <div
           className="post-prose prose prose-lg mt-10 max-w-none prose-headings:tracking-tight prose-a:decoration-1 prose-a:underline-offset-4"

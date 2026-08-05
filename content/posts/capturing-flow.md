@@ -4,6 +4,7 @@ title: "Capturing Flow with Voice Memos and AI"
 date: "2024-07-15"
 categories: creativity, technology, productivity
 description: "A walk, a sudden idea, and a method for turning voice memos into workable drafts with AI."
+ai_assisted: true
 ---
 
 I'm walking down the street when an idea hits me. It feels brilliant, complex, full of potential. In the past, I might have scrambled for a notebook, fumbled with my phone's notes app, or, worse, trusted my memory to hold onto it. By the time I could capture the thought properly, it had usually faded into a fuzzy outline of something that once seemed profound.

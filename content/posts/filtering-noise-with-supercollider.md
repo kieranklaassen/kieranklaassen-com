@@ -4,6 +4,7 @@ title: Filtering Noise with SuperCollider
 date: "2024-03-04"
 categories: code, music
 description: "I used SuperCollider to shape pink noise and slow drone chords into an evolving piece. Here's the code behind it."
+ai_assisted: true
 ---
 
 Sometimes I need to switch off the goals and expectations and play. For me, that usually means making music. Lately, I've had an itch to get back into SuperCollider, so I gave myself a simple constraint: start with pink noise and use filtering to shape an evolving tone. This is what came out:

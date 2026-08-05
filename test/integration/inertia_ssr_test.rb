@@ -22,6 +22,7 @@ class InertiaSsrTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'data-server-rendered="true"'
     assert_includes response.body, "conscious breathing"
     assert_includes response.body, post.description
+    assert_includes response.body, "AI-assisted writing. The original ideas and experiences are mine."
   end
 
   test "systems article includes one persistent shell and a valid media player" do

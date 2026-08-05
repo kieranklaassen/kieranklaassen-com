@@ -4,6 +4,7 @@ title: Building Software We Love
 date: "2024-04-19"
 categories: creating
 description: "Why building software for yourself can bring energy, focus, and joy back to the work."
+ai_assisted: true
 ---
 
 I've spent my life building companies and products, and I keep coming back to one question: What makes software development fulfilling? After enough projects, I have an answer. I find more energy and joy in the work when I'm building software I love myself.

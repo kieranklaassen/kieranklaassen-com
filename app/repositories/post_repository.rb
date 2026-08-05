@@ -50,6 +50,7 @@ class PostRepository
       description = required_string(metadata, "description", path)
       categories_raw = required_string(metadata, "categories", path)
       date = Date.iso8601(required_string(metadata, "date", path))
+      ai_assisted = optional_boolean(metadata, "ai_assisted", path)
       slug = path.basename(".md").to_s
       body = match[:body]
 
@@ -59,6 +60,7 @@ class PostRepository
         date:,
         categories: categories_raw.split(",").map(&:strip).reject(&:empty?),
         description:,
+        ai_assisted:,
         html: Commonmarker.to_html(body, options: MARKDOWN_OPTIONS, plugins: MARKDOWN_PLUGINS),
         path: legacy_path(slug:, date:, categories_raw:)
       )
@@ -71,6 +73,13 @@ class PostRepository
       return value.strip if value.is_a?(String) && value.strip.present?
 
       raise InvalidPostError, "#{path.basename}: #{key} must be a non-empty string"
+    end
+
+    def optional_boolean(metadata, key, path)
+      value = metadata.fetch(key, false)
+      return value if value == true || value == false
+
+      raise InvalidPostError, "#{path.basename}: #{key} must be true or false"
     end
 
     def legacy_path(slug:, date:, categories_raw:)

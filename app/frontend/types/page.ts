@@ -12,5 +12,6 @@ export interface PostSummary {
 }
 
 export interface Post extends PostSummary {
+  ai_assisted: boolean
   html: string
 }

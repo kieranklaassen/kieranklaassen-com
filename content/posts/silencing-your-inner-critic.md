@@ -4,6 +4,7 @@ title: "Silencing Your Inner Critic"
 date: "2025-01-01"
 categories: creativity
 description: "How I use voice memos, AI prompts, and quick iterations to keep self-doubt from stopping the work."
+ai_assisted: true
 ---
 
 "Just start creating!" they say. Anyone who's stared at a blank page knows how little that helps. My inner critic has plenty to say: "Is this good enough? What will people think?" Now it has one more question: "Am I cheating if I use AI?"

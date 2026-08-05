@@ -4,6 +4,7 @@ title: Unlocking Ideas
 date: "2025-04-11"
 categories: creativity, breathwork
 description: "Breathwork has become my way to quiet the noise, get past my inner critic, and give stuck ideas room to form."
+ai_assisted: true
 ---
 
 I'm on my deck in the sun. Inhale for four seconds. Exhale for six. My mind clears, and an idea that's been stuck for days appears—complete, clear, and ready to act on. It didn't come from more research or forced brainstorming. It showed up while I was breathing.

@@ -37,6 +37,7 @@ class PublicRoutesTest < ActionDispatch::IntegrationTest
       assert_response :success, post.path
       assert_inertia_component "posts/show", post.path
       assert_equal post.title, inertia.props.dig("post", "title"), post.path
+      assert_equal post.ai_assisted, inertia.props.dig("post", "ai_assisted"), post.path
     end
   end
 

@@ -61,6 +61,17 @@ class PostRepositoryTest < ActiveSupport::TestCase
     end
   end
 
+  test "marks writing after August 2023 as AI-assisted" do
+    posts = PostRepository.all
+
+    assisted, unassisted = posts.partition(&:ai_assisted)
+
+    assert_equal 14, assisted.size
+    assert assisted.all? { |post| post.date > Date.new(2023, 8, 31) }
+    assert_equal [ "automatically-add-tokens-to-active-record-models", "i-wrote-a-gem-it-runs-instance-methods-in-a-job" ],
+      unassisted.map(&:slug).sort
+  end
+
   test "rejects a post without frontmatter" do
     Dir.mktmpdir do |directory|
       path = Pathname(directory).join("invalid.md")
@@ -85,6 +96,18 @@ class PostRepositoryTest < ActiveSupport::TestCase
     end
   end
 
+  test "rejects a non-boolean AI-assisted value" do
+    Dir.mktmpdir do |directory|
+      path = Pathname(directory).join("invalid-ai-assisted.md")
+      path.write(post_source(ai_assisted: "yes"))
+
+      error = assert_raises(PostRepository::InvalidPostError) do
+        PostRepository.send(:load_post, path)
+      end
+      assert_match(/ai_assisted must be true or false/, error.message)
+    end
+  end
+
   test "rejects duplicate slugs" do
     Dir.mktmpdir do |directory|
       first = Pathname(directory).join("first", "duplicate.md")
@@ -103,13 +126,14 @@ class PostRepositoryTest < ActiveSupport::TestCase
 
   private
 
-  def post_source(date: "2026-06-25")
+  def post_source(date: "2026-06-25", ai_assisted: false)
     <<~MARKDOWN
       ---
       title: Test post
       date: "#{date}"
       categories: testing
       description: A test post.
+      ai_assisted: #{ai_assisted.inspect}
       ---
 
       Body

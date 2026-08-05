@@ -4,6 +4,7 @@ title: "Whispers of Silence: Sharing My Musical Self-Expression"
 date: "2023-11-10"
 categories: music,creativity,personal-journey
 description: "A month in San Diego, three tracks, and the story behind my most personal musical project yet."
+ai_assisted: true
 ---
 
 I made an EP called "Whispers of Silence," and it's now available on all major streaming platforms. Releasing it is a small way of claiming music as part of who I am, regardless of how other people respond. I make music because I love creating and because it gives me a way to express myself. Sharing it still brings up doubt and fear.

@@ -4,6 +4,7 @@ title: Enthusiasm
 date: "2024-05-07"
 categories: productivity
 description: "Enthusiasm gives me more ideas than I can follow. Here is how I capture them, decide what matters, and keep moving."
+ai_assisted: true
 ---
 
 **Too Many Good Ideas:** I have no shortage of ideas. The problem is deciding which one gets my attention before the next one arrives. A backlog of things I want to make, learn, cook, and visit can feel less like inspiration and more like being scattered.

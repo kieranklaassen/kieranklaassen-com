@@ -4,6 +4,7 @@ title: The Joy of Micro-Improvement
 date: "2024-04-15"
 categories: personal-development
 description: "A question about posture in the park turns into a lesson on how AI makes tiny, immediate improvements easier to pursue."
+ai_assisted: true
 ---
 
 I'm standing in the park, watching my daughter play, when a question pops into my head: "How can I improve my posture right now?" I ask my AI assistant and soon I'm reading about anterior pelvic rotation and getting a plan I can try right there. That quick turn from curiosity to something useful is the joy of micro-improvement. I can't get enough of it.

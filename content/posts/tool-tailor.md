@@ -4,6 +4,7 @@ title: "ToolTailor: Simplifying Ruby JSON Schema Creation"
 date: "2024-08-01"
 categories: ruby, ai, development
 description: "ToolTailor turns Ruby methods and classes into OpenAI-compatible JSON schemas."
+ai_assisted: true
 ---
 
 I built ToolTailor, a Ruby gem that converts Ruby methods and classes into OpenAI-compatible JSON schemas.

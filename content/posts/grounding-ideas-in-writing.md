@@ -4,6 +4,7 @@ title: "Grounding Ideas in Writing"
 date: "2024-04-23"
 categories: writing
 description: "Why I write ideas down before they disappear and how the page changes what I think."
+ai_assisted: true
 ---
 
 My head is full of ideas. They arrive half-formed, collide with one another, and often disappear before I can work out whether they are any good. I have spent much of my life trying to catch them before they go.

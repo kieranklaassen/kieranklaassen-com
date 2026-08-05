@@ -4,6 +4,7 @@ title: The Importance of Value Alignment in Teams
 date: "2024-06-05"
 categories: leadership
 description: "Misaligned values turn disagreements about speed and quality into stress, conflict, and slower work."
+ai_assisted: true
 ---
 
 Teams often disagree about what good work looks like. The "zero to one" mentality favors testing ideas quickly, even when code quality suffers. Other engineers favor maintainable code that can support long-term growth. Neither approach is inherently wrong, but a lack of alignment—within the team or between personal and company values—turns the difference into stress and conflict.
