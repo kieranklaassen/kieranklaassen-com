@@ -44,6 +44,12 @@ External Every publications are listed in `content/external_posts.yml`. They
 appear alongside local posts in date order and open their Every page in a new
 tab.
 
+Featured public code projects are listed in `content/github_repositories.yml`.
+The site validates the checked-in snapshot, removes forks and archived entries,
+sorts the remainder by stars, and shows the first seven. Refresh descriptions,
+languages, star counts, and eligibility flags manually when the featured
+projects materially change; the home page never calls GitHub at runtime.
+
 ## Verify
 
 ```bash
