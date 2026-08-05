@@ -31,7 +31,6 @@ class GithubRepository
 
       repositories
         .reject { |repository| repository.fetch(:fork) || repository.fetch(:archived) }
-        .sort_by { |repository| [ -repository.fetch(:stars), repository.fetch(:name).downcase ] }
         .first(FEATURED_LIMIT)
         .map { |repository| repository.except(:fork, :archived).freeze }
         .freeze
@@ -87,14 +86,14 @@ class GithubRepository
       value = required_string(metadata, "url", index:)
       uri = URI.parse(value)
       return value if uri.scheme == "https" && uri.host == "github.com" &&
-        uri.path.match?(%r{\A/kieranklaassen/[^/]+\z}) &&
+        uri.path.match?(%r{\A/[^/]+/[^/]+\z}) &&
         uri.query.nil? && uri.fragment.nil?
 
       raise InvalidRepositoryError,
-        "GitHub repository #{index + 1} url must belong to https://github.com/kieranklaassen"
+        "GitHub repository #{index + 1} url must be an https://github.com repository URL"
     rescue URI::InvalidURIError
       raise InvalidRepositoryError,
-        "GitHub repository #{index + 1} url must belong to https://github.com/kieranklaassen"
+        "GitHub repository #{index + 1} url must be an https://github.com repository URL"
     end
 
     def validate_uniqueness!(repositories)

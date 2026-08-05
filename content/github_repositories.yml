@@ -1,10 +1,10 @@
-# Maintained snapshot of public, non-fork repositories. Refresh manually when
-# the featured projects or their GitHub metadata materially change.
-- name: leva
-  url: https://github.com/kieranklaassen/leva
-  description: LLM Evaluation Framework for Rails apps to be used with production data.
-  language: Ruby
-  stars: 142
+# Maintained snapshot of the repositories pinned on Kieran's GitHub profile.
+# File order is display order. Refresh manually when the pins or their metadata change.
+- name: Compound Engineering
+  url: https://github.com/EveryInc/compound-engineering-plugin
+  description: Official Compound Engineering plugin for Claude Code, Codex, Cursor, and more.
+  language: TypeScript
+  stars: 24017
   fork: false
   archived: false
 - name: riffrec
@@ -14,59 +14,17 @@
   stars: 87
   fork: false
   archived: false
-- name: hotkeys-rails
-  url: https://github.com/kieranklaassen/hotkeys-rails
-  description: Keyboard shortcuts for Hotwire apps. No dependencies. No configuration. Just HTML.
+- name: leva
+  url: https://github.com/kieranklaassen/leva
+  description: LLM Evaluation Framework for Rails apps to be used with production data.
   language: Ruby
-  stars: 36
+  stars: 142
   fork: false
   archived: false
-- name: blazer-ai
-  url: https://github.com/kieranklaassen/blazer-ai
-  description: AI-powered natural language to SQL generation for Blazer using RubyLLM.
+- name: thinkroom
+  url: https://github.com/kieranklaassen/thinkroom
+  description: Thinkroom — where deeper thinking compounds.
   language: Ruby
-  stars: 30
-  fork: false
-  archived: false
-- name: laters
-  url: https://github.com/kieranklaassen/laters
-  description: Run any instance method of an Active Record model via a job by adding `_later` to it.
-  language: Ruby
-  stars: 9
-  fork: false
-  archived: false
-- name: gpt-auto-pr-description-action
-  url: https://github.com/kieranklaassen/gpt-auto-pr-description-action
-  description: Automatically draft pull request descriptions with OpenAI.
-  language: Ruby
-  stars: 6
-  fork: false
-  archived: false
-- name: codeigniter-mollie-ideal-api
-  url: https://github.com/kieranklaassen/codeigniter-mollie-ideal-api
-  description: CodeIgniter version of the Mollie iDEAL API in PHP.
-  language: PHP
-  stars: 5
-  fork: false
-  archived: false
-- name: breathwork
-  url: https://github.com/kieranklaassen/breathwork
-  description:
-  language: TypeScript
-  stars: 4
-  fork: false
-  archived: false
-- name: codeigniter-mollie-sms-api
-  url: https://github.com/kieranklaassen/codeigniter-mollie-sms-api
-  description: CodeIgniter version of the Mollie SMS API in PHP.
-  language: PHP
-  stars: 3
-  fork: false
-  archived: false
-- name: farmbot-agent-cli-mcp
-  url: https://github.com/kieranklaassen/farmbot-agent-cli-mcp
-  description: Agent-native CLI and MCP server for FarmBot hardware control.
-  language: JavaScript
-  stars: 3
+  stars: 22
   fork: false
   archived: false

@@ -9,17 +9,18 @@ class GithubRepositoryTest < ActiveSupport::TestCase
   test "loads the checked-in repository snapshot" do
     repositories = GithubRepository.all
 
-    assert_equal 7, repositories.size
-    assert_equal "leva", repositories.first.fetch(:name)
+    assert_equal 4, repositories.size
+    assert_equal [ "Compound Engineering", "riffrec", "leva", "thinkroom" ],
+      repositories.map { |repository| repository.fetch(:name) }
     assert repositories.frozen?
     assert repositories.all?(&:frozen?)
   end
 
-  test "sorts eligible repositories by stars and name and limits the result" do
+  test "preserves pinned order while excluding ineligible repositories and limiting the result" do
     entries = 9.times.map do |index|
       repository_entry(
         name: "project-#{index}",
-        stars: index == 7 || index == 8 ? 20 : index
+        stars: 9 - index
       )
     end
     entries << repository_entry(name: "archived", stars: 100, archived: true)
@@ -28,9 +29,20 @@ class GithubRepositoryTest < ActiveSupport::TestCase
     repositories = load_entries(entries)
 
     assert_equal 7, repositories.size
-    assert_equal %w[project-7 project-8 project-6 project-5 project-4 project-3 project-2],
+    assert_equal %w[project-0 project-1 project-2 project-3 project-4 project-5 project-6],
       repositories.map { |repository| repository.fetch(:name) }
     assert repositories.all? { |repository| repository.keys == %i[name description language stars url] }
+  end
+
+  test "allows a pinned repository from another GitHub organization" do
+    repository = load_entries([
+      repository_entry(
+        name: "Compound Engineering",
+        url: "https://github.com/EveryInc/compound-engineering-plugin"
+      )
+    ]).sole
+
+    assert_equal "https://github.com/EveryInc/compound-engineering-plugin", repository.fetch(:url)
   end
 
   test "allows missing optional card metadata" do
