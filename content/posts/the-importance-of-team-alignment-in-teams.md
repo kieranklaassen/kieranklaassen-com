@@ -3,81 +3,79 @@ layout: post
 title: The Importance of Value Alignment in Teams
 date: "2024-06-05"
 categories: leadership
-description: "When speed meets quality, chaos often follows. I uncover the hidden factor that can make or break your team's success."
+description: "Misaligned values turn disagreements about speed and quality into stress, conflict, and slower work."
 ---
 
-In any company, different values and personalities coexist, shaping the work environment and impacting team dynamics. On one hand, there's the "zero to one" mentality, where the goal is to rapidly test ideas, often at the expense of code quality. On the other hand, some engineers focus on creating robust, scalable, and maintainable code, ensuring long-term sustainability and growth. This dichotomy can lead to stress and conflict, especially when there is a lack of alignment within teams or between individual and organizational values.
+Teams often disagree about what good work looks like. The "zero to one" mentality favors testing ideas quickly, even when code quality suffers. Other engineers favor maintainable code that can support long-term growth. Neither approach is inherently wrong, but a lack of alignment—within the team or between personal and company values—turns the difference into stress and conflict.
 
-The symptoms of misalignment are clear: slow development speeds due to conflicts, unhappiness among team members, and inefficient collaboration. Ironically, the people who want to move fast may find themselves slowing down, while those who prefer to take their time have big potential of speeding up. Finding the right balance and aligning values is crucial for creating a productive and harmonious work environment.
+Misalignment shows up as slower development, unhappy teammates, and collaboration that takes more effort than it should. The irony is that people who want to move fast can end up slowed by conflict, while people who prefer a careful pace may move faster once the team agrees on what matters. Alignment gives a team a way to balance those priorities.
 
 ### Stress from Misalignment
 
-The concept of stress arising from personal value misalignment is supported by adaptive personality styles, where individuals adapt to their environment's demands. However, when these demands diverge significantly from one's intrinsic values, long-term stress and dissatisfaction can result. This is particularly evident in scenarios where teams are expected to oscillate between rapid, hacky development and meticulous, scalable coding without clear guidance on the company's overarching objectives.
+People adapt to the demands of their environment, but sustained demands that conflict with their personal values can create stress and dissatisfaction. A software team feels this tension when it is expected to swing between quick, hacky development and careful, scalable code without clear guidance on what the company needs.
 
-Imagine a software engineering team working on a new product. The team lead, Sarah, is a strong proponent of the "zero to one" approach, emphasizing speed and experimentation over code quality. On the other hand, Mark, values clean, maintainable code that can scale with the company's growth. As the project progresses, Mark finds himself constantly torn between meeting Sarah's expectations for rapid iterations and his own desire to write robust, well-architected code and Sarah gets frustrated by all the "unneccesary" work she is doing.
+Imagine a software engineering team building a new product. The team lead, Sarah, favors the "zero to one" approach: speed and experimentation over code quality. Mark values clean, maintainable code that can scale with the company. As the project progresses, he is torn between Sarah's expectation of rapid iteration and his own desire to write well-architected code. Sarah, meanwhile, gets frustrated by what she sees as his "unnecessary" work.
 
-This tension is not unique to Mark and Sarah's team. Research by W. Cram (2012) highlights the importance of aligning organizational values with those of project team members. When values align, team members experience higher satisfaction and enthusiasm. Conversely, misalignment breeds frustration and discontent, ultimately impacting project performance.
+This tension is not unique to Mark and Sarah's team. Research by W. Cram (2012) connects alignment between organizational values and team members' values with greater satisfaction and enthusiasm. Misalignment brings frustration and can hurt project performance.
 
-The construction industry offers valuable insights into the impact of team alignment on project success. Najafizadeh and Hamzeh (2023) emphasize the crucial role of consistent communication and acceptance of shared values in achieving project objectives. Drawing a parallel to software development, teams that openly discuss and agree upon their values and approaches are more likely to work harmoniously towards a common goal.
+The construction industry offers another view of the same problem. Najafizadeh and Hamzeh (2023) point to consistent communication and acceptance of shared values as factors in reaching project objectives. The parallel to software is straightforward: teams that discuss their values and working methods have a better chance of agreeing on how to reach a shared goal.
 
-Bezrukova et al. (2012) delve deeper into the effects of cultural alignment on performance. Their findings suggest that strong results-oriented cultures can mitigate the negative impact of group faultlines, while misaligned cultures exacerbate performance issues. In Mark and Sarah's case, a clear, unified direction from leadership could help bridge the gap between their divergent approaches and foster a more cohesive team culture.
+Bezrukova et al. (2012) examined how cultural alignment affects performance. Their findings suggest that a strong results-oriented culture can soften the negative effects of group faultlines, while a mismatched culture can make performance problems worse. In Mark and Sarah's case, a clear direction from leadership could narrow the gap between their approaches.
 
-Proactive conflict management is another key aspect of maintaining team harmony. Fitzpatrick (2007) presents evidence that values alignment fosters collaboration and reduces conflict within organizations. By actively aligning values, teams can preempt and manage conflicts before they escalate. Imagine if Sarah and Mark's team had an open discussion about their values and found a middle ground that balanced speed and code quality. This proactive approach could have prevented the tension from building up and affecting their work.
+Fitzpatrick (2007) presents evidence that values alignment supports collaboration and reduces organizational conflict. Teams that discuss values early can address disagreements before they escalate. If Sarah and Mark's team had agreed on how to balance speed and code quality, the tension might not have reached their day-to-day work.
 
-At the heart of successful teams lie shared values, attitudes, and beliefs. Fisher et al. (1996) found a positive correlation between team performance and the presence of common values among team members. When individuals' values align with those of the team, they are more likely to work effectively together towards a shared vision.
+### What Alignment Changes
 
-### Conclusion
+Long-term misalignment between personal and organizational values can lead to stress, lower productivity, and an eroded company culture. Clear communication about values gives teams a chance to resolve conflict before it affects the work.
 
-Long-term misalignment between personal and organizational values can lead to stress, reduced productivity, and erosion of company culture. Ensuring that team members' values align with organizational goals is crucial for maintaining a harmonious and productive work environment. Clear communication and consistent value alignment can mitigate conflicts, enhance collaboration, and ultimately lead to higher project success rates.
+Alignment does not require a team to choose speed over quality. It requires a shared understanding of when speed, experimentation, quality, and scalability matter. That understanding lets teams innovate without losing sight of the software they have to maintain.
 
-Taking the time to align values and foster a shared understanding within teams is important for long term success. By creating a culture that values both speed and quality, experimentation and scalability, organizations can empower their teams to innovate while building robust, sustainable software.
-
-Surprisingly, aligning values can lead to faster development speeds for those who prioritize speed, and higher-quality code for those who prefer to take their time. By finding the right balance and creating a shared vision, teams can work more efficiently and effectively towards their goals.
+The payoff can be counterintuitive: people who prioritize speed may ship faster because they spend less time fighting, while careful engineers can improve quality because the team has agreed where that care matters. Shared values make those tradeoffs visible.
 
 ## Values Exercise Guide
 
-This excercise it inspired by "Engineering Management for the Rest of Us" by Sarah Drasner. https://www.engmanagement.dev/
+This exercise is inspired by Sarah Drasner's [Engineering Management for the Rest of Us](https://www.engmanagement.dev/).
 
 ## Purpose
 
-The values exercise is designed to help team members identify their personal core values, align these values with the team’s values, and foster a cohesive and supportive work environment.
+This exercise helps team members identify their personal values, compare them with the team's values, and agree on how they want to work together.
 
 ### Step 1: Preparation
 
-1. **Create a List of Core Values**: Compile a comprehensive list of values (e.g., integrity, innovation, teamwork). You can use resources such as Brene Brown’s list of values or create your own.
-2. **Schedule the Exercise**: Set aside 1-2 hours for this exercise. Ensure all team members are available and aware of the purpose of the session.
+1. **Create a List of Core Values**: Gather a list of values such as integrity, innovation, and teamwork. Use a resource such as Brené Brown’s list, or make your own.
+2. **Schedule the Exercise**: Set aside 1–2 hours when the whole team can attend. Tell everyone what the session is for ahead of time.
 
 ### Step 2: Individual Reflection
 
-1. **Distribute the List of Values**: Give each team member a copy of the core values list.
-2. **Select Personal Values**: Ask each person to silently review the list and select their top five values. They should write these values on sticky notes or index cards.
-3. **Reflect on Choices**: Each team member should write a brief explanation (1-2 sentences) for each chosen value, describing why it is important to them.
+1. **Distribute the List of Values**: Give everyone a copy of the list.
+2. **Select Personal Values**: Ask each person to review it quietly and choose their top five values. Write each value on a sticky note or index card.
+3. **Reflect on Choices**: For each value, write 1–2 sentences explaining why it matters.
 
 ### Step 3: Group Discussion
 
-1. **Share Values**: Have each team member share their top five values with the group, along with their explanations.
-2. **Identify Common Values**: As values are shared, group similar values together on the whiteboard or large paper.
-3. **Discuss Differences**: Encourage open discussion about any differing values. Seek to understand each person’s perspective and how these values impact their work and interactions.
+1. **Share Values**: Each person shares their five values and the thinking behind them.
+2. **Identify Common Values**: Group similar values on a whiteboard or large sheet of paper as they come up.
+3. **Discuss Differences**: Talk openly about the differences. Try to understand how each person's values affect their work and interactions.
 
 ### Step 4: Alignment and Integration
 
-1. **Highlight Core Values**: Identify the core values that resonate with the majority of the team. Discuss how these values align with the company’s mission and goals.
-2. **Create a Team Values Statement**: Collaborate to create a values statement that reflects the team’s shared values. This statement can be used as a guiding principle for decision-making and behavior.
-3. **Action Plan**: Develop an action plan for how these values will be integrated into daily work practices. This can include:
-   - Regular check-ins to discuss how values are being upheld.
-   - Incorporating values into performance reviews.
-   - Creating initiatives that promote the team’s core values.
+1. **Highlight Core Values**: Identify the values that resonate with most of the team, then discuss how they relate to the company’s mission and goals.
+2. **Create a Team Values Statement**: Write a statement that reflects the values the team shares. Use it to guide decisions and behavior.
+3. **Action Plan**: Decide how the values will show up in daily work. For example:
+   - Check in regularly on whether the team is living up to them.
+   - Include them in performance reviews.
+   - Plan initiatives that reinforce the team's core values.
 
 ### Step 5: Follow-Up
 
-1. **Regular Reviews**: Schedule periodic reviews of the team values to ensure they remain relevant and are being practiced.
-2. **Adjust as Needed**: Be open to revisiting and adjusting the values as the team evolves.
+1. **Regular Reviews**: Revisit the team values periodically to see whether they still fit and show up in practice.
+2. **Adjust as Needed**: Change them as the team evolves.
 
 ## Tips for Success
 
-- **Facilitation**: Ensure a neutral facilitator guides the discussion to keep it focused and respectful.
-- **Inclusivity**: Encourage participation from all team members to ensure a diverse range of perspectives.
-- **Documentation**: Document the final list of team values and the action plan. Share this document with the team and refer to it regularly.
+- Ask a neutral facilitator to keep the discussion focused and respectful.
+- Make room for every team member to participate.
+- Write down the final values and action plan, share them with the team, and refer to them regularly.
 
 ## Example Values List
 
@@ -92,9 +90,9 @@ The values exercise is designed to help team members identify their personal cor
 - Adaptability
 - Courage
 
-By conducting this values exercise, you can help align personal values with team and organizational goals, fostering a more cohesive and supportive work environment.
+The exercise is meant to surface differences before they turn into conflict. Its output should be a working agreement the team can use when speed, quality, and other priorities compete.
 
-### References:
+### References
 
 - Bezrukova, K., Thatcher, S. M., Jehn, K. A., & Spell, C. S. (2012). The effects of alignments: Examining group faultlines, organizational cultures, and performance. Journal of Applied Psychology, 97(1), 77–92. https://doi.org/10.1037/a0023684
 - Cram, W. A. (2012). Aligning Organizational Values in Systems Development Projects: An Empirical Investigation. In 45th Hawaii International Conference on System Sciences (pp. 5079-5088). IEEE. https://doi.org/10.1109/HICSS.2012.596

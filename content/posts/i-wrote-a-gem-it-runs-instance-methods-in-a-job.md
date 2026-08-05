@@ -3,18 +3,18 @@ layout: post
 title: I wrote a Gem! It runs instance_methods in a job
 date: "2020-08-23"
 categories: code
-description: "After 12 years of Ruby, I finally wrote a Gem. Here's what I learned about the art of creating tools for developers."
+description: "After 12 years of Ruby, I finally wrote a gem. These are the setup, testing, and release steps I had been missing."
 ---
 
-I've been writing Ruby for 12 years now but I never wrote a Ruby Gem 💎! So I set a goal for myself to write one that I would use myself. The goal of this exercise is more to see how gem internals work and how you test than the functionality of the code.
+I've been writing Ruby for 12 years, but I'd never written a Ruby gem 💎! I wanted to build one I'd use myself. The point was to learn how gem internals and testing work; the functionality came second.
 
 ## Introducing the Laters Gem
 
-🔥 You can check it out at [Github](https://github.com/kieranklaassen/laters).
+🔥 You can check it out on [GitHub](https://github.com/kieranklaassen/laters).
 
-It runs any `instance_method` of an ActiveRecord model via a job by adding `_later` to it. The inspiration is the ActionMailer way of declaring `_later` on it to schedule a job instead of it performing instantly.
+It runs any instance method on an Active Record model in a job: add `_later` to the method name. The idea came from Action Mailer's `deliver_later`, which schedules a job instead of delivering immediately.
 
-This is an example how to use it on your project:
+Here's an example of using it in a project:
 
 ```rb
 class User < ApplicationRecord
@@ -38,20 +38,20 @@ end
 
 ## How to write a Gem
 
-This is what I did to write my gem. First I used the bundler gem command to initialize a new gem to get started.
+Here's how I wrote the gem. I started with Bundler's `gem` command:
 
 ```bash
 $ bundle gem laters
 $ cd laters
 ```
 
-You get a whole lot of work done for free! I love this generator!
+You get a whole lot for free. I love this generator!
 
 ## The lib
 
-Next up, you'll write your code in the gem. The entry to the gem starts in the `lib/my_gem.rb`.
+The gem's entry point is `lib/laters.rb`.
 
-Since my gem is going to work in a Rails environment, I need to add it as a dependency.
+Since my gem was going to run in a Rails environment, I added Rails as a dependency.
 
 [laters.gemspec](https://github.com/kieranklaassen/laters/blob/master/laters.gemspec)
 
@@ -59,7 +59,7 @@ Since my gem is going to work in a Rails environment, I need to add it as a depe
   spec.add_dependency 'rails', '>= 4.2'
 ```
 
-I ended up requiring my dependencies and library like this:
+I ended up requiring the dependencies and library files like this:
 
 [lib/laters.rb](https://github.com/kieranklaassen/laters/blob/master/lib/laters.rb)
 
@@ -75,33 +75,33 @@ module Laters
 end
 ```
 
-You can check out on [Github](https://github.com/kieranklaassen/laters) what the implementation of the concern and job are. That is not important for the Gem creation.
+You can see the concern and job implementations on [GitHub](https://github.com/kieranklaassen/laters). They aren't important to the gem-creation process, so I won't cover them here.
 
 ## Test it!
 
-Next I wanted to test the functionality and started looking around what other do. I was looking at the [Ahoy gem by Andrew Kane](https://github.com/ankane/ahoy) and found [this test helper](https://github.com/ankane/ahoy/blob/master/test/test_helper.rb#L8)
+Next I needed to test the functionality, so I looked at how other gem authors did it. In [Andrew Kane's Ahoy gem](https://github.com/ankane/ahoy), I found [this test helper](https://github.com/ankane/ahoy/blob/master/test/test_helper.rb#L8).
 
-So whats [Combustion](https://github.com/pat/combustion)?
+So what's [Combustion](https://github.com/pat/combustion)?
 
 > Simple, elegant testing for Rails Engines
 
-That sounds like what I want. I gives you a real nice way to have a rails-like, internal app to use in your testing. You can create models, a database, a controller, jobs. Whatever you need to test your Gem against. It's like your Gem is added to this apps Gemfile.
+That sounded like what I wanted. It gives you a really nice Rails-like app inside your test suite. You can create models, a database, a controller, and jobs—whatever you need to test your gem against. It feels like adding your gem to an app's Gemfile.
 
-If you use Rspec it is super easy to setup. To generate a scaffold rails app in `spec/internal` Just run:
+With RSpec, it's super easy to set up. Run this to generate a skeleton Rails app in `spec/internal`:
 
 ```bash
 $ bundle exec combust
 ```
 
-and to enable it in your specs, add your rails-parts to the spec helper:
+Then enable it in your specs by adding the parts of Rails you need to the spec helper:
 
 ```rb
 Combustion.initialize! :active_record, :action_controller
 ```
 
-Then, write your specs like you are in a normal Rails app. This is great! 🔥🚀
+Then write your specs as if you were in a normal Rails app. This is great! 🔥🚀
 
-To run your test you have:
+Run the tests with:
 
 ```bash
 $ rake test
@@ -109,12 +109,12 @@ $ rake test
 
 ## Release it
 
-When everything is tested and works well you can release. Make sure your version is correct, you have some changelog set up if you like that sort of thing and run:
+When everything is tested and working, you can release it. Check the version number, add a changelog if you like that sort of thing, and run:
 
 ```bash
 $ rake release
 ```
 
-Check it out, I'm live on [RubyGems.org/gems/laters](https://rubygems.org/gems/laters)
+And now it's live on [RubyGems.org/gems/laters](https://rubygems.org/gems/laters).
 
-I know this is a very high level assuming you have a good understanding of writing Ruby code. But these were the missing pieces I had no idea of how to do before I wrote this Gem. I am sure there are other ways and better ways to do certain things, but I looked at a good amount of gem source code to at least be inspired by some that I really like.
+This is a high-level overview, and it assumes you already have a good understanding of Ruby. But these were the missing pieces I had no idea how to do before I wrote this gem. There are probably better ways to handle some of them; I got here by reading a lot of source code from gems I really like.

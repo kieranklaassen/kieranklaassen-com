@@ -3,27 +3,27 @@ layout: post
 title: Automatically add tokens to your ActiveRecord models with a Tokenizable concern
 date: "2020-07-15"
 categories: code
-description: "A simple addition to your Rails models could be the key to better API security. Here's how I solved a common problem with an elegant solution."
+description: "Add opaque tokens to Rails models with a reusable ActiveSupport concern."
 ---
 
 ## Use case
 
-When exposing an API you most likely don't want your identifier to be incrementing Ids. To solve this problem you can add a unique `token` field to your Active Record for identifying your records via the API layer. This brings some more security and removes some unwanted transparency.
+When exposing records through an API, you may not want to identify them with incrementing IDs. A `token` field gives each Active Record an opaque public identifier, hiding its database ID and some unwanted details about your data.
 
 ## Setup
 
-First, we generate, a new model that will use the token field.
+First, generate a new model with a token field:
 
 ```shell
 $ rails generate model Product title description price:decimal token:string:index:null
 $ rails db:migrate
 ```
 
-> Make sure to `add_index` the token and set `null: false`
+> Make sure to `add_index` the token and set `null: false`.
 
 [See example migration file](https://github.com/kieranklaassen/tokenizable-example/blob/master/db/migrate/20200715134857_create_products.rb)
 
-Or we choose to add it to an existing model and generate tokens for all records in the database:
+Or add it to an existing model, then generate tokens for every record that does not have one:
 
 ```shell
 $ rails generate migration addTokenToUser token:string:index
@@ -31,9 +31,9 @@ $ rails db:migrate
 $ rails run User.generate_tokens!
 ```
 
-> It is recommended to do another migration after this to set token to `null: false`
+> Follow this with another migration that sets the token to `null: false`.
 
-To setup we include the concern in our model et viola!
+To set it up, include the concern in the model, et voilà!
 
 ```ruby
 class Product < ApplicationRecord
@@ -46,9 +46,9 @@ end
 
 ## Show me the code!
 
-The above magic is achieved by this Tokenizable concern that you can include in your Ruby on Rails projects.
+The `Tokenizable` concern below handles the work and can be included in any Rails model with a `token` column.
 
-You can also [view it on Github](https://github.com/kieranklaassen/tokenizable-example/blob/master/app/models/concerns/tokenizable.rb)
+You can also [view it on GitHub](https://github.com/kieranklaassen/tokenizable-example/blob/master/app/models/concerns/tokenizable.rb).
 
 ```ruby
 #

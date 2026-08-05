@@ -3,40 +3,40 @@ layout: post
 title: Systems, Structure, and Creative Freedom
 date: "2024-02-11"
 categories: art
-description: "Can constraints truly set us free? My journey through music and art reveals a counterintuitive truth about creativity."
+description: "How musical miniatures, grids, and a Rebecca Morris painting taught me to use structure as a creative tool."
 ---
 
 ![Creative Process](https://res.cloudinary.com/dhcx3vzmg/image/upload/v1708099423/acinziwryumm1luzumdn.jpg)
 
 ## **Why Creativity Needs Rules**
 
-When I was younger, ideas swirled in my head like a whirlwind, beautiful...until they scattered. Only when I learned to build walls – not out of fear, but focus – could my storms take shape. Systems became my shelter, where the restlessness turned into something creative.
+When I was younger, I had more ideas than I knew what to do with. They felt beautiful in my head, then scattered before I could make anything from them. I learned to build walls around the work, and the walls gave me focus. Systems gave that restlessness somewhere to go.
 
-As a young musician, the world had endless options. Systems in music and daily life became safe harbors where I could play. My system was like building a sturdy sandbox – I had space to experiment, and my ideas wouldn't spill out and get lost.
+As a young musician, I could choose from what felt like endless options. Systems in music and daily life gave me a safe place to play. I thought of them as a sturdy sandbox: enough room to experiment without letting every idea spill out and disappear.
 
 ## **Composing in Miniatures**
 
-That daunting blank page before composing? I learned to trick my brain. Like Schönberg with his miniatures, I'd break the goal into five bites instead of one symphony. I'd write a musical snippet, just a taste, then another, and another. Suddenly, I had a collection, and that finish line didn't feel so distant.
+The blank page used to make composing feel enormous. I learned to trick my brain: like Schönberg with his miniatures, I'd break the goal into five small pieces instead of imagining a whole symphony. I'd write one musical snippet, then another. Soon I had a collection, and finishing no longer felt so distant.
 
-My composition, _These/These_, was born like this. My melody felt like a spark I didn't want to lose. Those systems I loved? They were like fanning the spark into a bonfire. The piece felt strong but with space for the melody to breathe. It was a balance I was proud of.
+My composition, _These/These_, grew from that process. The melody arrived as a spark I didn't want to lose. The systems around it helped me keep going without crowding it. The finished piece felt strong and left the melody room to breathe—a balance I was proud of.
 
 <iframe width="100%" height="300" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/151415958&color=%23e46c5c&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"></iframe>
 <div style="font-size: 10px; color: #cccccc; line-break: anywhere; word-break: normal; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: Interstate, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Garuda, Verdana, Tahoma, sans-serif; font-weight: 100;"><a href="https://soundcloud.com/ensemblefive" title="EnsembleFive" target="_blank" rel="noreferrer" style="color: #cccccc; text-decoration: none;">EnsembleFive</a> · <a href="https://soundcloud.com/ensemblefive/4-kieran-klaassen-these-these" title="4. Kieran Klaassen - These / These" target="_blank" rel="noreferrer" style="color: #cccccc; text-decoration: none;">4. Kieran Klaassen - These / These</a></div>
 
 ## **The Power of the Grid**
 
-My obsession with structure found its way beyond music. Grids... not just those on music notation paper, but everywhere I looked. The clean lines of beautiful typography, the way well-designed pages guide the eye, and even the invisible layout of thoughts in my mind have a structure supporting them.
+My obsession with structure followed me beyond music. I started seeing grids everywhere: in music notation, the clean lines of typography, the way a well-designed page guides the eye, and even the way I arrange thoughts in my mind.
 
-A grid brings a tangible framework to abstract ideas. It tethers those sparks of creativity, giving them a place to settle and burn brightly.
+A grid turns an abstract idea into something I can place, move, and work on.
 
-**From Museum Visit to Creative Insight: Rebecca Morris and the Joy of Structure**
+**Rebecca Morris and the Joy of Structure**
 
-Sometimes it's the simplest works that have the most unexpected impact. While exploring the Museum of Contemporary Art, a piece by Rebecca Morris, resonated deeply with my own creative approach.
+At the Museum of Contemporary Art, a piece by Rebecca Morris caught me off guard. Its simple structure lined up with something I already sensed about my own work.
 
 ![art](https://res.cloudinary.com/dhcx3vzmg/image/upload/v1708099537/y2v5jpr0bmq9lt6vldlk.jpg)
 
-Unlike some contemporary art that demands attention, this piece invited me in with its quiet intrigue. It looked like a series of miniature paintings, each with intricate details and subtle variations. Initially, it was just playful and fun, but that feeling evolved. Looking closer, I found a sense of peace amidst the structure.
+The piece invited me in quietly. It looked like a series of miniature paintings, each with intricate details and subtle variations. At first it felt playful and fun. As I looked closer, the structure began to feel peaceful.
 
-Each square, while imperfect, felt deliberate. Its details weren't about showing off, but about small joys of mark-making. It made me realize my own perfectionism is often a creativity killer. Morris's piece didn't just visually please, it reminded me that the process itself can bring happiness. It's within those little details, and the space for play within a framework, that the magic can happen.
+The squares were imperfect and deliberate. Their details seemed to come from the small pleasure of making marks. Looking at them, I could see how often my own perfectionism kills an idea before it has a chance. Beyond the visual pleasure, Morris's piece reminded me that the process itself can make me happy. The joy was in the little details and the room to play inside the framework.
 
-Her work sparked a shift in my thinking. Structure isn't about limiting myself. Done right, it becomes a launchpad, freeing me from the fear of a blank canvas and letting me start and build something worthwhile. This, to me, is the true gift Morris's piece offered – a simple reminder that creativity can be found and nurtured, even within the tightest of spaces.
+Her work changed how I think about structure. When I use it well, structure gets me past the fear of a blank canvas and gives me a place to start. That was the gift of Morris's piece: the reminder that even a tight space can hold a lot of play.

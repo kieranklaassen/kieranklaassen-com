@@ -3,16 +3,16 @@ layout: post
 title: "ToolTailor: Simplifying Ruby JSON Schema Creation"
 date: "2024-08-01"
 categories: ruby, ai, development
-description: "Discover how ToolTailor, my latest Ruby gem, bridges the gap between Ruby methods and OpenAI's JSON schemas, streamlining AI integration for developers."
+description: "ToolTailor turns Ruby methods and classes into OpenAI-compatible JSON schemas."
 ---
 
-I created ToolTailor, a Ruby gem designed to convert Ruby methods and classes into OpenAI-compatible JSON schemas.
+I built ToolTailor, a Ruby gem that converts Ruby methods and classes into OpenAI-compatible JSON schemas.
 
 [https://github.com/kieranklaassen/tool_tailor](https://github.com/kieranklaassen/tool_tailor)
 
-## The Power of ToolTailor
+## Converting a Method
 
-At its core, ToolTailor does one thing: it takes Ruby methods or classes and converts them into OpenAI-compatible JSON schemas. Here's a simple example:
+Pass a method to `ToolTailor.convert`, and it returns an OpenAI-compatible JSON schema:
 
 ```ruby
 class WeatherService
@@ -29,11 +29,11 @@ end
 schema = ToolTailor.convert(WeatherService.instance_method(:get_current_temperature))
 ```
 
-With just a single line of code, we've transformed a Ruby method into a schema that OpenAI can understand and work with. It's that simple.
+One call turns the method into a schema OpenAI can use.
 
-## Beyond Methods: Handling Classes
+## Converting a Class
 
-ToolTailor isn't limited to just methods. It can handle entire classes too:
+ToolTailor handles classes too:
 
 ```ruby
 class User
@@ -50,11 +50,11 @@ end
 schema = User.to_json_schema
 ```
 
-This flexibility allows us to seamlessly integrate our existing Ruby structures with OpenAI's API, opening up new possibilities for AI-powered applications.
+This lets you use existing Ruby structures with OpenAI's API.
 
-## Real-World Application
+## Using the Schema with OpenAI
 
-Imagine giving an AI assistant a deep understanding of your application's structure. Here's a glimpse of what that might look like:
+Here's how the generated schema fits into a tool call:
 
 ```ruby
 response = client.chat(
