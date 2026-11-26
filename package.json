@@ -10,20 +10,20 @@
   "dependencies": {
     "@inertiajs/react": "^3.5.0",
     "@inertiajs/vite": "^3.5.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react": "^19.2.9",
+    "react-dom": "^19.2.9"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
-    "@tailwindcss/vite": "^4.3.1",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@vitejs/plugin-react": "^6.3.0",
     "jsdom": "^29.1.1",
-    "tailwindcss": "^4.3.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.0.0",
-    "vite-plugin-ruby": "^5.2.0",
+    "vite-plugin-ruby": "^5.2.6",
     "vitest": "^4.1.9"
   }
 }
