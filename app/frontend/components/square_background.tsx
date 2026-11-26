@@ -6,15 +6,28 @@ interface Square {
   opacity: number
   targetOpacity: number
   gradientOffset: number
+  drawnLevel: number
 }
 
 const SQUARE_SIZE = 134
 // Easing toward 0 only decays, so it takes minutes to stop changing. Opacity this
 // small (of 255) is invisible and too small to affect any later easing step.
 const SETTLED_OPACITY = 1e-18
+// Opacity this close to halfway between two levels may round either way, depending on
+// the browser's float precision.
+const ROUNDING_MARGIN = 1e-3
 
 function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+// Browsers round a color's alpha to a whole step of 1/255, so a square only looks
+// different once its opacity rounds differently. Both gradient stops round together,
+// because they are whole numbers apart. Too close to call is NaN, which equals nothing
+// and so always counts as a change.
+function drawnLevelOf(opacity: number) {
+  const level = Math.round(opacity)
+  return Math.abs(opacity - level) > 0.5 - ROUNDING_MARGIN ? NaN : level
 }
 
 export function SquareBackground() {
@@ -33,6 +46,7 @@ export function SquareBackground() {
     const baseColor = [random(0, 255), random(0, 255), random(0, 255)]
     let squares: Square[] = []
     let animationFrame = 0
+    let cleared = false
     let hoveredSquare: Square | undefined
 
     const resize = () => {
@@ -54,6 +68,7 @@ export function SquareBackground() {
             opacity: random(0, 255),
             targetOpacity: random(0, 255),
             gradientOffset: random(-30, 30),
+            drawnLevel: NaN,
           })
         }
       }
@@ -63,16 +78,9 @@ export function SquareBackground() {
       if (!animationFrame) animationFrame = window.requestAnimationFrame(draw)
     }
 
-    const draw = () => {
-      animationFrame = 0
-      let changed = false
+    const paint = () => {
       context.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight)
-
       for (const square of squares) {
-        const previousOpacity = square.opacity
-        square.opacity += (square.targetOpacity - square.opacity) * 0.05
-        if (square.opacity !== previousOpacity && square.opacity > SETTLED_OPACITY) changed = true
-
         const gradient = context.createLinearGradient(
           square.x,
           square.y,
@@ -86,6 +94,27 @@ export function SquareBackground() {
         context.fillStyle = gradient
         context.fillRect(square.x, square.y, SQUARE_SIZE, SQUARE_SIZE)
       }
+    }
+
+    const draw = () => {
+      animationFrame = 0
+      let changed = false
+      let repaint = cleared
+      cleared = false
+
+      for (const square of squares) {
+        const previousOpacity = square.opacity
+        square.opacity += (square.targetOpacity - square.opacity) * 0.05
+        if (square.opacity !== previousOpacity && square.opacity > SETTLED_OPACITY) changed = true
+
+        const level = drawnLevelOf(square.opacity)
+        if (level !== square.drawnLevel) repaint = true
+        square.drawnLevel = level
+      }
+
+      // Painting re-runs the full-page noise filter, so skip frames that would paint
+      // the same pixels again.
+      if (repaint) paint()
 
       // Once easing no longer moves any square, every further frame would be
       // identical, so stop until a hover or resize changes one.
@@ -110,6 +139,11 @@ export function SquareBackground() {
       hoveredSquare = square
     }
 
+    const restore = () => {
+      cleared = true
+      requestDraw()
+    }
+
     resize()
     draw()
     const resizeAndDraw = () => {
@@ -123,7 +157,7 @@ export function SquareBackground() {
     if (!reducedMotion) {
       window.addEventListener('pointermove', move, { passive: true })
       // The browser clears the canvas when it restores a lost context.
-      canvas.addEventListener('contextrestored', requestDraw)
+      canvas.addEventListener('contextrestored', restore)
     }
 
     return () => {
@@ -131,7 +165,7 @@ export function SquareBackground() {
       resizeObserver.disconnect()
       window.removeEventListener('resize', resizeAndDraw)
       window.removeEventListener('pointermove', move)
-      canvas.removeEventListener('contextrestored', requestDraw)
+      canvas.removeEventListener('contextrestored', restore)
     }
   }, [])
 

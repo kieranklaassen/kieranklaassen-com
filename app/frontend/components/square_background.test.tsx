@@ -30,10 +30,40 @@ const POST: Post = {
   html: '<p>Body</p>',
 }
 
+const HALFWAY_MARGIN = 1e-3
+
+// The 8-bit alpha an engine draws for an rgba() string, rounded to nearest. Too close
+// to halfway is undefined, because engines may disagree there.
+function drawnAlpha(color: string) {
+  const exact = Number(color.slice(color.lastIndexOf(',') + 1, -1)) * 255
+  const below = Math.floor(exact)
+  const fraction = exact - below
+  if (Math.abs(fraction - 0.5) < HALFWAY_MARGIN) return undefined
+  return fraction > 0.5 ? below + 1 : below
+}
+
+// The gradient stop colors of one square on each frame, eased independently.
+function easeColors(start: number, target: number, offset: number, frameCount: number) {
+  let opacity = start
+  return Array.from({ length: frameCount }, () => {
+    opacity += (target - opacity) * 0.05
+    const end = Math.max(0, opacity - 40 + offset)
+    return [opacity, end].map((value) => `rgba(128,128,128,${value / 255})`)
+  })
+}
+
+function drawnValueChanged(previous: string[] | undefined, colors: string[]) {
+  return colors.some((color, stop) => {
+    const alpha = drawnAlpha(color)
+    return alpha === undefined || !previous || alpha !== drawnAlpha(previous[stop])
+  })
+}
+
 describe('interactive square background', () => {
   let container: HTMLDivElement
   let root: Root
   let fillRect: ReturnType<typeof vi.fn>
+  let addColorStop: ReturnType<typeof vi.fn>
   let resizeDisconnect: ReturnType<typeof vi.fn>
   let resizeObserve: ReturnType<typeof vi.fn>
   let resizeCallback: (() => void) | undefined
@@ -85,7 +115,8 @@ describe('interactive square background', () => {
     document.body.append(container)
     root = createRoot(container)
 
-    const gradient = { addColorStop: vi.fn() }
+    addColorStop = vi.fn()
+    const gradient = { addColorStop }
     const context = {
       clearRect: vi.fn(),
       createLinearGradient: vi.fn(() => gradient),
@@ -158,6 +189,84 @@ describe('interactive square background', () => {
     expect(frames.isPending()).toBe(false)
   })
 
+  it('keeps easing without repainting once no square rounds to a new opacity', () => {
+    const frames = stubFrames()
+    startSquaresAwayFromTarget()
+    act(() => root.render(<SiteShell>Page</SiteShell>))
+
+    // 47 of the first 51 draws reach a new whole opacity; each paints all 12 squares.
+    expect(frames.run(50)).toBe(50)
+    expect(fillRect).toHaveBeenCalledTimes(12 * 47)
+    frames.run(150)
+    fillRect.mockClear()
+
+    expect(frames.run(100)).toBe(100)
+    expect(fillRect).not.toHaveBeenCalled()
+
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 10, clientY: 10 }))
+    vi.mocked(Math.random).mockReturnValue(0)
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 150, clientY: 10 }))
+    frames.run(1)
+    expect(fillRect).toHaveBeenCalledTimes(12)
+  })
+
+  // Gives every square the same start, target and gradient offset, so that one
+  // square's changes decide every paint.
+  const startSquaresAt = (start: number, target: number, offset: number) => {
+    const values = [(start + 0.5) / 256, (target + 0.5) / 256, (offset + 30.5) / 61]
+    let call = 0
+    vi.mocked(Math.random).mockImplementation(() => {
+      call += 1
+      return call <= 3 ? 0.5 : values[(call - 4) % 3]
+    })
+  }
+
+  // Returns the stop colors painted since the last call, checking that a paint
+  // covers all 12 squares with the same two colors.
+  const takePaint = () => {
+    const colors = addColorStop.mock.calls.map(([, color]) => color as string)
+    expect(fillRect.mock.calls.length).toBe(colors.length / 2)
+    expect([0, 24]).toContain(colors.length)
+    addColorStop.mockClear()
+    fillRect.mockClear()
+    expect(colors).toEqual(Array.from(colors, (_, index) => colors[index % 2]))
+    return colors.length ? colors.slice(0, 2) : undefined
+  }
+
+  it.each([
+    { start: 64, target: 192, offset: 0, near: 0 },
+    { start: 200, target: 20, offset: 30, near: 0 },
+    { start: 200, target: 201, offset: -30, near: 0 },
+    { start: 10, target: 9, offset: 0, near: 0 },
+    // Each of these lands just short of, or just past, halfway between two levels.
+    { start: 0, target: 17, offset: 0, near: 1 },
+    { start: 0, target: 36, offset: 0, near: 1 },
+    { start: 2, target: 0, offset: 0, near: 1 },
+    { start: 14, target: 0, offset: 0, near: 1 },
+  ])(
+    'paints exactly when a drawn alpha changes from $start to $target (offset $offset)',
+    ({ start, target, offset, near }) => {
+      const frames = stubFrames()
+      startSquaresAt(start, target, offset)
+      const expected = easeColors(start, target, offset, 201)
+      act(() => root.render(<SiteShell>Page</SiteShell>))
+
+      const painted = [takePaint()]
+      while (painted.length < expected.length && frames.run(1)) painted.push(takePaint())
+
+      expect(painted).toEqual(
+        expected.map((colors, frame) =>
+          drawnValueChanged(expected[frame - 1], colors) ? colors : undefined,
+        ),
+      )
+      const nearFrames = expected.flatMap((colors, frame) =>
+        frame > 0 && colors.some((color) => drawnAlpha(color) === undefined) ? [frame] : [],
+      )
+      expect(nearFrames.length).toBeGreaterThanOrEqual(near)
+      for (const frame of nearFrames) expect(painted[frame]).toBeDefined()
+    },
+  )
+
   it.each([
     ['a window resize', () => window.dispatchEvent(new Event('resize'))],
     ['a ResizeObserver callback', () => resizeCallback?.()],
@@ -187,6 +296,17 @@ describe('interactive square background', () => {
     // Nothing is moving, so one frame repaints every square and the loop stops.
     expect(frames.run(2000)).toBe(1)
     expect(fillRect).toHaveBeenCalledTimes(12)
+    expect(frames.isPending()).toBe(false)
+  })
+
+  it('stops listening for a restored canvas context once unmounted', () => {
+    const frames = renderSettled()
+    const canvas = container.querySelector('canvas')
+
+    act(() => root.unmount())
+    canvas?.dispatchEvent(new Event('contextrestored'))
+
+    expect(canvas).not.toBeNull()
     expect(frames.isPending()).toBe(false)
   })
 
