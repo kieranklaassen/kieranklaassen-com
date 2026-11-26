@@ -275,6 +275,10 @@
 .wc-sound button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .wc-sound svg { width: 24px; height: 24px; fill: #2f6473; }
 .wc-sound [aria-pressed="true"] svg { fill: #b4473a; }
+@media (max-width: 640px) {
+  .wc-sound [aria-pressed]:last-child { width: 48px; min-height: 48px; padding: 0; justify-content: center; }
+  .wc-sound [aria-pressed]:last-child span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}
 .wc-sound .wc-part { padding: 0 14px; }
 .wc-sound .wc-part::before { content: ""; width: 11px; height: 13px; border: 1.8px solid #2f6473; border-radius: 55% 45% 52% 48% / 62% 58% 42% 40%; }
 .wc-sound .wc-part[aria-pressed="true"]::before { background: #2f6473; }

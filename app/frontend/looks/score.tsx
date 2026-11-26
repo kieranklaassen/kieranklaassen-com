@@ -104,6 +104,7 @@ export function Score({ posts }: { posts: PostSummary[] }) {
                 className="wc-note"
                 data-paint="note"
                 data-key={post.slug}
+                data-note={`${lane} ${years.indexOf(post.date.slice(0, 4))} ${post.title.length} ${left.toFixed(4)}`}
                 onPointerEnter={touch(post, lane, left)}
                 onFocus={touch(post, lane, left)}
                 data-side={left > 0.5 ? 'right' : 'left'}
