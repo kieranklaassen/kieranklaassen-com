@@ -36,6 +36,45 @@ describe('interactive square background', () => {
   let fillRect: ReturnType<typeof vi.fn>
   let resizeDisconnect: ReturnType<typeof vi.fn>
   let resizeObserve: ReturnType<typeof vi.fn>
+  let resizeCallback: (() => void) | undefined
+
+  const stubFrames = () => {
+    let pending: FrameRequestCallback | undefined
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      pending = callback
+      return 1
+    })
+    return {
+      isPending: () => pending !== undefined,
+      run: (limit: number) => {
+        let frames = 0
+        while (pending && frames < limit) {
+          const callback = pending
+          pending = undefined
+          callback(0)
+          frames += 1
+        }
+        return frames
+      },
+    }
+  }
+
+  // Values are drawn in threes: the base color, then opacity, target and gradient
+  // offset per square. Every square therefore starts away from its target.
+  const startSquaresAwayFromTarget = () => {
+    const values = [0.25, 0.75, 0.5]
+    let call = 0
+    vi.mocked(Math.random).mockImplementation(() => values[call++ % values.length])
+  }
+
+  const renderSettled = () => {
+    const frames = stubFrames()
+    startSquaresAwayFromTarget()
+    act(() => root.render(<SiteShell>Page</SiteShell>))
+    expect(frames.run(2000)).toBeGreaterThan(50)
+    expect(frames.isPending()).toBe(false)
+    return frames
+  }
 
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -74,7 +113,11 @@ describe('interactive square background', () => {
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false }) as MediaQueryList))
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
     vi.stubGlobal('cancelAnimationFrame', vi.fn())
+    resizeCallback = undefined
     class ResizeObserverMock {
+      constructor(callback: () => void) {
+        resizeCallback = callback
+      }
       disconnect = resizeDisconnect
       observe = resizeObserve
       unobserve = vi.fn()
@@ -105,32 +148,46 @@ describe('interactive square background', () => {
   })
 
   it('stops drawing once every square has settled and resumes on hover', () => {
-    let pending: FrameRequestCallback | undefined
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      pending = callback
-      return 1
-    })
-    const runFrames = (limit: number) => {
-      let frames = 0
-      while (pending && frames < limit) {
-        const callback = pending
-        pending = undefined
-        callback(0)
-        frames += 1
-      }
-      return frames
-    }
-
-    act(() => root.render(<SiteShell>Page</SiteShell>))
-    runFrames(2000)
-    expect(pending).toBeUndefined()
+    const frames = renderSettled()
 
     vi.mocked(Math.random).mockReturnValue(0)
     window.dispatchEvent(new MouseEvent('pointermove', { clientX: 10, clientY: 10 }))
-    expect(runFrames(50)).toBe(50)
+    expect(frames.run(50)).toBe(50)
     // Target 0: decay must not keep the loop alive until it underflows.
-    runFrames(2000)
-    expect(pending).toBeUndefined()
+    frames.run(2000)
+    expect(frames.isPending()).toBe(false)
+  })
+
+  it.each([
+    ['a window resize', () => window.dispatchEvent(new Event('resize'))],
+    ['a ResizeObserver callback', () => resizeCallback?.()],
+  ])('draws again after %s changes the canvas size, then settles', (_source, triggerResize) => {
+    const frames = renderSettled()
+    const canvas = container.querySelector('canvas')
+    expect(canvas?.width).toBe(268)
+    fillRect.mockClear()
+
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(402)
+    triggerResize()
+    expect(canvas?.width).toBe(402)
+
+    expect(frames.run(50)).toBe(50)
+    // The column that only exists at the new width is drawn.
+    expect(fillRect).toHaveBeenCalledWith(268, 0, 134, 134)
+    frames.run(2000)
+    expect(frames.isPending()).toBe(false)
+  })
+
+  it('draws again after the canvas context is restored, then settles', () => {
+    const frames = renderSettled()
+    fillRect.mockClear()
+
+    container.querySelector('canvas')?.dispatchEvent(new Event('contextrestored'))
+
+    // Nothing is moving, so one frame repaints every square and the loop stops.
+    expect(frames.run(2000)).toBe(1)
+    expect(fillRect).toHaveBeenCalledTimes(12)
+    expect(frames.isPending()).toBe(false)
   })
 
   it('includes the original noise texture filter', () => {

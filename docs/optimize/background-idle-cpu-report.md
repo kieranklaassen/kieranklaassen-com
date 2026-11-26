@@ -33,14 +33,14 @@ Keep threshold: 20% relative improvement on both selection and holdout. Load ave
 
 ## Equivalence
 
-- Canvas pixels compared at every one of 2,837 manually stepped frames (hover, hover after settling, resize, resize back): 0 differ on home 800x600, home 1440x900, article 1000x700 and home with reduced motion, across three random seeds. Screenshots with the noise filter match.
+- Canvas pixels compared at every one of 2,837 manually stepped frames (hover, hover after settling, resize, resize back): 0 differ on home 800x600, home 1440x900, article 1000x700 and home with reduced motion, across three random seeds. Screenshots with the noise filter match. The harness behind the CPU figures and pixel comparisons is not in the repository, and the numbers are one machine's.
 - 23.5 million easing steps compared after freezing a square at 1e-18: 0 differ bitwise.
 - After a forced GPU process crash the settled background is repainted identically.
 - Harness gates: background painted, and hover still animates after settling. Both reject the obvious shortcuts (nothing drawn, loop stopped for good).
 
 ## Experiments
 
-1. Stop at the bitwise fixed point only: not kept. The holdout showed it never stops on the tall article page (target-0 squares).
+1. Stop at the bitwise fixed point only: not kept. The holdout showed it takes about 14,600 frames to stop on the tall article page (target-0 squares).
 2. The same with the 1e-18 cutoff: kept. The holdout had been seen once by then, hence the extra unseen seed and size.
 
 Not covered: Safari and Firefox, battery power, displays above 60 Hz. No regressions were found. A first version of the harness measured stale assets; the validity probes caught it and the baseline was retaken.
