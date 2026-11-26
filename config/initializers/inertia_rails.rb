@@ -6,6 +6,9 @@ InertiaRails.configure do |config|
   config.always_include_errors_hash = true
   config.use_script_element_for_initial_page = true
   config.use_data_inertia_head_attribute = true
+  # The gem reads this on every request, for both recording and the
+  # /_inertia/devtools route.
+  config.devtools.enabled = false
   config.ssr_enabled = true
   config.ssr_bundle = Rails.root.join("public/vite-ssr/ssr.js").to_s
   config.ssr_url = ENV["INERTIA_SSR_URL"] if ENV["INERTIA_SSR_URL"].present?
@@ -17,3 +20,6 @@ InertiaRails.configure do |config|
     )
   end
 end
+
+# The gem adds this unconditionally; drop it, since recording is off everywhere.
+Rails.application.config.middleware.delete InertiaRails::Devtools::Middleware
