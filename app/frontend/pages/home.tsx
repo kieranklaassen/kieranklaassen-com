@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react'
 import { PostList } from '../components/post_list'
 import { RepositoryList } from '../components/repository_list'
 import { Repositories, Section, Thoughts } from '../looks/entries'
-import type { Look } from '../looks/looks'
+import { ByLook } from '../looks/by_look'
 import { Score } from '../looks/score'
 import type { GithubRepositorySummary, PostSummary } from '../types/page'
 
@@ -13,7 +13,6 @@ interface HomeProps {
   posts: PostSummary[]
   repositories: GithubRepositorySummary[]
   score?: PostSummary[]
-  look?: Look
 }
 
 export function HomeContent({ posts, repositories }: HomeProps) {
@@ -43,12 +42,11 @@ export function HomeContent({ posts, repositories }: HomeProps) {
   )
 }
 
-function PaintedHome({ posts, repositories, score, look }: HomeProps & { look: Look }) {
-  return (
-    <div className="wc-home" data-paint="stream">
-      {look === 'score' && score && <Score posts={score} />}
+function PaintedHome({ posts, repositories, score, room }: HomeProps & { room: string }) {
+  const lists = (
+    <>
       <Section title="Thoughts" more={<Link href="/posts">More</Link>}>
-        <Thoughts posts={posts} look={look} />
+        <Thoughts posts={posts} room={room} />
       </Section>
       <Section
         title="Code"
@@ -58,14 +56,35 @@ function PaintedHome({ posts, repositories, score, look }: HomeProps & { look: L
           </a>
         }
       >
-        <Repositories repositories={repositories} look={look} />
+        <Repositories repositories={repositories} room={room} />
       </Section>
+    </>
+  )
+  if (room === 'long')
+    return (
+      <>
+        <div className="wc-first" data-look="score">
+          {score && <Score posts={score} />}
+        </div>
+        <div className="wc-river" data-look="estuary" data-paint="stream">
+          <div className="wc-home">{lists}</div>
+        </div>
+      </>
+    )
+  return (
+    <div className="wc-home" data-paint="stream">
+      {score && (
+        <div className={room === 'name' ? 'wc-first' : undefined} data-look="score">
+          <Score posts={score} />
+        </div>
+      )}
+      {lists}
       <div className="wc-band" data-paint="band" data-key="band-foot" aria-hidden="true" />
     </div>
   )
 }
 
-export default function Home({ posts, repositories, score, look = 'blocks' }: HomeProps) {
+export default function Home({ posts, repositories, score }: HomeProps) {
   return (
     <>
       <Head title="Kieran Klaassen">
@@ -75,11 +94,9 @@ export default function Home({ posts, repositories, score, look = 'blocks' }: Ho
           content="Essays from Kieran Klaassen about work, life, creativity, and technology."
         />
       </Head>
-      {look === 'blocks' ? (
+      <ByLook painted={({ body }) => <PaintedHome posts={posts} repositories={repositories} score={score} room={body} />}>
         <HomeContent posts={posts} repositories={repositories} />
-      ) : (
-        <PaintedHome posts={posts} repositories={repositories} score={score} look={look} />
-      )}
+      </ByLook>
     </>
   )
 }

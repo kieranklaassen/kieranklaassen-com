@@ -2,14 +2,15 @@ import { Link, usePage } from '@inertiajs/react'
 import type { PropsWithChildren } from 'react'
 import { SiteShell } from '../components/site_shell'
 import { PaintedSheet } from '../watercolor/sheet'
-import { COMPOSE, LOOKS, type Look } from './looks'
+import { LOOKS, roomsOf, type Look } from './looks'
 
 export function LookShell({ children }: PropsWithChildren) {
   const { props, url, component } = usePage<{ look: Look; chooseLook: boolean }>()
   const look = props.look
   const chooser = props.chooseLook && <LookChooser look={look} path={url.split('?')[0]} />
 
-  if (!look || look === 'blocks')
+  const rooms = roomsOf(look, component)
+  if (!rooms)
     return (
       <>
         <SiteShell>{children}</SiteShell>
@@ -18,10 +19,14 @@ export function LookShell({ children }: PropsWithChildren) {
     )
 
   return (
-    <div className="wc" data-look={look} data-page={component}>
-      <PaintedSheet compose={COMPOSE[look]} page={url} />
-      <LookHeader small={component.startsWith('posts/show')} />
-      <main>{children}</main>
+    <div className="wc">
+      <PaintedSheet compose={rooms.compose} page={url} />
+      <div className="wc-head" data-look={rooms.head}>
+        <LookHeader small={component.startsWith('posts/show')} />
+      </div>
+      <main className="wc-body" data-look={rooms.body} data-page={component}>
+        {children}
+      </main>
       {chooser}
     </div>
   )

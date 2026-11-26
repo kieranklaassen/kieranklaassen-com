@@ -47,7 +47,7 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
     const sheet = holder.current
     const shell = sheet?.parentElement
     if (!sheet || !shell) return
-    const painter = Painter.make()
+    const painter = Painter.get()
     if (!painter) return
     seed.current ||= seedOfVisit()
 
@@ -186,7 +186,7 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       composition = compose({ width, height, boxes: measure, shell, random: seeded(seed.current) })
       size = `${width}x${Math.max(shell.scrollHeight, window.innerHeight)}`
       painter.setPaper(composition.paper)
-      if (composition.creek) painter.setCreek(composition.creek)
+      if (composition.course) painter.setCourse(composition.course)
       if (composition.mask) painter.setMask(composition.mask.width, composition.mask.height, composition.mask.field)
       moving = []
       waiting = new Set()
@@ -244,6 +244,35 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       under = wash
     }
 
+    // A stroke sounded: water falls on it, and where its other voices stand about the middle line.
+    const heard = (event: Event) => {
+      const staff = (event.target as Element).closest('[data-paint="staff"]')?.getBoundingClientRect()
+      const own = composition.washes.find((one) => one.stands && one.stands === event.target)
+      if (!own || !staff || reduced) return
+      const x = own.x + own.w / 2
+      const line = staff.top - origin().top + staff.height / 2
+      const off = own.y + own.h / 2 - line
+      ;[1, -1, 0.5, -0.5].forEach((share, i) => {
+        const y = line + off * share
+        const wash = i === 0 ? own : composition.washes.filter((w) => w.kind === 0 && !w.flood && x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h).pop()
+        if (!wash) return
+        moving = moving.filter((one) => !(one.kind === 'drop' && one.wash === wash))
+        moving.push({ wash, kind: 'drop', start: performance.now() + i * 60, lasts: DROP_LASTS, drop: [x, y, Math.min(34, own.h * (i === 0 ? 0.5 : 0.42)), i === 0 ? 1 : 1.1] })
+      })
+      ask()
+    }
+
+    // A square that stands for a sentence leads to it.
+    const led = (event: MouseEvent) => {
+      const target = event.target as Element | null
+      if (!target?.closest('[data-of="article"]')) return
+      const from = origin()
+      const x = event.clientX - from.left
+      const y = event.clientY - from.top
+      const wash = composition.washes.find((w) => w.leads && x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h)
+      wash?.leads?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
+    }
+
     const flood = (goal: number) => (event: Event) => {
       const target = event.target as Element | null
       const wash = composition.washes.find((w) => w.flood && target && (w.flood === target || w.flood.contains(target)))
@@ -275,10 +304,13 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       observer.observe(shell)
     })
     window.addEventListener('scroll', scrolled, { passive: true })
+    window.addEventListener('resize', scrolled, { passive: true })
     if (!reduced) {
       window.addEventListener('pointermove', fall, { passive: true })
       window.addEventListener('pointerdown', fall, { passive: true })
     }
+    shell.addEventListener('wc:heard', heard)
+    shell.addEventListener('click', led)
     shell.addEventListener('pointerover', wet)
     shell.addEventListener('pointerout', dry)
     shell.addEventListener('focusin', wet)
@@ -292,8 +324,13 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       cancelAnimationFrame(composeAsked)
       observer.disconnect()
       window.removeEventListener('scroll', scrolled)
+      window.removeEventListener('resize', scrolled)
       window.removeEventListener('pointermove', fall)
       window.removeEventListener('pointerdown', fall)
+      shell.removeEventListener('wc:heard', heard)
+      shell.removeEventListener('click', led)
+      painter.canvas.removeEventListener('webglcontextlost', lost)
+      painter.canvas.removeEventListener('webglcontextrestored', restored)
       shell.removeEventListener('pointerover', wet)
       shell.removeEventListener('pointerout', dry)
       shell.removeEventListener('focusin', wet)

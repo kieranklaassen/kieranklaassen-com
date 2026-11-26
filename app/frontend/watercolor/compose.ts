@@ -1,6 +1,6 @@
 import { lettersOf, type Letter, type Mask } from './letters'
-import { Kind, type Creek, type RGB, type Rect, type Wash } from './painter'
-import { clamp, four, hashOf, mixInk, pigment, seeded, smooth, type Random } from './pigments'
+import { Kind, type Course, type RGB, type Rect, type Wash } from './painter'
+import { clamp, four, hashOf, pigment, seeded, smooth, type Random } from './pigments'
 
 export interface PaintBox extends Rect {
   name: string
@@ -11,7 +11,7 @@ export interface PaintBox extends Rect {
 export interface Composition {
   washes: Wash[]
   paper: RGB
-  creek?: Creek
+  course?: Course
   mask?: Mask
 }
 
@@ -22,6 +22,8 @@ export interface Page {
   /** The boxes the page asks paint for, measured now. */
   boxes: () => PaintBox[]
   random: Random
+  /** The name stands over a longer page, and its paint runs further. */
+  long?: boolean
 }
 
 export type Compose = (page: Page) => Composition
@@ -49,48 +51,6 @@ function beside(cell: Rect, taken: Rect[], least: number): Rect | undefined {
 }
 
 const of = (boxes: PaintBox[], ...names: string[]) => boxes.filter((box) => names.includes(box.name))
-
-// ---------------------------------------------------------------------------------------------
-// Wet blocks: the 134 pixel grid of the site as it was, one pigment a visit, laid wet into wet.
-
-const PIGMENTS: [RGB, RGB][] = [
-  [[0.2, 0.32, 0.58], [0.6, 0.46, 0.6]], // indigo that goes to mauve
-  [[0.14, 0.44, 0.5], [0.42, 0.44, 0.66]], // a green blue to violet
-  [[0.46, 0.34, 0.6], [0.82, 0.48, 0.52]], // violet to rose
-  [[0.26, 0.47, 0.4], [0.72, 0.64, 0.34]], // a deep green to ochre
-  [[0.76, 0.34, 0.26], [0.86, 0.6, 0.36]], // a burnt red to amber
-  [[0.16, 0.38, 0.54], [0.78, 0.6, 0.42]], // sea to sand
-]
-const BLOCK = 134
-
-export const wetBlocks: Compose = ({ width, height, boxes, random }) => {
-  const [ink, ink2] = PIGMENTS[Math.floor(random() * PIGMENTS.length)]
-  const quiet = of(boxes(), 'name', 'intro', 'heading')
-  const washes: Wash[] = []
-  for (let x = 0; x < width; x += BLOCK) {
-    for (let y = 0; y < height; y += BLOCK) {
-      const cell = { x, y, w: BLOCK, h: BLOCK }
-      const r = random()
-      const lean = random()
-      let density = r < 0.16 ? 0.02 : 0.08 + 1.15 * r * r
-      if (quiet.some((box) => meets(cell, box))) density = 0.05 + 0.32 * r
-      washes.push({
-        ...cell,
-        kind: Kind.Wet,
-        ink: mixInk(ink, ink2, 0.7 * lean),
-        ink2: mixInk(ink, ink2, clamp(0.7 * lean + 0.34)),
-        density,
-        seed: four(random),
-        extra: [0, r > 0.8 ? 1.2 : 0, 0, 0],
-        from: [random(), random()],
-        delay: 0.35 * y + 0.12 * x + 500 * random(),
-        lasts: 1800,
-        grow: 0,
-      })
-    }
-  }
-  return { washes, paper: [0.965, 0.955, 0.935] }
-}
 
 // ---------------------------------------------------------------------------------------------
 // The page is the painting: every card is an oblong of the picture, and small squares lie around.
@@ -257,7 +217,7 @@ function runsOf(letters: Letter[], blocked: Rect[], inks: [RGB, RGB][], random: 
   return runs
 }
 
-export const paintedName: Compose = ({ boxes: measure, shell, random, width }) => {
+export const paintedName: Compose = ({ boxes: measure, shell, random, width, long }) => {
   const boxes = measure()
   const from = shell.getBoundingClientRect()
   const washes: Wash[] = []
@@ -265,7 +225,7 @@ export const paintedName: Compose = ({ boxes: measure, shell, random, width }) =
 
   for (const line of of(boxes, 'line')) {
     const own = seeded(hashOf(line.key))
-    const w = own()
+    const w = toneOf(line.element.querySelector<HTMLElement>('[data-paint="swatch"]')?.dataset.key ?? line.key).warmth
     washes.push({
       x: line.x - 14,
       y: line.y + 3,
@@ -281,7 +241,8 @@ export const paintedName: Compose = ({ boxes: measure, shell, random, width }) =
       flood: line.element,
     })
   }
-  for (const swatch of of(boxes, 'swatch')) washes.push(swatchWash(swatch, random))
+  const swatches = of(boxes, 'swatch').filter((box) => box.w > 0)
+  if (!long) for (const swatch of swatches) washes.push(swatchWash(swatch, random))
 
   const name = of(boxes, 'title')[0] ?? of(boxes, 'name')[0]
   const letters = name && lettersOf(name.element, from.left, from.top)
@@ -305,7 +266,7 @@ export const paintedName: Compose = ({ boxes: measure, shell, random, width }) =
         grow: 0,
       })
     })
-    if (name.name === 'name' && big > 90) washes.push(...runsOf(letters.letters, of(boxes, 'intro', 'heading', 'line', 'nav'), inks, random, width > 900 ? 210 : 90))
+    if (name.name === 'name' && big > 90) washes.push(...runsOf(letters.letters, of(boxes, 'intro', 'heading', 'line', 'nav', 'staff'), inks, random, width > 900 ? (long ? 420 : 210) : 110))
     // drops that flew off the brush
     if (name.name === 'name')
       for (let i = 0; i < (width > 900 ? 18 : 8); i++) {
@@ -313,51 +274,110 @@ export const paintedName: Compose = ({ boxes: measure, shell, random, width }) =
         const x = name.x + name.w * random() * 1.02
         const y = name.y - 10 + (name.h + 60) * random()
         const spot = { x, y, w: s, h: s * (0.8 + 0.4 * random()) }
-        if (of(boxes, 'intro', 'heading', 'nav', 'line').some((box) => meets(grown(spot, 6), box))) continue
+        if (of(boxes, 'intro', 'heading', 'nav', 'line', 'staff').some((box) => meets(grown(spot, 6), box))) continue
         if (letters.letters.some((letter) => letter.feet.length && meets(spot, { x: letter.feet[0].x, y: name.y + (letter.y > name.y + 60 ? name.h / 2 : 0), w: letter.feet[letter.feet.length - 1].x - letter.feet[0].x, h: name.h / 2 }))) continue
         const [ink, ink2] = inks[Math.floor(random() * inks.length)]
         washes.push({ ...spot, kind: Kind.Puddle, ink, ink2, density: 0.8, seed: four(random), extra: [2, 0.9, 0, 0], delay: 700 + 900 * random(), lasts: 500, grow: 0, still: true })
       }
   }
+  // One run goes on: down the list, and it pools where a piece is.
+  if (!long && name?.name === 'name' && letters && swatches.length) {
+    const x = swatches[0].x + swatches[0].w / 2
+    const feet = letters.letters.flatMap((letter) => letter.feet).filter((foot) => Math.abs(foot.x - x) < swatches[0].w * 1.2)
+    const low = Math.max(...feet.map((foot) => foot.y))
+    const sole = feet.filter((foot) => foot.y > low - 5).sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0]
+    let at = sole ? { x: sole.x, y: sole.y - 6, inks: noteInk(swatches[0].key) } : undefined
+    for (const swatch of swatches) {
+      const own = seeded(hashOf(swatch.key) + 1)
+      const inks = noteInk(swatch.key)
+      if (at) {
+        const w = 4 + 2.4 * own()
+        washes.push({ x: at.x - w / 2, y: at.y, w, h: swatch.y + swatch.h * 0.5 - at.y, kind: Kind.Run, ink: at.inks[0], ink2: inks[0], density: 0.72, seed: four(own), extra: [0, 0, 0, 0], delay: 900, lasts: 1800, grow: 0, still: true })
+      }
+      at = { x: swatch.x + swatch.w * (0.36 + 0.28 * own()), y: swatch.y + swatch.h - 5, inks }
+    }
+  }
+  washes.push(...staffWashes(boxes, random))
   for (const rule of of(boxes, 'rule')) washes.push(pencil({ x: rule.x, y: rule.y - 1, w: rule.w, h: 3 }, random))
-  return { washes, paper: [0.978, 0.966, 0.938], mask }
+  return { washes, paper: PAPER, mask }
 }
 
 // ---------------------------------------------------------------------------------------------
 // Estuary: sandbanks seen from the air, and a creek of bare paper that the writing runs down.
 
-export const creekAt = (creek: Creek, y: number) =>
-  creek.middle + creek.wind * (0.62 * Math.sin(y / 310 + 0.6) + 0.38 * Math.sin(y / 173 + 2))
+const NARROW = 900
+const STEP = 12
 
-export const estuary: Compose = ({ width, height, boxes: measure, shell, random }) => {
-  for (const element of shell.querySelectorAll<HTMLElement>('[data-wander]')) element.style.translate = ''
-  const stream = of(measure(), 'stream')[0]
-  const narrow = width < 900
-  const half = narrow ? 9 : (stream ? stream.w / 2 : 360) + 46
-  const creek: Creek = {
-    middle: width / 2,
-    wind: narrow ? width * 0.24 : clamp((width / 2 - half) * 0.42, 10, 96),
-    half,
-    mouth: narrow ? 0 : Math.max(0, width * 0.36 - half),
-    mouthAt: narrow ? 120 : 300,
-    mouthReach: 250,
+/** The water comes and goes twice a day, as it does. From -1 to 1. */
+const tide = () => Math.sin((Date.now() / 3_600_000 / 12.42) * 2 * Math.PI)
+
+const winding = (y: number) => 0.62 * Math.sin(y / 310 + 0.6) + 0.38 * Math.sin(y / 173 + 2)
+
+function courseOf(height: number, at: (y: number) => [number, number]): Course {
+  const step = Math.max(STEP, height / 2000)
+  const points = new Float32Array((Math.ceil(height / step) + 2) * 2)
+  for (let i = 0; i < points.length / 2; i++) points.set(at(i * step), i * 2)
+  return { step, points }
+}
+
+const courseAt = ({ step, points }: Course, y: number): [number, number] => {
+  const last = points.length / 2 - 1
+  const f = clamp(y / step, 0, last - 0.001)
+  const i = Math.floor(f)
+  const between = (o: number) => points[i * 2 + o] + (points[i * 2 + 2 + o] - points[i * 2 + o]) * (f - i)
+  return [between(0), between(1)]
+}
+
+/** On a phone the creek goes round what is written: as wide as a paragraph, a trickle where there is none. */
+function courseRound(written: Rect[], width: number, height: number): Course {
+  const count = Math.ceil(height / STEP) + 2
+  const low = new Float32Array(count)
+  const high = new Float32Array(count)
+  for (let i = 0; i < count; i++) {
+    const y = i * STEP
+    const here = written.filter((box) => y > box.y - 20 && y < box.y + box.h + 20)
+    const dry = width / 2 + width * 0.24 * winding(y)
+    const left = Math.min(...here.map((box) => box.x))
+    const right = Math.max(...here.map((box) => box.x + box.w))
+    // no slivers where there is hardly room for a bank
+    low[i] = !here.length ? dry - 9 : left < 70 ? -90 : left - 26
+    high[i] = !here.length ? dry + 9 : right > width - 70 ? width + 90 : right + 26
   }
-  const from = shell.getBoundingClientRect()
-  for (const element of shell.querySelectorAll<HTMLElement>('[data-wander]')) {
-    const box = element.getBoundingClientRect()
-    if (!narrow) element.style.translate = `${(creekAt(creek, box.top - from.top + box.height / 2) - creek.middle).toFixed(1)}px 0`
-  }
-  const boxes = measure()
+  const eased = (line: Float32Array) =>
+    line.map((_, i) => {
+      let sum = 0
+      let weight = 0
+      for (let k = -3; k <= 3; k++) {
+        const j = clamp(i + k, 0, count - 1)
+        const w = 4 - Math.abs(k)
+        sum += line[j] * w
+        weight += w
+      }
+      return sum / weight
+    })
+  const [left, right] = [eased(low), eased(high)]
+  const points = new Float32Array(count * 2)
+  for (let i = 0; i < count; i++) points.set([(left[i] + right[i]) / 2, (right[i] - left[i]) / 2], i * 2)
+  return { step: STEP, points }
+}
+
+interface Shore {
+  width: number
+  /** The banks lie from here to here. */
+  top: number
+  foot: number
+  course: Course
+  random: Random
+  /** The piece whose page it is gives the banks its color. */
+  tone?: Tone
+}
+
+function banks({ width, top, foot, course, random, tone }: Shore): Wash[] {
   const washes: Wash[] = []
+  const narrow = width < NARROW
   const turn = random() * 6
-  const taken = narrow ? of(boxes, 'name', 'intro', 'nav', 'heading', 'card', 'repo', 'sheet').map((box) => ({ ...grown(box, 14), x: 0, w: width })) : []
-  // how far down a bank lies from where its row is ruled
-  const sunk = (x: number, y: number, bank: number) =>
-    900 * (0.034 * Math.sin((x / 900) * 2.3 + 0.9) + 0.02 * Math.sin((x / 900) * 4.6 + (2.4 * y) / 900 + 2)) + 62 * Math.exp(-((bank / 190) ** 2))
-
-  let y = -90
-  let row = 0
-  while (y < height + 60) {
+  let y = top - 90
+  while (y < foot) {
     const rowH = (narrow ? 30 : 48) + (narrow ? 16 : 30) * random()
     const rowSeed = random()
     let x = -40 - 80 * random()
@@ -365,30 +385,105 @@ export const estuary: Compose = ({ width, height, boxes: measure, shell, random 
       const w = (narrow ? 60 : 90) + (narrow ? 90 : 200) * random()
       const cx = x + w / 2
       const cy = y + rowH / 2
-      const bank = Math.abs(cx - creekAt(creek, cy)) - half
-      const light = clamp(0.98 - 0.92 * smooth(-40, narrow ? 190 : Math.max(150, width / 2 - half), bank) + (random() - 0.5) * 0.36)
-      const warmth = 0.5 + 0.36 * Math.sin((cx / 900) * 2.1 - (cy / 900) * 2.2 + turn) + (random() - 0.5) * 0.8
-      const wash: Wash = {
-        x, y, w: w - 5, h: rowH,
-        kind: Kind.Bank,
-        ink: pigment(light, warmth),
-        ink2: pigment(clamp(light + 0.08), warmth + 0.4 * (random() - 0.5)),
-        density: 0.8 + 0.42 * random(),
-        seed: [rowSeed, random(), random(), random()],
-        extra: [0, 1, 0, 0],
-        from: [cx < creek.middle ? 0 : 1, 0.5],
-        delay: 0.45 * Math.max(0, cy) + 350 * random(),
-        lasts: 1500,
-        grow: 0,
-      }
-      const lies = y + sunk(cx, cy + 40, bank)
-      if (bank + w / 2 > -70 && !taken.some((box) => meets({ x, y: lies - 12, w, h: rowH + 24 }, box))) washes.push(wash)
+      const [middle, half] = courseAt(course, cy + 30)
+      const bank = Math.abs(cx - middle) - half
+      const light = clamp(0.98 - 0.92 * smooth(-40, narrow ? 170 : Math.max(150, width / 2 - half), bank) + (random() - 0.5) * 0.36)
+      const wide = 0.5 + 0.36 * Math.sin((cx / 900) * 2.1 - (cy / 900) * 2.2 + turn) + (random() - 0.5) * 0.8
+      const warmth = tone ? tone.warmth + (wide - 0.5) * 0.3 : wide
+      if (bank + w / 2 > -70)
+        washes.push({
+          x, y, w: w - 5, h: rowH,
+          kind: Kind.Bank,
+          ink: pigment(light, warmth),
+          ink2: pigment(clamp(light + 0.08), (tone ? tone.warmth + (wide - 0.5) * 0.7 : warmth) + 0.4 * (random() - 0.5)),
+          density: 0.8 + 0.42 * random(),
+          seed: [rowSeed, random(), random(), random()],
+          extra: [0, 1, 0, 0],
+          from: [cx < middle ? 0 : 1, 0.5],
+          delay: 0.45 * Math.max(0, cy - top) + 350 * random(),
+          lasts: 1500,
+          grow: 0,
+        })
       x += w
     }
     y += rowH * 0.98
-    row++
   }
-  return { washes, paper: PAPER, creek }
+  return washes
+}
+
+/** What is written in the stream, for a creek that goes round it. */
+function writtenIn(boxes: PaintBox[], shell: HTMLElement): Rect[] {
+  const from = shell.getBoundingClientRect()
+  const blocks = [...shell.querySelectorAll<HTMLElement>('.wc-prose > *, .wc-sheet > header > *, .wc-back')].map((element) => {
+    const box = element.getBoundingClientRect()
+    return { x: box.left - from.left, y: box.top - from.top, w: box.width, h: box.height }
+  })
+  return [...of(boxes, 'name', 'intro', 'nav', 'heading', 'card', 'repo', 'title', 'staff', 'quiet', ...(blocks.length ? [] : ['sheet'])), ...blocks]
+}
+
+function wander(shell: HTMLElement, middle: (y: number) => number, width: number) {
+  const from = shell.getBoundingClientRect()
+  const all = [...shell.querySelectorAll<HTMLElement>('[data-wander]')]
+  for (const element of all) element.style.translate = ''
+  for (const element of all) {
+    const box = element.getBoundingClientRect()
+    element.style.translate = `${(middle(box.top - from.top + box.height / 2) - width / 2).toFixed(1)}px 0`
+  }
+}
+
+const still = (shell: HTMLElement) => {
+  for (const element of shell.querySelectorAll<HTMLElement>('[data-wander]')) element.style.translate = ''
+}
+
+export const estuary: Compose = ({ width, height, boxes: measure, shell, random }) => {
+  still(shell)
+  let boxes = measure()
+  const sheet = of(boxes, 'sheet')[0]
+  const tone = sheet && toneOf(sheet.key)
+  let course: Course
+  if (width < NARROW) course = courseRound(writtenIn(boxes, shell), width, height)
+  else {
+    const stream = of(boxes, 'stream')[0]
+    const half = (stream ? stream.w / 2 : 360) + 46 + 14 * tide()
+    const winds = clamp((width / 2 - half) * 0.42, 10, sheet ? 44 : 96)
+    const mouth = Math.max(0, width * 0.36 - half)
+    const middle = (y: number) => width / 2 + winds * winding(y)
+    wander(shell, middle, width)
+    boxes = measure()
+    course = courseOf(height, (y) => [middle(y), half + mouth * Math.exp(-(((y - 300) / 250) ** 2))])
+  }
+  return { washes: banks({ width, top: 0, foot: height + 60, course, random, tone }), paper: PAPER, course }
+}
+
+// ---------------------------------------------------------------------------------------------
+// One long page: the paint of the name runs down to the score, and under the score the writing runs
+// down the estuary to the sea.
+
+export const longPage: Compose = (page) => {
+  const { width, height, shell, boxes: measure, random } = page
+  const narrow = width < NARROW
+  still(shell)
+  const stream = of(measure(), 'stream')[0]
+  if (!stream) return paintedName(page)
+  const top = stream.y
+  const foot = stream.y + stream.h
+  let course: Course
+  if (narrow) course = courseRound(writtenIn(measure(), shell), width, height)
+  else {
+    const half = 356 + 14 * tide()
+    const winds = clamp((width / 2 - half) * 0.42, 10, 96)
+    const middle = (y: number) => width / 2 + winds * winding(y) * smooth(top - 100, top + 300, y) * (1 - smooth(foot - 500, foot, y))
+    wander(shell, middle, width)
+    const open = width * 0.62 - half
+    course = courseOf(height, (y) => [middle(y), half + open * (1 - smooth(top - 160, top + 420, y)) + open * smooth(foot - 520, foot + 60, y)])
+  }
+  const name = paintedName({ ...page, long: true })
+  return {
+    washes: [...banks({ width, top: top - 40, foot: foot - 40, course, random }), ...name.washes],
+    paper: PAPER,
+    course,
+    mask: name.mask,
+  }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -397,12 +492,16 @@ export const estuary: Compose = ({ width, height, boxes: measure, shell, random 
 
 export const score: Compose = ({ boxes: measure, random }) => {
   const boxes = measure()
+  const swatches = of(boxes, 'swatch').filter((box) => box.w > 0).map((swatch) => swatchWash(swatch, random))
+  return { washes: [...swatches, ...sheetWashes(boxes, random), ...staffWashes(boxes, random)], paper: PAPER }
+}
+
+function staffWashes(boxes: PaintBox[], random: Random): Wash[] {
   const washes: Wash[] = []
   const staff = of(boxes, 'staff')[0]
   const notes = of(boxes, 'note')
   const turn = random() * 6
-  for (const swatch of of(boxes, 'swatch')) washes.push(swatchWash(swatch, random))
-  if (!staff) return { washes: [...washes, ...sheetWashes(boxes, random)], paper: PAPER }
+  if (!staff) return []
 
   const lanes = Math.max(1, Number(staff.element.dataset.lanes ?? 8))
   const lane = staff.h / lanes
@@ -433,18 +532,30 @@ export const score: Compose = ({ boxes: measure, random }) => {
   }
   for (const note of notes) {
     const [ink, ink2] = noteInk(note.key)
-    washes.push({ ...note, kind: Kind.Square, ink, ink2, density: 1.12, seed: four(seeded(hashOf(note.key))), extra: [0, 1, 0, 0], from: [0, 0.5], delay: 300 + 1500 * ((note.x - staff.x) / staff.w), lasts: 1200, grow: 0 })
+    washes.push({ ...note, kind: Kind.Square, ink, ink2, density: 1.12, seed: four(seeded(hashOf(note.key))), extra: [0, 1, 0, 0], from: [0, 0.5], delay: 300 + 1500 * ((note.x - staff.x) / staff.w), lasts: 1200, grow: 0, stands: note.element })
   }
   for (const tick of of(boxes, 'tick')) washes.push(pencil({ x: tick.x - 1, y: staff.y - 14, w: 3, h: staff.h + 28 }, random))
-  return { washes, paper: PAPER }
+  // the line the voices are mirrored in
+  for (const by of [-2, 0.5]) washes.push(pencil({ x: staff.x - 22, y: staff.y + staff.h / 2 + by, w: staff.w + 44, h: 3 }, random))
+  return washes
 }
 
-/** The strong pigment of one thought, the same in the score and beside its title. */
-function noteInk(key: string): [RGB, RGB] {
+export interface Tone {
+  light: number
+  warmth: number
+  goes: number
+}
+
+/** Every thought has a color of its own: in the score, beside its title and on the banks of its page. */
+function toneOf(key: string): Tone {
   const own = seeded(hashOf(key))
-  const w = own() < 0.5 ? own() * 0.3 : 0.7 + own() * 0.3
-  const light = 0.04 + 0.42 * own()
-  return [pigment(light, w), pigment(light + 0.16, w + 0.5 * (own() - 0.5))]
+  const warmth = own() < 0.5 ? own() * 0.3 : 0.7 + own() * 0.3
+  return { warmth, light: 0.04 + 0.42 * own(), goes: warmth + 0.5 * (own() - 0.5) }
+}
+
+function noteInk(key: string): [RGB, RGB] {
+  const tone = toneOf(key)
+  return [pigment(tone.light, tone.warmth), pigment(tone.light + 0.16, tone.goes)]
 }
 
 function swatchWash(swatch: PaintBox, random: Random): Wash {
@@ -453,28 +564,79 @@ function swatchWash(swatch: PaintBox, random: Random): Wash {
   return { ...swatch, kind: Kind.Square, ink, ink2, density: 1.1, seed: four(own), extra: [0, 1, 0, 0], from: [own(), own()], delay: 400 + 500 * random(), lasts: 1100, grow: 0 }
 }
 
-/** An article's own short phrase of squares over its title. */
+/** Squares made of what is written: a word to a square beside an entry, a sentence to a square over an article. */
 function sheetWashes(boxes: PaintBox[], random: Random): Wash[] {
+  return of(boxes, 'phrase').flatMap((band) => (band.element.dataset.of === 'article' ? sentences(band, random) : words(band, random)))
+}
+
+function square(rect: Rect, light: number, warmth: number, own: Random, delay: number): Wash {
+  return { ...rect, kind: Kind.Square, ink: pigment(light, warmth), ink2: pigment(clamp(light + 0.1), warmth + 0.4 * (own() - 0.5)), density: 0.9 + 0.3 * own(), seed: four(own), extra: [0, 1, 0, 0], from: [0, own()], delay, lasts: 900, grow: 0 }
+}
+
+/** The words of a title in strong paint and those under it in pale, each as wide as it is long. */
+function words(band: PaintBox, random: Random): Wash[] {
+  const own = seeded(hashOf(band.key))
+  const tone = toneOf(band.key)
+  const of = (text = '') => text.split(/\s+/).filter(Boolean)
+  const strong = of(band.element.dataset.strong)
+  const all = [...strong.map((word) => ({ word, strong: true })), ...of(band.element.dataset.pale).map((word) => ({ word, strong: false }))]
+  const letter = Math.max(4.4, Math.min(8.5, (band.w * 0.72) / strong.reduce((sum, word) => sum + word.length + 0.8, 0)))
   const washes: Wash[] = []
-  for (const band of of(boxes, 'phrase')) {
-    const own = seeded(hashOf(band.key))
-    let x = band.x
-    while (x < band.x + band.w - 8) {
-      const w = Math.min(band.h * (0.35 + 1.1 * own()), band.x + band.w - x)
-      const away = Math.abs((x - band.x) / band.w - 0.5 * own()) * 2
-      const light = clamp(0.1 + 0.85 * away + (own() - 0.5) * 0.3)
-      const warmth = own()
-      const whole = { x: x + 2.5, y: band.y, w: w - 5, h: band.h }
-      const parts = own() > 0.75 ? [{ ...whole, h: band.h / 2 - 2.5 }, { ...whole, y: band.y + band.h / 2 + 2.5, h: band.h / 2 - 2.5 }] : [whole]
-      for (const part of parts)
-        if (part.w > 6)
-          washes.push({ ...part, kind: Kind.Square, ink: pigment(light, warmth), ink2: pigment(clamp(light + 0.1), warmth + 0.4 * (own() - 0.5)), density: 0.9 + 0.3 * own(), seed: four(own), extra: [0, 1, 0, 0], from: [0, own()], delay: 700 * ((x - band.x) / band.w) + 150 * random(), lasts: 900, grow: 0 })
-      x += w
-    }
+  let x = band.x
+  for (const one of all) {
+    const w = Math.max(7, one.word.length * letter)
+    if (x + w > band.x + band.w + 1) break
+    const warmth = one.strong ? tone.warmth + 0.5 * (own() - 0.5) : 0.4 + 0.5 * own()
+    const light = one.strong ? clamp(tone.light * 0.6 + 0.3 * own() ** 2) : 0.72 + 0.24 * own()
+    washes.push(square({ x, y: band.y, w, h: band.h }, light, warmth, own, 700 * ((x - band.x) / band.w) + 150 * random()))
+    x += w + 4.5
   }
   return washes
 }
 
+/** Every sentence of an article, in its order and as wide as it is long: deep for a heading, red for a question. */
+function sentences(band: PaintBox, random: Random): Wash[] {
+  const own = seeded(hashOf(band.key))
+  const tone = toneOf(band.key)
+  const found: { length: number; kind: 'heading' | 'question' | 'other'; block: number; element: Element }[] = []
+  const prose = band.element.closest('article')?.querySelector('.wc-prose')
+  ;[...(prose?.children ?? [])].forEach((element, block) => {
+    const text = element.textContent?.trim() ?? ''
+    if (/^H\d$/.test(element.tagName)) found.push({ length: text.length, kind: 'heading', block, element })
+    else
+      for (const sentence of text.match(/[^.!?\n]+[.!?]*/g) ?? [])
+        if (sentence.trim().length > 2) found.push({ length: sentence.trim().length, kind: sentence.trim().endsWith('?') ? 'question' : 'other', block, element })
+  })
+  if (!found.length) return []
+  const gap = 5
+  const rows = clamp(Math.round(band.h / 25), 1, 9)
+  const rowH = band.h / rows
+  const total = found.reduce((sum, one) => sum + one.length, 0)
+  // as many sentences to a row as make it full, and then the row is drawn out to its edge
+  const perRow = total / rows
+  const lines: (typeof found)[] = [[]]
+  let sum = 0
+  for (const one of found) {
+    if (sum + one.length / 2 > perRow * lines.length && lines.length < rows) lines.push([])
+    lines[lines.length - 1].push(one)
+    sum += one.length
+  }
+  const washes: Wash[] = []
+  lines.forEach((line, row) => {
+    const letters = line.reduce((all, one) => all + one.length, 0)
+    const room = band.w - gap * (line.length - 1)
+    let x = band.x
+    for (const one of line) {
+      const w = (one.length / letters) * room
+      const pale = 0.5 + 0.5 * Math.sin(one.block * 1.9 + tone.warmth * 6)
+      const [light, warmth] =
+        one.kind === 'heading' ? [0.02 + 0.14 * own(), 0.1 + 0.2 * own()] : one.kind === 'question' ? [0.24 + 0.1 * own(), 0.95] : [clamp(0.5 + 0.42 * pale + (own() - 0.5) * 0.24), tone.warmth + 0.55 * Math.sin(one.block * 2.4) + 0.2 * (own() - 0.5)]
+      if (w > 3) washes.push({ ...square({ x, y: band.y + row * rowH, w, h: rowH - gap }, light, warmth, own, 160 * row + 500 * ((x - band.x) / band.w) + 100 * random()), leads: one.element })
+      x += w + gap
+    }
+  })
+  return washes
+}
 
 // ---------------------------------------------------------------------------------------------
 // Mosaic: the net again, and the name is in it. A square inside a letter is deep, one outside is light.
@@ -483,12 +645,13 @@ export const mosaic: Compose = ({ width, boxes: measure, shell, random }) => {
   const boxes = measure()
   const washes: Wash[] = [...sheetWashes(boxes, random)]
   const name = of(boxes, 'name')[0]
-  const letters = name && linesOf(name.element, shell)
+  const letters = name && linesOf(name.element, shell, width < 700 ? 7 : 9)
   if (!name || !letters) return { washes, paper: PAPER }
   if (width < 700 && name.element.closest('[data-small]')) return { washes, paper: PAPER } // too small for squares
   const turn = random() * 6
   const top = 10
-  const edge = width < 700 ? 6 : 12
+  const small = width < 700
+  const edge = small ? 6 : 12
   const bottom = name.y + name.h + letters.row * (width < 700 ? 2.4 : 2.1)
   for (let at = letters.top % letters.row - letters.row; at < bottom; at += letters.row) {
     const y = at + (random() - 0.5) * 1.5
@@ -499,13 +662,13 @@ export const mosaic: Compose = ({ width, boxes: measure, shell, random }) => {
       const inside = i % 2 === 1
       let x = stops[i]
       while (x < stops[i + 1] - 3) {
-        let w = letters.row * (inside ? 0.9 + 1.5 * random() : 0.55 + 1.9 * random())
+        let w = letters.row * (inside ? (small ? 2.6 + 1.2 * random() : 0.9 + 1.5 * random()) : (small ? 1.4 : 0.55) + (small ? 3 : 1.9) * random())
         if (stops[i + 1] - x - w < letters.row * 0.5) w = stops[i + 1] - x
         const cx = (x + w / 2) / width
         const cy = (y - top) / (bottom - top)
         const warmth = 0.5 + 0.46 * Math.sin(cx * 5.2 - cy * 2.6 + turn) + (random() - 0.5) * 0.7
         const light = inside ? clamp(0.02 + 0.36 * random() * random() + 0.1 * Math.sin(cx * 9 + turn)) : clamp(0.97 - 0.34 * random() ** 2.4 - 0.1 * Math.abs(cx - 0.5))
-        const gap = 1.6
+        const gap = small ? 0.9 : 1.6
         washes.push({
           x: x + gap, y: y + gap, w: w - gap * 2, h: letters.row - gap * 2,
           kind: Kind.Square,
@@ -527,7 +690,7 @@ export const mosaic: Compose = ({ width, boxes: measure, shell, random }) => {
 }
 
 /** The name as rows: for each, the stretches from x to x that lie in a letter. */
-function linesOf(element: HTMLElement, shell: HTMLElement) {
+function linesOf(element: HTMLElement, shell: HTMLElement, rows: number) {
   const style = getComputedStyle(element)
   const size = parseFloat(style.fontSize)
   const from = shell.getBoundingClientRect()
@@ -558,7 +721,7 @@ function linesOf(element: HTMLElement, shell: HTMLElement) {
   }
   const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
   // whole rows to a capital, so that a letter's bars fall on them
-  const row = (size * 0.727) / 9
+  const row = (size * 0.727) / rows
   const stretches = (y: number, h: number): [number, number][] => {
     const y0 = Math.round(y - start)
     const y1 = Math.round(y + h - start)

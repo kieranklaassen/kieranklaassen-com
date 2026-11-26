@@ -5,7 +5,7 @@ class PagesController < InertiaController
     render inertia: "home", props: {
       posts: ThoughtRepository.recent(limit: 7),
       repositories: GithubRepository.all,
-      **(look == "score" ? { score: ThoughtRepository.all } : {})
+      **(%w[score long rooms].include?(look) ? { score: ThoughtRepository.all } : {})
     }
   end
 

@@ -22,8 +22,8 @@ in vec2 vP;
 flat in vec4 vRect, vInk, vInk2, vSeed, vState, vDrop, vExtra;
 uniform vec3 uPaper;
 uniform float uPixel;   // one device pixel, in page pixels
-uniform vec4 uCreek;    // middle, how far it winds, half its width, how much wider its mouth is
-uniform vec2 uMouth;    // where the mouth is, how far down it reaches
+uniform sampler2D uCourse; // the creek: its middle and half its width, every uStep pixels down
+uniform float uStep;
 uniform sampler2D uMask;
 out vec4 fragColor;
 #define TAU 6.28318531
@@ -38,7 +38,12 @@ float noise(vec2 p) {
 }
 float smin(float a, float b, float k) { float h = sat(0.5 + 0.5 * (b - a) / k); return mix(b, a, h) - k * h * (1.0 - h); }
 float sq(float x) { return x * x; }
-float creekAt(float y) { return uCreek.x + uCreek.y * (0.62 * sin(y / 310.0 + 0.6) + 0.38 * sin(y / 173.0 + 2.0)); }
+vec2 course(float y) {
+  int last = textureSize(uCourse, 0).x - 1;
+  float f = clamp(y / uStep, 0.0, float(last) - 0.001);
+  int i = int(f);
+  return mix(texelFetch(uCourse, ivec2(i, 0), 0).rg, texelFetch(uCourse, ivec2(i + 1, 0), 0).rg, fract(f));
+}
 
 void main() {
   vec2 P = vP, p = P / S;
@@ -81,14 +86,6 @@ void main() {
     float m = texture(uMask, vExtra.xy + uv * vExtra.zw).r;
     d = (m - 0.5) * 2.0 * vState.w + (wob - 0.5) * clamp(vState.w * 0.2, 1.0, 5.0);
     tiny = clamp(vState.w / 16.0, 0.35, 1.0); q *= 0.8;
-  } else if (kind == 1.0) { // wet into wet: neighbours share one wandering edge
-    vec2 w = vec2(noise(p * 9.0 + 4.0), noise(p * 9.0 + 41.0)) - 0.5;
-    vec2 w2 = vec2(noise(p * 27.0 + 14.0), noise(p * 27.0 + 61.0)) - 0.5;
-    vec2 w3 = vec2(noise(p * 80.0 + 24.0), noise(p * 80.0 + 81.0)) - 0.5;
-    vec2 Y = X + 20.0 * w + 13.0 * w2 + 5.0 * w3;
-    d = min(min(Y.x, size.x - Y.x), min(Y.y, size.y - Y.y));
-    float wet = smoothstep(0.35, 0.7, noise(p * 2.7 + 8.0));   // some seams are wetter than others
-    soft = mix(1.2, 17.0, wet); rimK = mix(0.55, 0.16, wet);
   } else if (kind == 4.0) { // a puddle that dried where it lay
     vec2 h = size * 0.5; float R = min(h.x, h.y);
     vec2 v = X - h;
@@ -98,9 +95,10 @@ void main() {
     d = (1.0 - pow(pow(n.x, e) + pow(n.y, e), 1.0 / e)) * R * 0.95;
     d += (lump - 0.5) * 5.0 + (tooth - 0.5) * 2.0;
   } else if (kind == 5.0) { // a bank of sand
-    float C = creekAt(P.y), dy = (creekAt(P.y + 2.0) - creekAt(P.y - 2.0)) / 4.0;
-    float mouth = uCreek.w * exp(-sq((P.y - uMouth.x) / max(uMouth.y, 1.0)));
-    float creek = (abs(P.x - C) - (uCreek.z + mouth + 16.0 * sin(P.y / 97.0) + 9.0 * sin(P.y / 41.0 + sign(P.x - C)))) / sqrt(1.0 + dy * dy);
+    vec2 C = course(P.y), far = course(P.y + 3.0), near = course(P.y - 3.0);
+    float side = sign(P.x - C.x), slope = (far.x + side * far.y - near.x - side * near.y) / 6.0;
+    float edge = C.y + min(1.0, C.y / 60.0) * (16.0 * sin(P.y / 97.0) + 9.0 * sin(P.y / 41.0 + side));
+    float creek = (abs(P.x - C.x) - edge) / sqrt(1.0 + slope * slope);
     float y = P.y - S * (0.034 * sin(p.x * 2.3 + 0.9) + 0.020 * sin(p.x * 4.6 + 2.4 * p.y + 2.0)) - 62.0 * exp(-sq(creek / 190.0));
     float Yc = (y - vRect.y) / size.y - 0.5;
     float px = p.x;

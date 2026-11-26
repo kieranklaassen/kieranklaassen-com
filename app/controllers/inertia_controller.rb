@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class InertiaController < ApplicationController
-  LOOKS = %w[blocks wet page name estuary score mosaic].freeze
+  LOOKS = %w[blocks long rooms name estuary score mosaic page].freeze
 
   before_action :remember_look
   inertia_share look: -> { look }, chooseLook: -> { cookies[:look].present? && params[:chooser] != "0" }

@@ -2,7 +2,7 @@ import { FRAGMENT, VERTEX } from './shader'
 
 export type RGB = [number, number, number]
 
-export const Kind = { Square: 0, Wet: 1, Pencil: 2, Letter: 3, Puddle: 4, Bank: 5, Run: 6 } as const
+export const Kind = { Square: 0, Pencil: 2, Letter: 3, Puddle: 4, Bank: 5, Run: 6 } as const
 export type Kind = (typeof Kind)[keyof typeof Kind]
 
 export interface Wash {
@@ -30,17 +30,18 @@ export interface Wash {
   drop?: [number, number, number, number]
   /** Takes no drops. */
   still?: boolean
+  /** What on the page this wash stands for. */
+  stands?: Element
+  /** What on the page it leads to when it is pressed. */
+  leads?: Element
   /** Lies dry until this element is pointed at or focused. */
   flood?: Element
 }
 
-export interface Creek {
-  middle: number
-  wind: number
-  half: number
-  mouth: number
-  mouthAt: number
-  mouthReach: number
+/** A creek from the top of the page to its foot: its middle and half its width, every `step` pixels. */
+export interface Course {
+  step: number
+  points: Float32Array
 }
 
 export interface Rect {
@@ -65,7 +66,14 @@ export class Painter {
   private buffer: WebGLBuffer | null = null
   private data = new Float32Array(FLOATS * 256)
 
-  static make(): Painter | undefined {
+  private static shared: Painter | undefined
+
+  /** The one painter of this window. Going from page to page keeps it. */
+  static get(): Painter | undefined {
+    return (Painter.shared ??= Painter.make())
+  }
+
+  private static make(): Painter | undefined {
     const canvas = document.createElement('canvas')
     const gl = canvas.getContext('webgl2', {
       alpha: false,
@@ -119,7 +127,7 @@ export class Painter {
       gl.vertexAttribPointer(at, 4, gl.FLOAT, false, FLOATS * 4, i * 16)
       gl.vertexAttribDivisor(at, 1)
     })
-    for (const name of ['uTile', 'uPaper', 'uPixel', 'uCreek', 'uMouth', 'uMask'])
+    for (const name of ['uTile', 'uPaper', 'uPixel', 'uCourse', 'uStep', 'uMask'])
       this.uniforms[name] = gl.getUniformLocation(program, name)
     gl.bindTexture(gl.TEXTURE_2D, gl.createTexture())
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 1, 1, 0, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array([0]))
@@ -127,6 +135,15 @@ export class Painter {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
     gl.uniform1i(this.uniforms.uMask, 0)
+    gl.activeTexture(gl.TEXTURE1)
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture())
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.uniform1i(this.uniforms.uCourse, 1)
+    this.setCourse({ step: 1000, points: new Float32Array(4) })
+    gl.activeTexture(gl.TEXTURE0)
     gl.enable(gl.BLEND)
     gl.enable(gl.SCISSOR_TEST)
   }
@@ -141,9 +158,12 @@ export class Painter {
     this.gl.uniform3f(this.uniforms.uPaper, ...paper)
   }
 
-  setCreek(creek: Creek) {
-    this.gl.uniform4f(this.uniforms.uCreek, creek.middle, creek.wind, creek.half, creek.mouth)
-    this.gl.uniform2f(this.uniforms.uMouth, creek.mouthAt, creek.mouthReach)
+  setCourse({ step, points }: Course) {
+    const { gl } = this
+    gl.activeTexture(gl.TEXTURE1)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, points.length / 2, 1, 0, gl.RG, gl.FLOAT, points)
+    gl.activeTexture(gl.TEXTURE0)
+    gl.uniform1f(this.uniforms.uStep, step)
   }
 
   private put(at: number, wash: Wash) {
