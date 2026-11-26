@@ -9,6 +9,9 @@ interface Square {
 }
 
 const SQUARE_SIZE = 134
+// Easing toward 0 only decays, so it takes minutes to stop changing. Opacity this
+// small (of 255) is invisible and too small to affect any later easing step.
+const SETTLED_OPACITY = 1e-18
 
 function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
@@ -56,11 +59,19 @@ export function SquareBackground() {
       }
     }
 
+    const requestDraw = () => {
+      if (!animationFrame) animationFrame = window.requestAnimationFrame(draw)
+    }
+
     const draw = () => {
+      animationFrame = 0
+      let changed = false
       context.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight)
 
       for (const square of squares) {
+        const previousOpacity = square.opacity
         square.opacity += (square.targetOpacity - square.opacity) * 0.05
+        if (square.opacity !== previousOpacity && square.opacity > SETTLED_OPACITY) changed = true
 
         const gradient = context.createLinearGradient(
           square.x,
@@ -76,7 +87,9 @@ export function SquareBackground() {
         context.fillRect(square.x, square.y, SQUARE_SIZE, SQUARE_SIZE)
       }
 
-      if (!reducedMotion) animationFrame = window.requestAnimationFrame(draw)
+      // Once easing no longer moves any square, every further frame would be
+      // identical, so stop until a hover or resize changes one.
+      if (!reducedMotion && changed) requestDraw()
     }
 
     const move = (event: PointerEvent) => {
@@ -90,7 +103,10 @@ export function SquareBackground() {
           y >= candidate.y &&
           y < candidate.y + SQUARE_SIZE,
       )
-      if (square && square !== hoveredSquare) square.targetOpacity = random(0, 255)
+      if (square && square !== hoveredSquare) {
+        square.targetOpacity = random(0, 255)
+        requestDraw()
+      }
       hoveredSquare = square
     }
 
@@ -99,17 +115,23 @@ export function SquareBackground() {
     const resizeAndDraw = () => {
       resize()
       if (reducedMotion) draw()
+      else requestDraw()
     }
     const resizeObserver = new ResizeObserver(resizeAndDraw)
     resizeObserver.observe(shell)
     window.addEventListener('resize', resizeAndDraw)
-    if (!reducedMotion) window.addEventListener('pointermove', move, { passive: true })
+    if (!reducedMotion) {
+      window.addEventListener('pointermove', move, { passive: true })
+      // The browser clears the canvas when it restores a lost context.
+      canvas.addEventListener('contextrestored', requestDraw)
+    }
 
     return () => {
       window.cancelAnimationFrame(animationFrame)
       resizeObserver.disconnect()
       window.removeEventListener('resize', resizeAndDraw)
       window.removeEventListener('pointermove', move)
+      canvas.removeEventListener('contextrestored', requestDraw)
     }
   }, [])
 
