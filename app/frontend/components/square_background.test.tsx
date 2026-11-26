@@ -104,6 +104,35 @@ describe('interactive square background', () => {
     expect(Math.random).toHaveBeenCalledTimes(initialRandomCalls + 2)
   })
 
+  it('stops drawing once every square has settled and resumes on hover', () => {
+    let pending: FrameRequestCallback | undefined
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      pending = callback
+      return 1
+    })
+    const runFrames = (limit: number) => {
+      let frames = 0
+      while (pending && frames < limit) {
+        const callback = pending
+        pending = undefined
+        callback(0)
+        frames += 1
+      }
+      return frames
+    }
+
+    act(() => root.render(<SiteShell>Page</SiteShell>))
+    runFrames(2000)
+    expect(pending).toBeUndefined()
+
+    vi.mocked(Math.random).mockReturnValue(0)
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 10, clientY: 10 }))
+    expect(runFrames(50)).toBe(50)
+    // Target 0: decay must not keep the loop alive until it underflows.
+    runFrames(2000)
+    expect(pending).toBeUndefined()
+  })
+
   it('includes the original noise texture filter', () => {
     const markup = renderToStaticMarkup(<SiteShell>Page</SiteShell>)
     const renderedShell = document.createElement('div')
