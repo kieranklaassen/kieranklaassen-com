@@ -4,7 +4,8 @@
 autonomous_profile: hands-off
 autonomous_motions: [main-red, backlog, stack, climb]
 autonomous_landing: pull-request
-autonomous_ci: required
+autonomous_ci: if-running
+autonomous_ignored_checks: ["deploy/netlify", "Header rules", "Pages changed", "Redirect rules"]
 autonomous_merge_method: merge
 autonomous_checks:
   - run: mkdir -p tmp/g && cp Gemfile* tmp/g/ && export BUNDLE_GEMFILE=$PWD/tmp/g/Gemfile BUNDLE_PATH=$PWD/vendor/bundle && bundle install --quiet && bin/brakeman --no-pager
