@@ -3,8 +3,10 @@
 class InertiaController < ApplicationController
   LOOKS = %w[blocks long rooms name estuary score mosaic page].freeze
 
+  ARTS = %w[book wide around river].freeze
+
   before_action :remember_look
-  inertia_share look: -> { look }, chooseLook: -> { cookies[:look].present? && params[:chooser] != "0" }
+  inertia_share look: -> { look }, art: -> { art }, chooseLook: -> { cookies[:look].present? && params[:chooser] != "0" }
 
   private
 
@@ -12,7 +14,12 @@ class InertiaController < ApplicationController
     LOOKS.include?(cookies[:look]) ? cookies[:look] : LOOKS.first
   end
 
+  def art
+    ARTS.include?(cookies[:art]) ? cookies[:art] : ARTS.first
+  end
+
   def remember_look
+    cookies[:art] = params[:art] if ARTS.include?(params[:art])
     cookies[:look] = params[:look] if LOOKS.include?(params[:look])
   end
 end

@@ -2,14 +2,14 @@ import { Link, usePage } from '@inertiajs/react'
 import type { PropsWithChildren } from 'react'
 import { SiteShell } from '../components/site_shell'
 import { PaintedSheet } from '../watercolor/sheet'
-import { LOOKS, roomsOf, type Look } from './looks'
+import { ARTS, LOOKS, roomsOf, type Art, type Look } from './looks'
 
 export function LookShell({ children }: PropsWithChildren) {
-  const { props, url, component } = usePage<{ look: Look; chooseLook: boolean }>()
+  const { props, url, component } = usePage<{ look: Look; art: Art; chooseLook: boolean }>()
   const look = props.look
-  const chooser = props.chooseLook && <LookChooser look={look} path={url.split('?')[0]} />
+  const rooms = roomsOf(look, component, props.art)
+  const chooser = props.chooseLook && <LookChooser look={look} art={rooms?.art} path={url.split('?')[0]} />
 
-  const rooms = roomsOf(look, component)
   if (!rooms)
     return (
       <>
@@ -19,7 +19,7 @@ export function LookShell({ children }: PropsWithChildren) {
     )
 
   return (
-    <div className="wc">
+    <div className="wc" data-art={rooms.art}>
       <PaintedSheet compose={rooms.compose} page={url} />
       <div className="wc-head" data-look={rooms.head}>
         <LookHeader small={component.startsWith('posts/show')} />
@@ -59,12 +59,15 @@ function LookHeader({ small }: { small: boolean }) {
 }
 
 /** For choosing between the directions while they are being looked at. */
-function LookChooser({ look, path }: { look: Look; path: string }) {
+function LookChooser({ look, art, path }: { look: Look; art?: Art; path: string }) {
+  const choices = art
+    ? ARTS.map((one) => ({ href: `${path}?art=${one.art}`, title: one.title, chosen: one.art === art }))
+    : LOOKS.map((one) => ({ href: `${path}?look=${one.look}`, title: one.title, chosen: one.look === look }))
   return (
     <nav className="wc-chooser" aria-label="Look">
-      {LOOKS.map((one) => (
-        <a key={one.look} href={`${path}?look=${one.look}`} aria-current={one.look === look || undefined}>
-          {one.title}
+      {choices.map(({ href, title, chosen }) => (
+        <a key={href} href={href} aria-current={chosen || undefined}>
+          {title}
         </a>
       ))}
     </nav>

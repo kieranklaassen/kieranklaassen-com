@@ -23,7 +23,7 @@ export function Thoughts({ posts, room }: { posts: PostSummary[]; room: string }
       {posts.map((post) => (
         <li key={post.slug} data-wander>
           <Entry href={post.external_url ?? post.path} external={Boolean(post.external_url)} name={room === 'name' ? 'line' : 'card'}>
-            <span className="wc-swatch" data-paint="swatch" data-key={post.slug} aria-hidden="true" />
+            {room === 'score' ? <span className="wc-thumb" data-paint="picture" data-key={post.slug} aria-hidden="true" /> : <span className="wc-swatch" data-paint="swatch" data-key={post.slug} aria-hidden="true" />}
             {room === 'mosaic' && <span className="wc-phrase" data-paint="phrase" data-key={post.slug} data-strong={post.title} data-pale={post.description} aria-hidden="true" />}
             <h3>{post.title}</h3>
             <p>{post.description}</p>

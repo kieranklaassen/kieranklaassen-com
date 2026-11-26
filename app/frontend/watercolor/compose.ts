@@ -1,5 +1,7 @@
-import { lettersOf, type Letter, type Mask } from './letters'
+import { lettersOf, type Letter } from './letters'
+import { Cutter, type Mask } from './mask'
 import { Kind, type Course, type RGB, type Rect, type Wash } from './painter'
+import { plate } from './picture'
 import { clamp, four, hashOf, pigment, seeded, smooth, type Random } from './pigments'
 
 export interface PaintBox extends Rect {
@@ -28,13 +30,13 @@ export interface Page {
 
 export type Compose = (page: Page) => Composition
 
-const PAPER: RGB = [0.972, 0.953, 0.912]
+export const PAPER: RGB = [0.972, 0.953, 0.912]
 
-const grown = (box: Rect, by: number): Rect => ({ x: box.x - by, y: box.y - by, w: box.w + by * 2, h: box.h + by * 2 })
-const meets = (a: Rect, b: Rect) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
+export const grown = (box: Rect, by: number): Rect => ({ x: box.x - by, y: box.y - by, w: box.w + by * 2, h: box.h + by * 2 })
+export const meets = (a: Rect, b: Rect) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
 
 /** What is left of `cell` beside every rectangle in `taken`: the largest piece each time. */
-function beside(cell: Rect, taken: Rect[], least: number): Rect | undefined {
+export function beside(cell: Rect, taken: Rect[], least: number): Rect | undefined {
   let left = cell
   for (const t of taken) {
     if (!meets(left, t)) continue
@@ -50,7 +52,7 @@ function beside(cell: Rect, taken: Rect[], least: number): Rect | undefined {
   return left.w < least || left.h < least ? undefined : left
 }
 
-const of = (boxes: PaintBox[], ...names: string[]) => boxes.filter((box) => names.includes(box.name))
+export const of = (boxes: PaintBox[], ...names: string[]) => boxes.filter((box) => names.includes(box.name))
 
 // ---------------------------------------------------------------------------------------------
 // The page is the painting: every card is an oblong of the picture, and small squares lie around.
@@ -162,7 +164,7 @@ export const smallSquares: Compose = ({ width, height, boxes: measure, random })
 }
 
 /** A ruled line that lifts off where something is written. */
-function ruled(line: Rect, taken: Rect[], random: Random): Wash[] {
+export function ruled(line: Rect, taken: Rect[], random: Random): Wash[] {
   const across = line.w > line.h
   const from = across ? line.x : line.y
   const to = from + (across ? line.w : line.h)
@@ -179,7 +181,7 @@ function ruled(line: Rect, taken: Rect[], random: Random): Wash[] {
   return pieces
 }
 
-function pencil(rect: Rect, random: Random): Wash {
+export function pencil(rect: Rect, random: Random): Wash {
   return { ...rect, kind: Kind.Pencil, ink: [0.4, 0.4, 0.4], ink2: [0.4, 0.4, 0.4], density: 0.8, seed: four(random), delay: 0, lasts: 900, grow: 0, still: true }
 }
 
@@ -187,7 +189,7 @@ function pencil(rect: Rect, random: Random): Wash {
 // Painted name: bare paper, the name in glazes whose paint ran, and a wash for the line pointed at.
 
 /** Dark enough to be read as ink, each letter a pigment of its own along one turn of the wheel. */
-function letterInk(i: number, count: number, turn: number): [RGB, RGB] {
+export function letterInk(i: number, count: number, turn: number): [RGB, RGB] {
   const at = (i / Math.max(1, count - 1)) * 1.0 + turn
   const w = 0.5 + 0.62 * Math.sin(at * 6.283)
   const light = 0.16 + 0.2 * (0.5 + 0.5 * Math.sin(i * 2.4 + turn * 9))
@@ -221,7 +223,7 @@ export const paintedName: Compose = ({ boxes: measure, shell, random, width, lon
   const boxes = measure()
   const from = shell.getBoundingClientRect()
   const washes: Wash[] = []
-  let mask: Mask | undefined
+  const cutter = new Cutter()
 
   for (const line of of(boxes, 'line')) {
     const own = seeded(hashOf(line.key))
@@ -245,9 +247,8 @@ export const paintedName: Compose = ({ boxes: measure, shell, random, width, lon
   if (!long) for (const swatch of swatches) washes.push(swatchWash(swatch, random))
 
   const name = of(boxes, 'title')[0] ?? of(boxes, 'name')[0]
-  const letters = name && lettersOf(name.element, from.left, from.top)
+  const letters = name && lettersOf(name.element, from.left, from.top, cutter)
   if (name && letters) {
-    mask = letters.mask
     const turn = name.name === 'name' ? random() : (hashOf(name.key) % 1000) / 1000
     const inks = letters.letters.map((_, i) => letterInk(i, letters.letters.length, turn))
     const big = parseFloat(getComputedStyle(name.element).fontSize)
@@ -299,28 +300,28 @@ export const paintedName: Compose = ({ boxes: measure, shell, random, width, lon
   }
   washes.push(...staffWashes(boxes, random))
   for (const rule of of(boxes, 'rule')) washes.push(pencil({ x: rule.x, y: rule.y - 1, w: rule.w, h: 3 }, random))
-  return { washes, paper: PAPER, mask }
+  return { washes, paper: PAPER, mask: cutter.sheet() }
 }
 
 // ---------------------------------------------------------------------------------------------
 // Estuary: sandbanks seen from the air, and a creek of bare paper that the writing runs down.
 
-const NARROW = 900
+export const NARROW = 900
 const STEP = 12
 
 /** The water comes and goes twice a day, as it does. From -1 to 1. */
-const tide = () => Math.sin((Date.now() / 3_600_000 / 12.42) * 2 * Math.PI)
+export const tide = () => Math.sin((Date.now() / 3_600_000 / 12.42) * 2 * Math.PI)
 
-const winding = (y: number) => 0.62 * Math.sin(y / 310 + 0.6) + 0.38 * Math.sin(y / 173 + 2)
+export const winding = (y: number) => 0.62 * Math.sin(y / 310 + 0.6) + 0.38 * Math.sin(y / 173 + 2)
 
-function courseOf(height: number, at: (y: number) => [number, number]): Course {
+export function courseOf(height: number, at: (y: number) => [number, number]): Course {
   const step = Math.max(STEP, height / 2000)
   const points = new Float32Array((Math.ceil(height / step) + 2) * 2)
   for (let i = 0; i < points.length / 2; i++) points.set(at(i * step), i * 2)
   return { step, points }
 }
 
-const courseAt = ({ step, points }: Course, y: number): [number, number] => {
+export const courseAt = ({ step, points }: Course, y: number): [number, number] => {
   const last = points.length / 2 - 1
   const f = clamp(y / step, 0, last - 0.001)
   const i = Math.floor(f)
@@ -329,7 +330,7 @@ const courseAt = ({ step, points }: Course, y: number): [number, number] => {
 }
 
 /** On a phone the creek goes round what is written: as wide as a paragraph, a trickle where there is none. */
-function courseRound(written: Rect[], width: number, height: number): Course {
+export function courseRound(written: Rect[], width: number, height: number): Course {
   const count = Math.ceil(height / STEP) + 2
   const low = new Float32Array(count)
   const high = new Float32Array(count)
@@ -372,7 +373,7 @@ interface Shore {
   tone?: Tone
 }
 
-function banks({ width, top, foot, course, random, tone }: Shore): Wash[] {
+export function banks({ width, top, foot, course, random, tone }: Shore): Wash[] {
   const washes: Wash[] = []
   const narrow = width < NARROW
   const turn = random() * 6
@@ -412,7 +413,7 @@ function banks({ width, top, foot, course, random, tone }: Shore): Wash[] {
 }
 
 /** What is written in the stream, for a creek that goes round it. */
-function writtenIn(boxes: PaintBox[], shell: HTMLElement): Rect[] {
+export function writtenIn(boxes: PaintBox[], shell: HTMLElement): Rect[] {
   const from = shell.getBoundingClientRect()
   const blocks = [...shell.querySelectorAll<HTMLElement>('.wc-prose > *, .wc-sheet > header > *, .wc-back')].map((element) => {
     const box = element.getBoundingClientRect()
@@ -421,7 +422,7 @@ function writtenIn(boxes: PaintBox[], shell: HTMLElement): Rect[] {
   return [...of(boxes, 'name', 'intro', 'nav', 'heading', 'card', 'repo', 'title', 'staff', 'quiet', ...(blocks.length ? [] : ['sheet'])), ...blocks]
 }
 
-function wander(shell: HTMLElement, middle: (y: number) => number, width: number) {
+export function wander(shell: HTMLElement, middle: (y: number) => number, width: number) {
   const from = shell.getBoundingClientRect()
   const all = [...shell.querySelectorAll<HTMLElement>('[data-wander]')]
   for (const element of all) element.style.translate = ''
@@ -431,7 +432,7 @@ function wander(shell: HTMLElement, middle: (y: number) => number, width: number
   }
 }
 
-const still = (shell: HTMLElement) => {
+export const still = (shell: HTMLElement) => {
   for (const element of shell.querySelectorAll<HTMLElement>('[data-wander]')) element.style.translate = ''
 }
 
@@ -493,7 +494,9 @@ export const longPage: Compose = (page) => {
 export const score: Compose = ({ boxes: measure, random }) => {
   const boxes = measure()
   const swatches = of(boxes, 'swatch').filter((box) => box.w > 0).map((swatch) => swatchWash(swatch, random))
-  return { washes: [...swatches, ...sheetWashes(boxes, random), ...staffWashes(boxes, random)], paper: PAPER }
+  const cutter = new Cutter()
+  const pictures = of(boxes, 'picture').flatMap((box) => plate(box, box.key, cutter, seeded(hashOf(box.key)), true))
+  return { washes: [...swatches, ...sheetWashes(boxes, random), ...staffWashes(boxes, random), ...pictures], paper: PAPER, mask: cutter.sheet() }
 }
 
 function staffWashes(boxes: PaintBox[], random: Random): Wash[] {
@@ -547,13 +550,13 @@ export interface Tone {
 }
 
 /** Every thought has a color of its own: in the score, beside its title and on the banks of its page. */
-function toneOf(key: string): Tone {
+export function toneOf(key: string): Tone {
   const own = seeded(hashOf(key))
   const warmth = own() < 0.5 ? own() * 0.3 : 0.7 + own() * 0.3
   return { warmth, light: 0.04 + 0.42 * own(), goes: warmth + 0.5 * (own() - 0.5) }
 }
 
-function noteInk(key: string): [RGB, RGB] {
+export function noteInk(key: string): [RGB, RGB] {
   const tone = toneOf(key)
   return [pigment(tone.light, tone.warmth), pigment(tone.light + 0.16, tone.goes)]
 }

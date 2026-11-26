@@ -1,0 +1,92 @@
+/* An article with a painting of its own. What is the same in all four, and then each in turn. */
+.wc [data-look="article"] { font-family: var(--serif); }
+.wc [data-look="article"] .wc-header { max-width: none; display: flex; justify-content: space-between; align-items: baseline; gap: 24px; padding: 34px clamp(20px, 4vw, 60px) 0; }
+.wc [data-look="article"] h1 { font-family: var(--font-sans); font-size: 25px; line-height: 1.1; letter-spacing: -0.045em; }
+.wc [data-look="article"] .wc-intro { margin: 0; }
+.wc [data-look="article"] .wc-intro p { display: none; }
+.wc [data-look="article"] .wc-intro nav { margin: 0; font-size: 17px; font-weight: 500; }
+.wc [data-look="article"] .wc-back { display: inline-block; font-size: 17px; font-weight: 500; }
+.wc [data-look="article"] .wc-when { font-size: 17px; color: var(--soft-ink); }
+.wc [data-look="article"] .wc-when p { margin-top: 4px; font-size: 16px; }
+.wc [data-look="article"] header h2 { font-family: var(--font-sans); font-weight: 800; line-height: 0.96; letter-spacing: -0.048em; text-wrap: balance; overflow-wrap: break-word; }
+.wc[data-painted] [data-look="article"] header h2, .wc[data-painted][data-art="book"] .wc-initial, .wc [data-look="article"] header h2::selection, .wc[data-art="book"] .wc-initial::selection { color: transparent; }
+.wc [data-look="article"] .wc-prose { font-size: 21px; line-height: 1.56; margin-top: 0; }
+.wc [data-look="article"] .wc-prose :is(h2, h3) { font-weight: 600; letter-spacing: -0.018em; text-wrap: balance; }
+.wc [data-look="article"] .wc-prose > :first-child { margin-top: 0; }
+.wc-tail, .wc-foot { display: none; }
+@media (max-width: 699px) {
+  .wc [data-look="article"] .wc-header { padding-top: 22px; }
+  .wc [data-look="article"] .wc-prose { font-size: 19px; }
+}
+
+/* ---- Book ---- */
+.wc[data-art="book"] .wc-art { max-width: 960px; margin: 0 auto; padding: 0 22px 110px; }
+.wc[data-art="book"] .wc-picture { aspect-ratio: 1.6; max-width: 860px; margin: clamp(44px, 5vw, 76px) auto 0; }
+.wc[data-art="book"] .wc-art > header { display: flex; flex-direction: column; align-items: center; text-align: center; margin: clamp(38px, 4.4vw, 64px) 0 clamp(44px, 5vw, 72px); }
+.wc[data-art="book"] .wc-back { order: 3; margin-top: 10px; }
+.wc[data-art="book"] header h2 { font-size: clamp(2rem, min(12vw, calc(150vw / var(--longest))), 5.9rem); }
+.wc[data-art="book"] .wc-when { margin-top: 26px; }
+.wc[data-art="book"] .wc-when p { margin-inline: auto; }
+.wc[data-art="book"] .wc-prose { max-width: 680px; margin: 0 auto; }
+.wc[data-art="book"] .wc-initial { float: left; font: 800 124px/0.8 var(--font-sans); letter-spacing: 0; padding: 12px 10px 8px 8px; margin: 4px 16px 2px 0; }
+.wc[data-art="book"] .wc-prose > :is(h2, h3) { margin-top: 1.1em; padding-top: 152px; text-align: center; font-size: 30px; line-height: 1.12; }
+.wc[data-art="book"] .wc-prose > h3 { font-size: 26px; }
+.wc[data-art="book"] .wc-tail { display: block; width: 150px; height: 150px; margin: 70px auto 0; }
+@media (max-width: 899px) {
+  .wc[data-art="book"] .wc-picture { margin-inline: -8px; }
+  .wc[data-art="book"] .wc-initial { font-size: 92px; }
+  .wc[data-art="book"] .wc-prose > :is(h2, h3) { padding-top: 116px; font-size: 26px; }
+}
+
+/* ---- Wide ---- */
+.wc[data-art="wide"] .wc-art { position: relative; }
+.wc[data-art="wide"] .wc-picture { height: clamp(560px, 50vw, 780px); margin-top: -70px; }
+.wc[data-art="wide"] .wc-art > header { position: absolute; top: 0; left: 0; height: clamp(490px, calc(50vw - 70px), 710px); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; width: 42%; padding: 40px 0 20px clamp(20px, 4vw, 60px); }
+.wc[data-art="wide"] .wc-back { margin-bottom: 22px; }
+.wc[data-art="wide"] header h2 { font-size: min(5.2vw, 6rem, calc(62vw / var(--longest))); }
+.wc[data-art="wide"] .wc-when { margin-top: 24px; }
+.wc[data-art="wide"] .wc-prose { max-width: 690px; margin: clamp(60px, 7vw, 110px) auto 0; padding: 0 22px; box-sizing: content-box; }
+.wc[data-art="wide"] .wc-prose > :is(h2, h3) { font-size: 32px; line-height: 1.12; margin-top: 2em; }
+.wc[data-art="wide"] .wc-foot { display: block; height: 240px; margin-top: 110px; margin-bottom: 8px; }
+@media (max-width: 899px) {
+  .wc[data-art="wide"] .wc-picture { height: 78vw; margin-top: 18px; }
+  .wc[data-art="wide"] .wc-art > header { position: static; height: auto; width: auto; padding: 30px 22px 0; }
+  .wc[data-art="wide"] header h2 { font-size: min(12.5vw, 5rem, calc(150vw / var(--longest))); }
+  .wc[data-art="wide"] .wc-prose { margin-top: 44px; }
+  .wc[data-art="wide"] .wc-foot { height: 150px; }
+}
+
+/* ---- Around ---- */
+.wc[data-art="around"] { --w: min(37vw, 580px); }
+.wc[data-art="around"] .wc-art { display: flex; flex-direction: column; padding-bottom: 130px; }
+.wc[data-art="around"] .wc-art > header { order: 1; padding: clamp(44px, 5vw, 80px) clamp(20px, 4vw, 60px) 0; }
+.wc[data-art="around"] header h2 { font-size: clamp(2rem, min(12.5vw, calc(150vw / var(--longest))), min(10.6vw, 10.4rem)); line-height: 0.9; margin: 14px 0 0 -0.04em; text-wrap: wrap; }
+.wc[data-art="around"] .wc-when { margin-top: 30px; }
+.wc[data-art="around"] .wc-picture { order: 2; align-self: flex-end; width: var(--w); aspect-ratio: 1.6; margin: clamp(48px, 6vw, 92px) clamp(14px, 2.6vw, 44px) calc(var(--w) / -1.6 - clamp(48px, 6vw, 92px)); }
+.wc[data-art="around"] .wc-prose { order: 3; max-width: 620px; margin-left: max(20px, 15.5vw); margin-top: clamp(56px, 6.5vw, 104px); }
+.wc[data-art="around"] .wc-prose > :is(h2, h3) { font-size: 31px; line-height: 1.12; margin-top: 1.8em; }
+@media (max-width: 1279px) { .wc[data-art="around"] .wc-prose { max-width: 46vw; } }
+@media (max-width: 899px) {
+  .wc[data-art="around"] { --w: calc(100vw - 24px); }
+  .wc[data-art="around"] header h2 { font-size: min(13.5vw, calc(150vw / var(--longest))); }
+  .wc[data-art="around"] .wc-picture { margin: 34px 12px 0; }
+  .wc[data-art="around"] .wc-prose { margin: 44px 22px 0; max-width: none; }
+  .wc[data-art="around"] .wc-prose > :is(h2, h3) { font-size: 27px; min-height: 142px; padding-top: 34px; box-sizing: border-box; }
+  .wc[data-art="around"] .wc-prose > :is(h2, h3) { padding-right: 136px; }
+}
+
+/* ---- River ---- */
+.wc[data-art="river"] .wc-stream { max-width: 700px; margin: 0 auto; padding-bottom: 150px; }
+.wc[data-art="river"] .wc-picture { width: min(640px, 86vw); aspect-ratio: 1.6; margin: 28px auto 0; }
+.wc[data-art="river"] .wc-art { max-width: 640px; margin: 0 auto; }
+.wc[data-art="river"] .wc-art > header { display: flex; flex-direction: column; align-items: center; text-align: center; margin: 40px 0 54px; }
+.wc[data-art="river"] .wc-back { order: 3; margin-top: 10px; }
+.wc[data-art="river"] header h2 { font-size: clamp(2rem, min(12vw, calc(140vw / var(--longest))), min(5.4rem, calc(62rem / var(--longest)))); }
+.wc[data-art="river"] .wc-when { margin-top: 24px; }
+.wc[data-art="river"] .wc-when p { margin-inline: auto; }
+.wc[data-art="river"] .wc-prose > :is(h2, h3) { margin-top: 0.9em; padding-top: 154px; text-align: center; font-size: 30px; line-height: 1.12; }
+@media (max-width: 899px) {
+  .wc[data-art="river"] .wc-stream { max-width: none; margin-inline: 26px; padding-bottom: 260px; }
+  .wc[data-art="river"] .wc-picture { margin-top: 60px; width: calc(100vw - 100px); }
+  .wc[data-art="river"] .wc-prose > :is(h2, h3) { padding-top: 130px; font-size: 26px; }
+}

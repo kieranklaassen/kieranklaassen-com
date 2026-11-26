@@ -199,6 +199,8 @@
 @media (min-width: 1180px) { .wc [data-look="score"] .wc-entries { grid-template-columns: repeat(4, 1fr); } .wc-score { margin-left: 92px; } .wc .wc-lanes { display: block; } }
 .wc [data-look="score"] .wc-entry { display: grid; grid-template-columns: 46px minmax(0, 1fr); column-gap: 20px; }
 .wc [data-look="score"] .wc-swatch { display: block; grid-row: 1 / span 3; height: 100%; min-height: 60px; }
+.wc [data-look="score"] .wc-thoughts .wc-entry { display: block; }
+.wc-thumb { display: block; aspect-ratio: 1.6; margin-bottom: 14px; }
 .wc [data-look="score"] .wc-entry h3 { font-size: 21px; line-height: 1.2; letter-spacing: -0.02em; text-wrap: balance; }
 .wc [data-look="score"] .wc-entry:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
 .wc [data-look="score"] .wc-entry p { grid-column: 2; margin-top: 6px; font-size: 15px; line-height: 1.5; color: var(--soft-ink); }
