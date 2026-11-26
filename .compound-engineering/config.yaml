@@ -1,0 +1,14 @@
+# Settings for autonomous maintenance runs. Each check starts from a clean copy of the commit:
+# gems go to vendor/bundle through a copied lockfile, so a platform the lockfile does not list
+# never rewrites it, and the SSR server takes a free port instead of one a running site may hold.
+autonomous_profile: hands-off
+autonomous_motions: [main-red, backlog, stack, climb]
+autonomous_landing: pull-request
+autonomous_ci: required
+autonomous_merge_method: merge
+autonomous_checks:
+  - run: mkdir -p tmp/g && cp Gemfile* tmp/g/ && export BUNDLE_GEMFILE=$PWD/tmp/g/Gemfile BUNDLE_PATH=$PWD/vendor/bundle && bundle install --quiet && bin/brakeman --no-pager
+  - run: mkdir -p tmp/g && cp Gemfile* tmp/g/ && export BUNDLE_GEMFILE=$PWD/tmp/g/Gemfile BUNDLE_PATH=$PWD/vendor/bundle RUBOCOP_CACHE_ROOT=$PWD/tmp/rubocop && bundle install --quiet && bin/rubocop
+  - run: npm ci --silent && npm run check
+  - run: npm ci --silent && npm run test:frontend
+  - run: mkdir -p tmp/g && cp Gemfile* tmp/g/ && export BUNDLE_GEMFILE=$PWD/tmp/g/Gemfile BUNDLE_PATH=$PWD/vendor/bundle && bundle install --quiet && npm ci --silent && npm run build && port=$(ruby -rsocket -e 'puts TCPServer.open("127.0.0.1", 0) { |s| s.addr[1] }') && grep -q 13714 public/vite-ssr/ssr.js && perl -pi -e "s/\b13714\b/$port/g" public/vite-ssr/ssr.js && { node public/vite-ssr/ssr.js & ssr=$!; trap 'kill $ssr 2>/dev/null' EXIT; up=; for i in $(seq 40); do curl -fs http://127.0.0.1:$port/health && up=1 && break; sleep 0.25; done; [ -n "$up" ] && kill -0 $ssr && INERTIA_SSR_URL=http://127.0.0.1:$port SSR_STRICT=1 bin/rails test; }
