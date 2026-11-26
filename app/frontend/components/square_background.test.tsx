@@ -163,10 +163,9 @@ describe('interactive square background', () => {
     startSquaresAwayFromTarget()
     act(() => root.render(<SiteShell>Page</SiteShell>))
 
-    // The frames that move some square to another whole opacity are all painted.
+    // 47 of the first 51 draws reach a new whole opacity; each paints all 12 squares.
     expect(frames.run(50)).toBe(50)
-    const painted = fillRect.mock.calls.length
-    expect(painted).toBeGreaterThan(12 * 25)
+    expect(fillRect).toHaveBeenCalledTimes(12 * 47)
     frames.run(150)
     fillRect.mockClear()
 
