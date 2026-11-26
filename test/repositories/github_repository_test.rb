@@ -34,6 +34,16 @@ class GithubRepositoryTest < ActiveSupport::TestCase
     assert repositories.all? { |repository| repository.keys == %i[name description language stars url] }
   end
 
+  test "excludes forks and archived repositories below the limit" do
+    repositories = load_entries([
+      repository_entry(name: "forked", fork: true),
+      repository_entry(name: "archived", archived: true),
+      repository_entry(name: "kept")
+    ])
+
+    assert_equal [ "kept" ], repositories.map { |repository| repository.fetch(:name) }
+  end
+
   test "allows a pinned repository from another GitHub organization" do
     repository = load_entries([
       repository_entry(

@@ -3,8 +3,6 @@
 require "uri"
 require "yaml"
 
-# Extended by repositories that read a checked-in YAML list. They define SOURCE_PATH,
-# ENTRY_NAME, ENTRY_ERROR and the private class methods load_all and load_entry.
 module YamlListRepository
   def all
     return load_all if Rails.env.development?
