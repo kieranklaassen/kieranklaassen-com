@@ -158,6 +158,28 @@ describe('interactive square background', () => {
     expect(frames.isPending()).toBe(false)
   })
 
+  it('keeps easing without repainting once no square rounds to a new opacity', () => {
+    const frames = stubFrames()
+    startSquaresAwayFromTarget()
+    act(() => root.render(<SiteShell>Page</SiteShell>))
+
+    // The frames that move some square to another whole opacity are all painted.
+    expect(frames.run(50)).toBe(50)
+    const painted = fillRect.mock.calls.length
+    expect(painted).toBeGreaterThan(12 * 25)
+    frames.run(150)
+    fillRect.mockClear()
+
+    expect(frames.run(100)).toBe(100)
+    expect(fillRect).not.toHaveBeenCalled()
+
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 10, clientY: 10 }))
+    vi.mocked(Math.random).mockReturnValue(0)
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 150, clientY: 10 }))
+    frames.run(1)
+    expect(fillRect).toHaveBeenCalledTimes(12)
+  })
+
   it.each([
     ['a window resize', () => window.dispatchEvent(new Event('resize'))],
     ['a ResizeObserver callback', () => resizeCallback?.()],
