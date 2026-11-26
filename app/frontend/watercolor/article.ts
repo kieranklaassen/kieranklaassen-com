@@ -31,6 +31,7 @@ export function paintedTitle(box: PaintBox, page: Page, cutter: Cutter, random: 
       seed: four(random),
       extra: letter.uv,
       field: found.field,
+      index: i,
       from: [0.2 + 0.6 * random(), random()],
       delay: delay + i * step,
       lasts: 1300,

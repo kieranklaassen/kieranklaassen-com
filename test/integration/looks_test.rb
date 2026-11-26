@@ -20,6 +20,16 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_empty cookies[:look].to_s
   end
 
+  test "a layout of an article is remembered from one article to the next" do
+    first, second = PostRepository.all.first(2)
+    get first.path, params: { look: "rooms", art: "river" }
+    assert_equal "river", cookies[:art]
+    get second.path
+    assert_match(/(?:"|&quot;)art(?:"|&quot;):(?:"|&quot;)river/, response.body)
+    get second.path, params: { art: "nonsense" }
+    assert_equal "river", cookies[:art]
+  end
+
   test "only the score is handed every thought" do
     get root_path(look: "page")
     refute_match(/(?:"|&quot;)score(?:"|&quot;):\[/, response.body)
@@ -30,7 +40,7 @@ class LooksTest < ActionDispatch::IntegrationTest
   test "a look for each page gives every page its own" do
     skip "set INERTIA_SSR_URL and SSR_STRICT=1 after building the SSR bundle" unless ENV["SSR_STRICT"] == "1"
 
-    { root_path(look: "rooms") => "name", "/posts" => "score", PostRepository.all.first.path => "estuary", about_path => "mosaic" }.each do |path, room|
+    { root_path(look: "rooms") => "name", "/posts" => "score", PostRepository.all.first.path => "article", about_path => "mosaic" }.each do |path, room|
       get path
       assert_includes response.body, %(class="wc-body" data-look="#{room}")
     end
@@ -46,7 +56,7 @@ class LooksTest < ActionDispatch::IntegrationTest
   test "every look is rendered on the server" do
     skip "set INERTIA_SSR_URL and SSR_STRICT=1 after building the SSR bundle" unless ENV["SSR_STRICT"] == "1"
 
-    (InertiaController::LOOKS - [ "blocks" ]).each do |look|
+    (InertiaController::LOOKS - %w[blocks rooms]).each do |look|
       get root_path(look:)
       assert_response :success
       assert_includes response.body, %(data-look="#{look}")

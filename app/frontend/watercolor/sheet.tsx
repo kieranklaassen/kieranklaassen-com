@@ -1,13 +1,18 @@
 import { useEffect, useRef } from 'react'
 import type { Compose, Composition, PaintBox } from './compose'
+import { ear, type Gesture } from '../sound/ear'
 import { clamp, seeded } from './pigments'
-import { Painter, reachOf, type Rect, type Wash } from './painter'
+import { Kind, Painter, reachOf, type Rect, type Wash } from './painter'
+import { splash } from './splash'
 
 const TILE_HEIGHT = 512
 // Watercolor is soft: past this many device pixels a page pixel, more only costs.
 const MOST_PIXELS = 1.75
 const LAYS_OVER = 1500
 const DROP_LASTS = 1700
+const MOST_SPLASHES = 12
+
+const GESTURE: Record<Kind, Gesture> = { [Kind.Square]: 'square', [Kind.Pencil]: 'square', [Kind.Letter]: 'letter', [Kind.Puddle]: 'puddle', [Kind.Bank]: 'bank', [Kind.Run]: 'run' }
 
 interface Tile {
   canvas: HTMLCanvasElement
@@ -25,6 +30,7 @@ interface Moving {
   goal?: number
   began?: number
   drop?: [number, number, number, number]
+  told?: boolean
 }
 
 const ease = (t: number) => 1 - (1 - t) ** 3
@@ -63,6 +69,7 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
     let size = ''
     let under: Wash | undefined
     let first = true
+    let splashes: Wash[][] = []
 
     const origin = () => sheet.getBoundingClientRect()
 
@@ -95,6 +102,24 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       return { top, bottom: top + window.innerHeight }
     }
 
+    /** Tells whoever listens what a wash does. Nobody listens until Sound is pressed. */
+    const tell = (wash: Wash, gesture: Gesture, lasts = 0) => {
+      if (!ear.hears) return
+      const { top, bottom } = showing()
+      if (wash.y > bottom || wash.y + wash.h < top) return
+      const [r, g, b] = wash.ink
+      const pencil = wash.kind === Kind.Pencil
+      ear.hears({
+        gesture,
+        pan: clamp(((wash.x + wash.w / 2) / window.innerWidth) * 2 - 1, -1, 1),
+        size: pencil ? 0.01 : clamp(Math.sqrt(wash.w * wash.h) / 700),
+        light: pencil ? 1 : clamp(r * 0.3 + g * 0.5 + b * 0.2),
+        warmth: clamp(0.5 + (r - b) * 0.9),
+        lasts: lasts / 1000,
+        index: wash.index,
+      })
+    }
+
     // A wash is laid when it is first seen.
     const startSeen = (now: number) => {
       const { top, bottom } = showing()
@@ -112,6 +137,10 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       for (const one of moving) {
         const t = clamp((now - one.start) / one.lasts)
         if (now >= one.start) {
+          if (!one.told) {
+            one.told = true
+            if (one.kind === 'lay') tell(one.wash, one.wash.kind === Kind.Letter && one.wash.index === undefined ? 'square' : GESTURE[one.wash.kind], one.lasts)
+          }
           if (one.kind === 'lay') one.wash.grow = Math.max(0.001, ease(t))
           if (one.kind === 'flood') one.wash.grow = Math.max(0, (one.began ?? 0) + ((one.goal ?? 0) - (one.began ?? 0)) * ease(t))
           if (one.kind === 'drop' && one.drop) {
@@ -190,6 +219,7 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       if (composition.mask) painter.setMask(composition.mask.width, composition.mask.height, composition.mask.field)
       moving = []
       waiting = new Set()
+      splashes = []
       for (const wash of composition.washes) {
         if (wash.flood) wash.grow = 0
         else if (reduced || laidBefore) wash.grow = 1
@@ -221,7 +251,7 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       composeAsked = requestAnimationFrame(lay)
     }
 
-    const at = (event: PointerEvent) => {
+    const at = (event: MouseEvent) => {
       const from = origin()
       const x = event.clientX - from.left
       const y = event.clientY - from.top
@@ -239,9 +269,78 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
         const radius = Math.min(64, 12 + 0.3 * Math.min(wash.w, wash.h))
         moving = moving.filter((one) => !(one.kind === 'drop' && one.wash === wash))
         moving.push({ wash, kind: 'drop', start: performance.now(), lasts: DROP_LASTS, drop: [x, y, radius, 1] })
+        tell(wash, 'drop')
         ask()
       }
       under = wash
+    }
+
+    // Paint thrown at bare paper, where nothing is to be pressed and nobody is selecting what is written.
+    const thrown = (event: MouseEvent) => {
+      const target = event.target as Element | null
+      if (event.button || target?.closest('a, button, input, pre, iframe, [data-of]')) return
+      if (!window.getSelection()?.isCollapsed) return
+      const { x, y, wash } = at(event)
+      if (wash) return
+      const washes = splash(x, y, Math.random)
+      splashes.push(washes)
+      composition.washes.push(...washes)
+      const now = performance.now()
+      for (const one of washes) moving.push({ wash: one, kind: 'lay', start: now + (one.delay ?? 0), lasts: one.lasts ?? 400, told: true })
+      tell(washes[0], 'splash')
+      for (const old of splashes.splice(0, splashes.length - MOST_SPLASHES)) {
+        const gone = new Set(old)
+        composition.washes = composition.washes.filter((one) => !gone.has(one))
+        moving = moving.filter((one) => !gone.has(one.wash))
+        old.forEach(spoil)
+      }
+      ask()
+    }
+
+    // Rain that is heard is seen: it falls on some wash in the window, and the wash is its note.
+    const rained = () => {
+      const { top, bottom } = showing()
+      const seen = composition.washes.filter((w) => !w.still && !w.flood && w.grow > 0.9 && w.h > 12 && w.w > 12 && w.y + w.h / 2 > top && w.y + w.h / 2 < bottom)
+      const wash = seen[Math.floor(Math.random() * seen.length)]
+      if (!wash) return
+      tell(wash, 'rain')
+      if (reduced) return
+      const drop: [number, number, number, number] = [wash.x + wash.w * (0.3 + 0.4 * Math.random()), wash.y + wash.h * (0.3 + 0.4 * Math.random()), Math.min(30, 6 + 0.22 * Math.min(wash.w, wash.h)), 0.9]
+      moving = moving.filter((one) => !(one.kind === 'drop' && one.wash === wash))
+      moving.push({ wash, kind: 'drop', start: performance.now(), lasts: DROP_LASTS, drop })
+      ask()
+    }
+
+    // What the window holds, weighed by how much of it there is.
+    const view = () => {
+      const { top, bottom } = showing()
+      let weight = 0
+      let light = 0
+      let warmth = 0
+      for (const w of composition.washes) {
+        if (w.kind === Kind.Pencil || w.flood || w.grow < 0.5 || w.y > bottom || w.y + w.h < top) continue
+        const much = Math.min(w.w * w.h, 60_000)
+        const [r, g, b] = w.ink
+        weight += much
+        light += much * clamp(r * 0.3 + g * 0.5 + b * 0.2)
+        warmth += much * clamp(0.5 + (r - b) * 0.9)
+      }
+      return weight ? { light: light / weight, warmth: warmth / weight } : undefined
+    }
+
+    // The page is painted again, from bare paper.
+    const again = () => {
+      if (reduced) return
+      moving = []
+      first = true
+      for (const wash of composition.washes) {
+        if (wash.flood) continue
+        wash.grow = 0
+        wash.drop = undefined
+        waiting.add(wash)
+        spoil(wash)
+      }
+      ask()
     }
 
     // A stroke sounded: water falls on it, and where its other voices stand about the middle line.
@@ -285,6 +384,7 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       }
       moving = moving.filter((one) => one.wash !== wash)
       moving.push({ wash, kind: 'flood', start: performance.now(), lasts: reduced ? 1 : goal ? 900 : 500, goal, began: wash.grow })
+      if (goal) tell(wash, 'flood', 900)
       ask()
     }
     const wet = flood(1)
@@ -309,6 +409,10 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       window.addEventListener('pointermove', fall, { passive: true })
       window.addEventListener('pointerdown', fall, { passive: true })
     }
+    if (!reduced) shell.addEventListener('click', thrown)
+    ear.view = view
+    window.addEventListener('wc:rain', rained)
+    window.addEventListener('wc:again', again)
     shell.addEventListener('wc:heard', heard)
     shell.addEventListener('click', led)
     shell.addEventListener('pointerover', wet)
@@ -327,6 +431,10 @@ export function PaintedSheet({ compose, page }: { compose: Compose; page: string
       window.removeEventListener('resize', scrolled)
       window.removeEventListener('pointermove', fall)
       window.removeEventListener('pointerdown', fall)
+      shell.removeEventListener('click', thrown)
+      if (ear.view === view) ear.view = undefined
+      window.removeEventListener('wc:rain', rained)
+      window.removeEventListener('wc:again', again)
       shell.removeEventListener('wc:heard', heard)
       shell.removeEventListener('click', led)
       painter.canvas.removeEventListener('webglcontextlost', lost)

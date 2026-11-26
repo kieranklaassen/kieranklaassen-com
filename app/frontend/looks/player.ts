@@ -1,3 +1,6 @@
+import { theContext } from '../sound/context'
+import type { Keys } from '../sound/keys'
+
 // The score, sounded. Nothing here is made before somebody presses Play.
 //
 // Every stroke is one note of a scale, and five voices go with it, found by geometry about a center
@@ -48,7 +51,8 @@ export function pitchOf(center: number, degrees: number) {
 const SHARES = [1, 0.62, 0.42, 0.36, 0.26, 0.24]
 
 export class Instrument {
-  private context = new AudioContext()
+  private context = theContext()
+  private keys: Keys | undefined
   private out = this.context.createDynamicsCompressor()
   private level = this.context.createGain()
   private timers: number[] = []
@@ -75,6 +79,18 @@ export class Instrument {
     this.level.connect(wet).connect(wetLevel).connect(this.out)
   }
 
+  /** Fetches the piano. Without it, the notes are made of two oscillators each. */
+  async ready() {
+    if (this.context.state === 'suspended') void this.context.resume()
+    if (this.keys) return
+    try {
+      const { makeKeys } = await import('../sound/keys')
+      this.keys = await makeKeys(this.context, this.level)
+    } catch (error) {
+      console.warn('The piano could not be had.', error)
+    }
+  }
+
   get lasts() {
     return LASTS
   }
@@ -88,6 +104,7 @@ export class Instrument {
     voicesOf(distanceOf(lane)).forEach((degrees, i) => {
       const when = context.currentTime + ahead + i * STRUM * (0.7 + 0.6 * Math.random())
       const pitch = 440 * 2 ** ((pitchOf(center, degrees) - 69) / 12)
+      if (this.keys) return this.keys.strike(pitch, 0.3 * SHARES[i], when - context.currentTime, rings)
       const tail = rings * (i === 0 ? 1 : 0.85)
       const level = context.createGain()
       level.gain.setValueAtTime(0, when)
@@ -133,6 +150,7 @@ export class Instrument {
   stop() {
     this.timers.forEach((timer) => window.clearTimeout(timer))
     this.timers = []
+    this.keys?.hush()
     const ended = this.ended
     this.ended = undefined
     ended?.()
@@ -140,7 +158,8 @@ export class Instrument {
 
   close() {
     this.stop()
+    this.keys?.hush()
     this.level.gain.setTargetAtTime(0, this.context.currentTime, 0.05)
-    window.setTimeout(() => void this.context.close(), 400)
+    window.setTimeout(() => this.out.disconnect(), 400)
   }
 }

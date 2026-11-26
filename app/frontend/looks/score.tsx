@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type SyntheticEvent } from 'react'
+import { ear } from '../sound/ear'
 import { Instrument } from './player'
 import type { PostSummary } from '../types/page'
 
@@ -55,19 +56,25 @@ export function Score({ posts }: { posts: PostSummary[] }) {
     mark?.dispatchEvent(new CustomEvent('wc:heard', { bubbles: true }))
   }
 
-  const press = () => {
+  const press = async () => {
     if (playing) return instrument.current?.stop()
     if (!Instrument.possible) return
-    instrument.current ??= new Instrument()
+    const mine = (instrument.current ??= new Instrument())
+    ear.playing = true
+    setPlaying(true)
+    await mine.ready()
+    if (instrument.current !== mine || !ear.playing) return
     const marks = [...(staff.current?.querySelectorAll('.wc-note') ?? [])]
-    instrument.current.play(
+    mine.play(
       laid.map(({ post, lane, left }, i) => ({ ...note(post, lane), at: left, heard: () => show(marks[i]) })),
       () => {
         show()
         setPlaying(false)
+        ear.playing = false
+        ear.hush?.(false)
       },
     )
-    setPlaying(true)
+    ear.hush?.(true)
     setSounding(true)
   }
 

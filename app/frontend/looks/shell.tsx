@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react'
 import type { PropsWithChildren } from 'react'
 import { SiteShell } from '../components/site_shell'
 import { PaintedSheet } from '../watercolor/sheet'
+import { Sound } from './sound'
 import { ARTS, LOOKS, roomsOf, type Art, type Look } from './looks'
 
 export function LookShell({ children }: PropsWithChildren) {
@@ -27,6 +28,7 @@ export function LookShell({ children }: PropsWithChildren) {
       <main className="wc-body" data-look={rooms.body} data-page={component}>
         {children}
       </main>
+      <Sound rooms={rooms} url={url} />
       {chooser}
     </div>
   )

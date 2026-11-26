@@ -261,6 +261,7 @@ export const paintedName: Compose = ({ boxes: measure, shell, random, width, lon
         seed: four(random),
         extra: letter.uv,
         field: letters.field,
+        index: i,
         from: [0.2 + 0.6 * random(), random()],
         delay: i * 95,
         lasts: 1900,

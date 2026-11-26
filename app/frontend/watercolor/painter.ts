@@ -28,6 +28,8 @@ export interface Wash {
   grow: number
   /** A drop of water: x, y, radius, strength. */
   drop?: [number, number, number, number]
+  /** Which letter of its line it is. */
+  index?: number
   /** Takes no drops. */
   still?: boolean
   /** What on the page this wash stands for. */
