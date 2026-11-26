@@ -1,10 +1,10 @@
 import { createInertiaApp } from '@inertiajs/react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
-import { SiteShell } from '../components/site_shell'
+import { LookShell } from '../looks/shell'
 
 void createInertiaApp({
   pages: '../pages',
-  layout: () => SiteShell,
+  layout: () => LookShell,
   setup({ el, App, props }) {
     const tree = <App {...props} />
 
