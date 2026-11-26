@@ -89,14 +89,131 @@ class GithubRepositoryTest < ActiveSupport::TestCase
     end
   end
 
+  test "memoizes the repositories until reset" do
+    repositories = GithubRepository.all
+
+    assert_same repositories, GithubRepository.all
+    GithubRepository.reset!
+    refute_same repositories, GithubRepository.all
+  end
+
+  test "reloads the repositories on every call in development" do
+    with_rails_env("development") do
+      refute_same GithubRepository.all, GithubRepository.all
+    end
+  end
+
+  test "strips strings and accepts zero stars" do
+    repository = load_entries([
+      repository_entry(name: " project ", url: " https://github.com/kieranklaassen/project ",
+        description: " A project ", language: " Ruby ", stars: 0)
+    ]).sole
+
+    assert_equal({
+      name: "project",
+      description: "A project",
+      language: "Ruby",
+      stars: 0,
+      url: "https://github.com/kieranklaassen/project"
+    }, repository)
+  end
+
+  test "rejects a file that is not a list" do
+    assert_invalid "GitHub repositories must be a list", { "name" => "project" }
+  end
+
+  test "rejects YAML that does not parse" do
+    error = assert_raises(GithubRepository::InvalidRepositoryError) { load_source("- [\n") }
+
+    assert_match(/\Ainvalid GitHub repository YAML \(.+: did not find expected node content .+\)\z/, error.message)
+    assert_instance_of Psych::SyntaxError, error.cause
+  end
+
+  test "rejects an entry that is not a mapping" do
+    assert_invalid "GitHub repository 2 must be a mapping", [ repository_entry, "not a mapping" ]
+  end
+
+  test "rejects required strings that are not non-empty strings" do
+    %w[name url].each do |key|
+      [ nil, "", "  ", 1 ].each do |value|
+        assert_invalid_field "#{key} must be a non-empty string", key => value
+      end
+    end
+  end
+
+  test "rejects optional strings that are neither null nor non-empty strings" do
+    %w[description language].each do |key|
+      [ "", "  ", 1 ].each do |value|
+        assert_invalid_field "#{key} must be a non-empty string or null", key => value
+      end
+    end
+  end
+
+  test "rejects stars that are not a non-negative integer" do
+    [ nil, -1, 1.5, "1" ].each do |value|
+      assert_invalid_field "stars must be a non-negative integer", "stars" => value
+    end
+  end
+
+  test "rejects flags that are not booleans" do
+    %w[fork archived].each do |key|
+      [ nil, 1, "true" ].each do |value|
+        assert_invalid_field "#{key} must be true or false", key => value
+      end
+    end
+  end
+
+  test "rejects anything but an https GitHub repository URL" do
+    [
+      "http://github.com/owner/project",
+      "https://gist.github.com/owner/project",
+      "https://github.com/owner",
+      "https://github.com/owner/project/issues",
+      "https://github.com/owner/project?tab=readme",
+      "https://github.com/owner/project#readme",
+      "https://[bad"
+    ].each do |url|
+      assert_invalid_field "url must be an https://github.com repository URL", "url" => url
+    end
+  end
+
+  test "names every duplicate" do
+    assert_invalid "duplicate repository names: a, b",
+      %w[a b c a b].each_with_index.map { |name, index|
+        repository_entry(name:, url: "https://github.com/kieranklaassen/project-#{index}")
+      }
+  end
+
   private
 
+  def assert_invalid(message, content)
+    error = assert_raises(GithubRepository::InvalidRepositoryError) { load_entries(content) }
+    assert_equal message, error.message
+  end
+
+  def assert_invalid_field(message, overrides)
+    assert_invalid "GitHub repository 2 #{message}",
+      [ repository_entry(name: "valid"), repository_entry.merge(overrides) ]
+  end
+
   def load_entries(entries)
+    load_source(entries.to_yaml)
+  end
+
+  def load_source(source)
     Dir.mktmpdir do |directory|
       path = Pathname(directory).join("github_repositories.yml")
-      path.write(entries.to_yaml)
+      path.write(source)
       return GithubRepository.send(:load_all, path)
     end
+  end
+
+  def with_rails_env(name)
+    original = Rails.env
+    Rails.env = name
+    yield
+  ensure
+    Rails.env = original
   end
 
   def repository_entry(name: "project", url: nil, description: "A project", language: "Ruby", stars: 1,
