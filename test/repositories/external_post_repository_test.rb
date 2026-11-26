@@ -42,15 +42,13 @@ class ExternalPostRepositoryTest < ActiveSupport::TestCase
     end
   end
 
-  test "memoizes the posts until reset" do
+  test "memoizes the posts until reset, except in development" do
     posts = ExternalPostRepository.all
 
     assert_same posts, ExternalPostRepository.all
     ExternalPostRepository.reset!
     refute_same posts, ExternalPostRepository.all
-  end
 
-  test "reloads the posts on every call in development" do
     with_rails_env("development") do
       refute_same ExternalPostRepository.all, ExternalPostRepository.all
     end
@@ -78,44 +76,30 @@ class ExternalPostRepositoryTest < ActiveSupport::TestCase
     assert posts.all? { |post| post.fetch(:categories).frozen? }
   end
 
-  test "rejects a file that is not a list" do
+  test "rejects invalid files and entries with an exact message" do
     assert_invalid "external posts must be a list", { "slug" => "a" }
-  end
-
-  test "rejects YAML that does not parse" do
-    error = assert_raises(ExternalPostRepository::InvalidExternalPostError) { load_source("- [\n") }
-
-    assert_match(/\Ainvalid external post YAML \(.+: did not find expected node content .+\)\z/, error.message)
-    assert_instance_of Psych::SyntaxError, error.cause
-  end
-
-  test "rejects an entry that is not a mapping" do
     assert_invalid "external post 2 must be a mapping", [ post_entry, "not a mapping" ]
-  end
 
-  test "rejects fields that are not non-empty strings" do
     %w[slug title date description external_url].each do |key|
       [ nil, "", "  ", 1 ].each do |value|
         assert_invalid "external post 2 #{key} must be a non-empty string", [ post_entry, post_entry(key => value) ]
       end
     end
-  end
 
-  test "rejects invalid dates" do
     assert_invalid "external post 2 has an invalid date (invalid date)",
       [ post_entry, post_entry("date" => "2026-13-01") ]
-  end
 
-  test "rejects anything but an https URL on every.to" do
     [ "http://every.to/a", "https://www.every.to/a", "every.to/a", "https://[bad" ].each do |url|
       assert_invalid "external post 2 external_url must be an https://every.to URL",
         [ post_entry, post_entry("external_url" => url) ]
     end
-  end
 
-  test "rejects duplicate slugs" do
     assert_invalid "duplicate external post slugs: a, b",
       %w[a b c a b].map { |slug| post_entry("slug" => slug) }
+
+    error = assert_raises(ExternalPostRepository::InvalidExternalPostError) { load_source("- [\n") }
+    assert_match(/\Ainvalid external post YAML \(.+: did not find expected node content .+\)\z/, error.message)
+    assert_instance_of Psych::SyntaxError, error.cause
   end
 
   private

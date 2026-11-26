@@ -99,15 +99,13 @@ class GithubRepositoryTest < ActiveSupport::TestCase
     end
   end
 
-  test "memoizes the repositories until reset" do
+  test "memoizes the repositories until reset, except in development" do
     repositories = GithubRepository.all
 
     assert_same repositories, GithubRepository.all
     GithubRepository.reset!
     refute_same repositories, GithubRepository.all
-  end
 
-  test "reloads the repositories on every call in development" do
     with_rails_env("development") do
       refute_same GithubRepository.all, GithubRepository.all
     end
@@ -128,52 +126,22 @@ class GithubRepositoryTest < ActiveSupport::TestCase
     }, repository)
   end
 
-  test "rejects a file that is not a list" do
+  test "rejects invalid files and entries with an exact message" do
     assert_invalid "GitHub repositories must be a list", { "name" => "project" }
-  end
-
-  test "rejects YAML that does not parse" do
-    error = assert_raises(GithubRepository::InvalidRepositoryError) { load_source("- [\n") }
-
-    assert_match(/\Ainvalid GitHub repository YAML \(.+: did not find expected node content .+\)\z/, error.message)
-    assert_instance_of Psych::SyntaxError, error.cause
-  end
-
-  test "rejects an entry that is not a mapping" do
     assert_invalid "GitHub repository 2 must be a mapping", [ repository_entry, "not a mapping" ]
-  end
 
-  test "rejects required strings that are not non-empty strings" do
-    %w[name url].each do |key|
-      [ nil, "", "  ", 1 ].each do |value|
-        assert_invalid_field "#{key} must be a non-empty string", key => value
-      end
+    %w[name url].product([ nil, "", "  ", 1 ]).each do |key, value|
+      assert_invalid_field "#{key} must be a non-empty string", key => value
     end
-  end
-
-  test "rejects optional strings that are neither null nor non-empty strings" do
-    %w[description language].each do |key|
-      [ "", "  ", 1 ].each do |value|
-        assert_invalid_field "#{key} must be a non-empty string or null", key => value
-      end
+    %w[description language].product([ "", "  ", 1 ]).each do |key, value|
+      assert_invalid_field "#{key} must be a non-empty string or null", key => value
     end
-  end
-
-  test "rejects stars that are not a non-negative integer" do
     [ nil, -1, 1.5, "1" ].each do |value|
       assert_invalid_field "stars must be a non-negative integer", "stars" => value
     end
-  end
-
-  test "rejects flags that are not booleans" do
-    %w[fork archived].each do |key|
-      [ nil, 1, "true" ].each do |value|
-        assert_invalid_field "#{key} must be true or false", key => value
-      end
+    %w[fork archived].product([ nil, 1, "true" ]).each do |key, value|
+      assert_invalid_field "#{key} must be true or false", key => value
     end
-  end
-
-  test "rejects anything but an https GitHub repository URL" do
     [
       "http://github.com/owner/project",
       "https://gist.github.com/owner/project",
@@ -185,13 +153,15 @@ class GithubRepositoryTest < ActiveSupport::TestCase
     ].each do |url|
       assert_invalid_field "url must be an https://github.com repository URL", "url" => url
     end
-  end
 
-  test "names every duplicate" do
     assert_invalid "duplicate repository names: a, b",
       %w[a b c a b].each_with_index.map { |name, index|
         repository_entry(name:, url: "https://github.com/kieranklaassen/project-#{index}")
       }
+
+    error = assert_raises(GithubRepository::InvalidRepositoryError) { load_source("- [\n") }
+    assert_match(/\Ainvalid GitHub repository YAML \(.+: did not find expected node content .+\)\z/, error.message)
+    assert_instance_of Psych::SyntaxError, error.cause
   end
 
   private
