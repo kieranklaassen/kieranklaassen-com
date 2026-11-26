@@ -41,4 +41,4 @@ Two things went wrong on the way. The first version of the comparison did not re
 2. Also repaint only the changed squares: not kept. 559.8 (544.5 to 578.8, 3 samples) against 565.8 for experiment 1 in the same three rounds is no measurable difference.
 3. Stop the loop early: not built. A square would stay short of its target, so a later hover would ease from another value than on main.
 
-Not covered: battery power, displays above 60 Hz, real Safari, and an engine that clears a canvas without firing `contextrestored`. Such an engine would keep it blank from the last repaint until the next hover or resize. Before this change it repainted until about 900 frames in.
+Not covered: battery power, displays above 60 Hz, real Safari, and an engine that clears a canvas without firing `contextrestored`. Such an engine would keep it blank from the last repaint until the next resize or a hover that changes a drawn level; a hover whose new target rounds to the same level paints nothing. Before this change it repainted until about 900 frames in.
