@@ -106,9 +106,9 @@ export class Studio {
   }
 
   /** Comes up slowly, and goes faster. */
-  fade(up: boolean, at = this.context.currentTime) {
+  fade(up: boolean, slowly = false, at = this.context.currentTime) {
     this.out.gain.cancelScheduledValues(at)
-    this.out.gain.setTargetAtTime(up ? 0.8 : 0, at, up ? 0.5 : 0.12)
+    this.out.gain.setTargetAtTime(up ? 0.8 : 0, at, up ? (slowly ? 1.6 : 0.5) : 0.12)
   }
 
   hush(hushed: boolean, at = this.context.currentTime) {

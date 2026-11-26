@@ -6,7 +6,7 @@ import { banks, courseOf, courseRound, grown, letterInk, meets, NARROW, noteInk,
 import { lettersOf } from './letters'
 import { Cutter } from './mask'
 import { Kind, type Rect, type Wash } from './painter'
-import { DETAIL, fitted, groundOf, laid, plate, WHOLE } from './picture'
+import { DETAIL, fitted, groundOf, laid, plate, runsOff, WHOLE } from './picture'
 import { clamp, four, hashOf, pigment, seeded, smooth, type Random } from './pigments'
 
 /** A heading painted letter by letter, in the colors of its piece. */
@@ -166,8 +166,12 @@ export const wide: Compose = (page) => {
         return random() > 0.08 + 0.92 * written * (1 - 0.7 * smooth(0.86, 1, v))
       }),
     )
-    const at = fitted(narrow ? { ...picture, x: picture.x + 12, w: picture.w - 24 } : { x: page.width * 0.4, y: picture.y + picture.h * 0.06, w: page.width * 0.58, h: picture.h * 0.88 })
-    washes.push(...laid(drawing.shapes, WHOLE, at.x, at.y, at.k, cutter, random, 600))
+    // what runs off its sheet runs off the window
+    const off = runsOff(drawing.shapes)
+    const inside = narrow ? { ...picture, x: picture.x + 12, w: picture.w - 24 } : { x: page.width * 0.4, y: picture.y + picture.h * 0.06, w: page.width * 0.58, h: picture.h * 0.88 }
+    const at = fitted(!off ? inside : narrow ? { ...picture, x: -6, w: page.width + 12 } : { ...inside, w: page.width * 0.6 + 6 })
+    if (off && !narrow) at.x = page.width + 6 - WHOLE.across * at.k
+    washes.push(...laid(drawing.shapes, WHOLE, at.x, at.y, at.k, cutter, random, 600, !narrow))
   }
   if (title) washes.push(...paintedTitle(title, page, cutter, random, 300))
   // the squares come loose and fall a little way down the page

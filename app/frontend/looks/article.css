@@ -43,7 +43,7 @@
 .wc[data-art="wide"] .wc-picture { height: clamp(560px, 50vw, 780px); margin-top: -70px; }
 .wc[data-art="wide"] .wc-art > header { position: absolute; top: 0; left: 0; height: clamp(490px, calc(50vw - 70px), 710px); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; width: 42%; padding: 40px 0 20px clamp(20px, 4vw, 60px); }
 .wc[data-art="wide"] .wc-back { margin-bottom: 22px; }
-.wc[data-art="wide"] header h2 { font-size: min(5.2vw, 6rem, calc(62vw / var(--longest))); }
+.wc[data-art="wide"] header h2 { font-size: min(5.2vw, 6rem, calc(62vw / var(--longest)), calc(32vw / var(--letters))); }
 .wc[data-art="wide"] .wc-when { margin-top: 24px; }
 .wc[data-art="wide"] .wc-prose { max-width: 690px; margin: clamp(60px, 7vw, 110px) auto 0; padding: 0 22px; box-sizing: content-box; }
 .wc[data-art="wide"] .wc-prose > :is(h2, h3) { font-size: 32px; line-height: 1.12; margin-top: 2em; }
@@ -51,7 +51,7 @@
 @media (max-width: 899px) {
   .wc[data-art="wide"] .wc-picture { height: 78vw; margin-top: 18px; }
   .wc[data-art="wide"] .wc-art > header { position: static; height: auto; width: auto; padding: 30px 22px 0; }
-  .wc[data-art="wide"] header h2 { font-size: min(12.5vw, 5rem, calc(150vw / var(--longest))); }
+  .wc[data-art="wide"] header h2 { font-size: min(12.5vw, 5rem, calc(150vw / var(--longest)), calc(82vw / var(--letters))); }
   .wc[data-art="wide"] .wc-prose { margin-top: 44px; }
   .wc[data-art="wide"] .wc-foot { height: 150px; }
 }

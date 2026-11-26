@@ -18,11 +18,11 @@ export const LOOKS: { look: Look; title: string }[] = [
 ]
 
 /** A way of laying an article round its painting. */
-export type Art = 'book' | 'wide' | 'around' | 'river'
+export type Art = 'wide' | 'book' | 'around' | 'river'
 
 export const ARTS: { art: Art; title: string }[] = [
-  { art: 'book', title: 'Book' },
   { art: 'wide', title: 'Edge to edge' },
+  { art: 'book', title: 'Book' },
   { art: 'around', title: 'Around the words' },
   { art: 'river', title: 'River' },
 ]
@@ -46,7 +46,7 @@ export interface Rooms {
 }
 
 /** How a page is painted under a look. */
-export function roomsOf(look: Look | undefined, component: string, art: Art = 'book'): Rooms | undefined {
+export function roomsOf(look: Look | undefined, component: string, art: Art = 'wide'): Rooms | undefined {
   if (!look || look === 'blocks') return undefined
   if (look === 'long' && component === 'home') return { head: 'name', body: 'long', compose: longPage }
   const whole = look === 'long' || look === 'rooms'

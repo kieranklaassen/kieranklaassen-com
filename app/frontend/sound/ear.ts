@@ -1,4 +1,4 @@
-// What the paint tells whoever listens. Nobody does until Sound is pressed, and then telling costs nothing.
+// What the paint tells whoever listens. Nobody does until the first click, and then telling costs nothing.
 
 export type Gesture = 'square' | 'letter' | 'puddle' | 'bank' | 'run' | 'flood' | 'drop' | 'rain' | 'splash'
 

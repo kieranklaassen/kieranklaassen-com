@@ -6,7 +6,7 @@ import { roomsOf, type Art, type Look } from '../app/frontend/looks/looks'
 import { theContext } from '../app/frontend/sound/context'
 import { ear } from '../app/frontend/sound/ear'
 import { placeOf } from '../app/frontend/sound/place'
-import { close, fade, keep, kept, moveTo, NAMES, open, sounding, turn, type Parts } from '../app/frontend/sound/switch'
+import { arm, close, fade, keep, kept, listen, moveTo, NAMES, open, sounding, turn, want, type Parts } from '../app/frontend/sound/switch'
 import { laySheet } from '../app/frontend/watercolor/lay'
 import worklet from 'virtual:worklet'
 
@@ -39,27 +39,46 @@ function wireSound(root: HTMLElement, page: Page, signal: AbortSignal) {
   const holder = root.querySelector('.wc-sound')
   const main = holder?.querySelector<HTMLButtonElement>('[data-sound="all"]')
   if (!rooms || !holder || !main) return
+  const more = holder.querySelector<HTMLButtonElement>('[data-sound="more"]')
   let parts: Parts = kept()
+  let shown = false
   const say = () => {
     const on = sounding()
+    if (more) {
+      more.hidden = !on
+      more.setAttribute('aria-expanded', String(shown))
+    }
     main.setAttribute('aria-pressed', String(on))
     main.lastElementChild!.textContent = on ? 'Sound off' : 'Sound'
     for (const [part] of NAMES) {
       const button = holder.querySelector<HTMLButtonElement>(`[data-sound="${part}"]`)
       if (!button) continue
-      button.hidden = !on
+      button.hidden = !on || (!!more && !shown)
       button.setAttribute('aria-pressed', String(parts[part]))
     }
+  }
+  signal.addEventListener('abort', listen(say))
+  const start = async (slowly: boolean) => {
+    void theContext().resume()
+    if (!globalThis.__worklet) await addressOfWorklet()
+    await open(placeOf(rooms, page.url), parts, slowly)
   }
   main.addEventListener(
     'click',
     async () => {
-      if (sounding()) close()
-      else {
-        await addressOfWorklet()
-        await open(placeOf(rooms, page.url), parts)
-        window.dispatchEvent(new CustomEvent('wc:again'))
-      }
+      want(!sounding())
+      if (sounding()) return close()
+      await start(false)
+      window.dispatchEvent(new CustomEvent('wc:again'))
+    },
+    { signal },
+  )
+  // A whole board on the canvas is there to be commented on: it sounds when it is played.
+  if (window.innerHeight <= 1600) signal.addEventListener('abort', arm(() => void start(true)))
+  more?.addEventListener(
+    'click',
+    () => {
+      shown = !shown
       say()
     },
     { signal },

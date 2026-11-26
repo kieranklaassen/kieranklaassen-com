@@ -20,6 +20,11 @@ class LooksTest < ActionDispatch::IntegrationTest
     assert_empty cookies[:look].to_s
   end
 
+  test "an article is laid out edge to edge unless another layout is chosen" do
+    get PostRepository.all.first.path, params: { look: "rooms" }
+    assert_match(/(?:"|&quot;)art(?:"|&quot;):(?:"|&quot;)wide/, response.body)
+  end
+
   test "a layout of an article is remembered from one article to the next" do
     first, second = PostRepository.all.first(2)
     get first.path, params: { look: "rooms", art: "river" }

@@ -59,8 +59,31 @@ function drawn(context: CanvasRenderingContext2D, shape: Shape) {
 
 const inkOf = ([light, warmth]: Pigment): RGB => pigment(clamp(light), warmth)
 
+/** Whether a drawing runs off its sheet at the right, as a sea does. */
+export const runsOff = (shapes: Shape[], sheet = WHOLE) => shapes.some((shape) => {
+  const box = boundsOf(shape, sheet)
+  return box && box.x + box.w >= sheet.across - 1
+})
+
+/** Takes off the left end of what a drawing cuts straight: a brush lifts where it lifts. */
+function lifted(context: CanvasRenderingContext2D, box: Rect, random: Random) {
+  const inset = 1 + 11 * random()
+  const lean = (random() - 0.5) * 0.5
+  const turn = random() * 6
+  context.globalCompositeOperation = 'destination-out'
+  context.beginPath()
+  context.moveTo(-PAST, box.y - PAST)
+  for (let i = 0; i <= 24; i++) {
+    const y = box.y - 2 + ((box.h + 4) * i) / 24
+    context.lineTo(Math.max(0, inset + lean * (y - box.y - box.h / 2) + 0.9 * Math.sin(y * 0.55 + turn) + 0.4 * Math.sin(y * 1.7 + turn * 2)), y)
+  }
+  context.lineTo(-PAST, box.y + box.h + PAST)
+  context.fill()
+  context.globalCompositeOperation = 'source-over'
+}
+
 /** Lays the shapes of a drawing at `x`, `y`, every unit of it `k` pixels long. */
-export function laid(shapes: Shape[], sheet: Sheet, x: number, y: number, k: number, cutter: Cutter, random: Random, delay = 0): Wash[] {
+export function laid(shapes: Shape[], sheet: Sheet, x: number, y: number, k: number, cutter: Cutter, random: Random, delay = 0, lifts = false): Wash[] {
   return shapes.flatMap((shape, i) => {
     const box = boundsOf(shape, sheet)
     if (!box) return []
@@ -73,6 +96,7 @@ export function laid(shapes: Shape[], sheet: Sheet, x: number, y: number, k: num
       context.translate(pad - box.x * k, pad - box.y * k)
       context.scale(k, k)
       drawn(context, shape)
+      if (lifts && !shape.brush && box.x < 1) lifted(context, box, random)
     })
     return {
       x: x + box.x * k - pad,

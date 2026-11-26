@@ -2,4 +2,10 @@
 
 let context: AudioContext | undefined
 
-export const theContext = () => (context ??= new AudioContext())
+export function theContext() {
+  if (context) return context
+  // On a phone it plays beside whatever the visitor already listens to, and does not stop it.
+  const { audioSession } = navigator as Navigator & { audioSession?: { type: string } }
+  if (audioSession) audioSession.type = 'ambient'
+  return (context = new AudioContext())
+}

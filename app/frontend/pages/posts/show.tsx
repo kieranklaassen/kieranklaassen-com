@@ -33,7 +33,7 @@ function ArtPost({ post }: { post: Post }) {
           <Link href="/posts" className="wc-back" data-paint="quiet">
             ← All thoughts
           </Link>
-          <h2 data-paint="title" data-key={post.slug} style={{ '--longest': Math.max(...post.title.split(/[\s-]+/).map((word) => word.length), 9) } as CSSProperties}>
+          <h2 data-paint="title" data-key={post.slug} style={{ '--longest': Math.max(...post.title.split(/[\s-]+/).map((word) => word.length), 9), '--letters': Math.sqrt(post.title.length).toFixed(2) } as CSSProperties}>
             {post.title}
           </h2>
           <div className="wc-when" data-paint="quiet">
