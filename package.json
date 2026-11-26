@@ -8,16 +8,16 @@
     "test:frontend": "vitest run"
   },
   "dependencies": {
-    "@inertiajs/react": "^3.11.0",
-    "@inertiajs/vite": "^3.11.0",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "@inertiajs/react": "^3.5.0",
+    "@inertiajs/vite": "^3.5.0",
+    "react": "^19.2.9",
+    "react-dom": "^19.2.9"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.3.3",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.3.0",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4.3.3",
