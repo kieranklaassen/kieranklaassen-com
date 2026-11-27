@@ -81,7 +81,8 @@ async function markupOf({ page, path, w }) {
     }
     root.querySelector('.painted-sheet').replaceChildren()
     root.querySelector('.wc-chooser')?.remove()
-    const drop = root.querySelector('.wc-sound svg').outerHTML
+    root.querySelector('.wc-rings')?.remove()
+    const drop = root.querySelector('.wc-sound > :last-child svg').outerHTML
     const drops = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${three}"></path></svg>`
     root.querySelector('.wc-sound').innerHTML =
       ['music', 'weather', 'paint'].map((part) => `<button type="button" class="wc-part" data-sound="${part}" aria-pressed="true" hidden><span>${part[0].toUpperCase()}${part.slice(1)}</span></button>`).join('') +
