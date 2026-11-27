@@ -13,7 +13,7 @@ Workload: production browser bundle and server-rendered page snapshots served fr
 - `Painter` (`app/frontend/watercolor/painter.ts`) starts shader compilation and `gl.linkProgram()` in its constructor without reading `COMPILE_STATUS` or `LINK_STATUS`.
 - `Painter.ready()` polls `KHR_parallel_shader_compile` (`COMPLETION_STATUS_KHR`) every 8 ms until linking finishes or the WebGL context is lost, then runs `finish()` to verify compile and link status and set up buffers, uniforms, and textures. Where `KHR_parallel_shader_compile` is unavailable, `ready()` calls `finish()` directly.
 - `laySheet` (`app/frontend/watercolor/lay.ts`) waits for `Promise.all([painter.ready(), faced])` before calling `lay()` and observing resizes, cleans up via `leave()` if linking fails, and ignores early `frame()` and bare-paper `thrown()` clicks while no tiles exist. Context restore still runs `painter.setUp()`.
-- Entry bundle size changed from 400,767 to 401,390 bytes uncompressed (+623 bytes).
+- Entry bundle size changed from 400,767 to 401,394 bytes uncompressed (+627 bytes).
 
 ## Result
 
@@ -44,6 +44,6 @@ All 40 confirmation runs passed both gates (`painted == 1`, `fresh_shader == 1`)
   - `base` against a control changing one fragment-shader rim constant from `2.7` to `2.8`: 130 of 182 tiles differ, confirming the comparison detects pixel changes.
 - Real-clock comparison runs earlier in the investigation differed even between two runs of `base` because the fixed wall-clock timeout caught different animation frames; switching the equivalence harness to deterministic rAF stepping removed that noise.
 - Browser edge-case checks verified initial paint, Inertia navigation to `/posts`, shader link failure leaving the page plain with harmless clicks, WebGL2 unavailable, `KHR_parallel_shader_compile` unavailable, slow compilation with early clicks and scrolling, and `WEBGL_lose_context` at 0 ms (during compilation) and 1500 ms (after painting) followed by context restore.
-- Unit tests in `app/frontend/watercolor/painter.test.ts` cover polling before completion, fallback without `KHR_parallel_shader_compile`, link failure, concurrent/repeated `ready()` calls, and context loss before linking finishes.
+- Unit tests in `app/frontend/watercolor/painter.test.ts` cover polling before completion, fallback without `KHR_parallel_shader_compile`, link failure, concurrent/repeated `ready()` calls, context loss before linking finishes, and a `null` completion query exiting cleanly.
 
 Not covered: Firefox and Safari/WebKit (browsers without `KHR_parallel_shader_compile` fall back to synchronous linking), warm-cache visits where linking is already fast, software WebGL renderers, and audio behavior (sound code is untouched).

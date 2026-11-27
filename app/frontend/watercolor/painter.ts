@@ -124,7 +124,12 @@ export class Painter {
   async ready(): Promise<boolean> {
     const { gl } = this
     const parallel = gl.getExtension('KHR_parallel_shader_compile')
-    while (parallel && !this.linked && !gl.isContextLost() && !gl.getProgramParameter(this.program!, parallel.COMPLETION_STATUS_KHR))
+    while (
+      parallel &&
+      !this.linked &&
+      !gl.isContextLost() &&
+      gl.getProgramParameter(this.program!, parallel.COMPLETION_STATUS_KHR) === false
+    )
       await new Promise((done) => window.setTimeout(done, 8))
     // a lost context is set up again when it is restored
     if (this.linked || gl.isContextLost()) return true

@@ -6,7 +6,7 @@ const LINK = 0x8b82
 
 /** A WebGL context whose compiler is done when `done` is set, and that counts what would wait for it. */
 function compiler({ parallel = true, links = true } = {}) {
-  const state = { done: false, lost: false, waits: 0 }
+  const state: { done: boolean | null; lost: boolean; waits: number } = { done: false, lost: false, waits: 0 }
   const gl = new Proxy({} as Record<string, unknown>, {
     get: (_, name: string) => {
       if (name === 'LINK_STATUS') return LINK
@@ -72,4 +72,10 @@ it('stops waiting when the context is lost before linking finishes', async () =>
   state.lost = true
   expect(await ready).toBe(true)
   expect(state.waits).toBe(0)
+})
+
+it('stops waiting when the completion query returns null', async () => {
+  const state = compiler({ links: false })
+  state.done = null
+  expect(await (await painter()).ready()).toBe(false)
 })
