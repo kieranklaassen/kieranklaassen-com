@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class InertiaController < ApplicationController
-  LOOKS = %w[blocks long rooms name estuary score mosaic page].freeze
+  LOOKS = %w[long rooms name estuary score mosaic page blocks].freeze
 
   ARTS = %w[wide book around river].freeze
 

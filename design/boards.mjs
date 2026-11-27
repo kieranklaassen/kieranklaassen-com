@@ -45,10 +45,10 @@ board('Main', 'Home: one long page', { look: 'long', component: 'home' }, '/', '
 board('Thoughts', 'Thoughts: the score and the pictures', { look: 'rooms', component: 'posts/index' }, '/posts', 'site')
 board('About', 'About', { look: 'rooms', component: 'about' }, '/about', 'site')
 board('NotFound', 'A page that is not there', { look: 'rooms', component: 'not_found' }, '/nowhere-at-all', 'site')
-board('HomeName', 'Home, the other way: the name alone', { look: 'rooms', component: 'home' }, '/', 'site')
 
 const flow = posts.find((post) => post.slug === 'capturing-flow')
 for (const art of Object.keys(ART)) board(`Layout${camel(art)}`, art === 'wide' ? `${ART[art]}: chosen` : ART[art], { look: 'rooms', component: 'posts/show', art }, flow.path, 'layouts')
+board('HomeName', 'Home: the painted name alone', { look: 'rooms', component: 'home' }, '/', 'homes')
 for (const [look, title] of [['estuary', 'Estuary'], ['score', 'Score'], ['mosaic', 'Mosaic'], ['page', 'The page is the painting']]) board(`Kept${camel(look)}`, `Home: ${title}`, { look, component: 'home' }, '/', 'homes')
 posts.forEach((post, i) => board(camel(post.slug), post.title, { look: 'rooms', component: 'posts/show', art: 'wide' }, post.path, `articles${1 + Math.floor(i / 6)}`))
 
@@ -183,11 +183,11 @@ for (const [id, name] of pages) {
     x += w + 80
     right = x - 80
   }
-  notes[`title-${id}`] = { x: 0, y: -340, text: { site: 'The website', layouts: 'One article, laid out four ways', homes: 'The first directions, as a home page', phone: 'On a phone' }[id] ?? name, kind: 'title1', maxW: right, page: id }
+  notes[`title-${id}`] = { x: 0, y: -340, text: { site: 'The website', layouts: 'One article, laid out four ways', homes: 'The other directions, as a home page', phone: 'On a phone' }[id] ?? name, kind: 'title1', maxW: right, page: id }
 }
 notes.how = { x: -440, y: 0, w: 360, page: 'site', fill: 'green', text: 'Press Play on a page. The sound comes in with the first click or tap, and Sound off at its bottom right is remembered: Music, Weather and Paint can each be turned off too. Move the pointer over the paint, throw paint on bare paper, scroll. On Thoughts, press Play the score.' }
 notes.which = { x: -440, y: 0, w: 360, page: 'layouts', fill: 'orange', text: 'Edge to edge is the one: every article is laid out in it. The other three are kept here, and under Tweaks every article has Layout, so any of them can be tried in any. Painting, beside it, paints another one.' }
-notes.homes = { x: -440, y: 0, w: 360, page: 'homes', fill: 'orange', text: 'Kept from the first round, each as a home page. The painted name is on the Website page, and the score, the estuary and the mosaic live on in the pages there.' }
+notes.homes = { x: -440, y: 0, w: 360, page: 'homes', fill: 'orange', text: 'The one long page is the home. These are kept, each as a home page, and the name, the score, the estuary and the mosaic live on in the pages of the website.' }
 
 const kept = existsSync(join(to, 'canvas.json')) ? JSON.parse(readFileSync(join(to, 'canvas.json'), 'utf8')) : {}
 writeFileSync(

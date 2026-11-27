@@ -395,8 +395,13 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   const lost = (event: Event) => event.preventDefault()
 
   const observer = new ResizeObserver(layAgain)
-  void document.fonts.ready.then(() => {
-    if (gone) return
+  // letters are cut from the face they are set in, and a face that is slow is not waited for
+  const faces = document.fonts.ready
+  void faces.then(() => {
+    if (composition.washes.length && !gone) layAgain()
+  })
+  void Promise.race([faces, new Promise((done) => window.setTimeout(done, 2500))]).then(() => {
+    if (gone || composition.washes.length) return
     lay()
     observer.observe(shell)
   })

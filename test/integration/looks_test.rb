@@ -1,11 +1,19 @@
 require "test_helper"
 
 class LooksTest < ActionDispatch::IntegrationTest
-  test "the site is as it is until a look is chosen" do
+  test "the site is one long page in watercolor unless another look is chosen" do
     get root_path
     assert_response :success
-    refute_includes response.body, 'data-look="'
+    assert_match(/(?:"|&quot;)look(?:"|&quot;):(?:"|&quot;)long/, response.body)
+    assert_match(/(?:"|&quot;)chooseLook(?:"|&quot;):false/, response.body)
     assert_empty cookies[:look].to_s
+  end
+
+  test "the blocks are kept" do
+    get root_path(look: "blocks")
+    refute_includes response.body, 'data-look="'
+    get about_path
+    assert_match(/(?:"|&quot;)look(?:"|&quot;):(?:"|&quot;)blocks/, response.body)
   end
 
   test "a look is remembered from one page to the next" do

@@ -7,7 +7,6 @@ export type Room = 'page' | 'name' | 'estuary' | 'score' | 'mosaic'
 export type Look = 'blocks' | 'long' | 'rooms' | Room
 
 export const LOOKS: { look: Look; title: string }[] = [
-  { look: 'blocks', title: 'As it is' },
   { look: 'long', title: 'One long page' },
   { look: 'rooms', title: 'A look for each page' },
   { look: 'name', title: 'Painted name' },
@@ -15,6 +14,7 @@ export const LOOKS: { look: Look; title: string }[] = [
   { look: 'score', title: 'Score' },
   { look: 'mosaic', title: 'Mosaic' },
   { look: 'page', title: 'The page is the painting' },
+  { look: 'blocks', title: 'The blocks' },
 ]
 
 /** A way of laying an article round its painting. */

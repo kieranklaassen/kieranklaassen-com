@@ -3,15 +3,18 @@
   --ink: #1f1a1d;
   --soft-ink: #4b4246;
   --paper: #f8f3e8;
+  --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --serif: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
   --wide: 1206px;
   position: relative;
   isolation: isolate;
   min-height: 100vh;
+  font-family: var(--font-sans);
   overflow: clip;
   color: var(--ink);
   background: var(--paper);
 }
+html:has(.wc) { background: #f8f3e8; }
 .wc ::selection { background: rgb(240 200 90 / 55%); }
 .painted-sheet { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
 .wc a { text-decoration-thickness: 1px; text-underline-offset: 4px; }
@@ -267,6 +270,11 @@
 .wc [data-look="mosaic"] .wc-sheet .wc-phrase { display: block; height: 196px; cursor: pointer; margin: 26px 0 34px; }
 .wc [data-look="mosaic"] .wc-sheet, .wc [data-look="mosaic"] .wc-sheet-plain { max-width: 820px; margin: 48px auto 100px; padding: 0 22px; background: none; box-shadow: none; backdrop-filter: none; }
 @media (max-width: 699px) { .wc [data-look="mosaic"] .wc-header:not([data-small]) h1 { font-size: 16.2vw; } }
+
+/* Where there is no paint, the score is plain strokes. Paint that is on its way comes first. */
+.wc:not([data-painted]) .wc-note { animation: wc-plain 0.6s 3s both; }
+@keyframes wc-plain { to { background: #2f6473; } }
+@media (scripting: none) { .wc-sound, .wc-buttons { display: none !important; } }
 
 /* ---- Sound. ---- */
 .wc-sound { position: fixed; z-index: 10; right: 16px; bottom: 14px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: calc(100vw - 32px); }
