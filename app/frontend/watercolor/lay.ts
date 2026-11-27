@@ -151,7 +151,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
 
   const frame = (now: number) => {
     frameAsked = 0
-    if (gone) return
+    if (gone || !tiles.length) return
     startSeen(now)
     move(now)
     const { top, bottom } = showing()
@@ -275,7 +275,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   // Paint thrown at bare paper, where nothing is to be pressed and nobody is selecting what is written.
   const thrown = (event: MouseEvent) => {
     const target = event.target as Element | null
-    if (event.button || target?.closest('a, button, input, pre, iframe, [data-of]')) return
+    if (!tiles.length || event.button || target?.closest('a, button, input, pre, iframe, [data-of]')) return
     if (!window.getSelection()?.isCollapsed) return
     const { x, y, wash } = at(event)
     if (wash) return
@@ -400,8 +400,10 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   void faces.then(() => {
     if (composition.washes.length && !gone) layAgain()
   })
-  void Promise.race([faces, new Promise((done) => window.setTimeout(done, 2500))]).then(() => {
+  const faced = Promise.race([faces, new Promise((done) => window.setTimeout(done, 2500))])
+  void Promise.all([painter.ready(), faced]).then(([paints]) => {
     if (gone || composition.washes.length) return
+    if (!paints) return leave()
     lay()
     observer.observe(shell)
   })
@@ -424,7 +426,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   painter.canvas.addEventListener('webglcontextlost', lost)
   painter.canvas.addEventListener('webglcontextrestored', restored)
 
-  return () => {
+  const leave = () => {
     gone = true
     cancelAnimationFrame(frameAsked)
     cancelAnimationFrame(composeAsked)
@@ -448,4 +450,5 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
     for (const tile of tiles) tile.canvas.remove()
     delete shell.dataset.painted
   }
+  return leave
 }
