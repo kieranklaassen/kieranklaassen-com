@@ -1,4 +1,9 @@
 @import "tailwindcss";
+@import "@fontsource-variable/newsreader/wght.css";
+@import "@fontsource-variable/newsreader/wght-italic.css";
+@import "@fontsource-variable/inter/wght.css";
+@import "../looks/watercolor.css";
+@import "../looks/article.css";
 @plugin "@tailwindcss/typography";
 
 @theme {

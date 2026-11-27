@@ -4,7 +4,8 @@ class PagesController < InertiaController
   def home
     render inertia: "home", props: {
       posts: ThoughtRepository.recent(limit: 7),
-      repositories: GithubRepository.all
+      repositories: GithubRepository.all,
+      **(%w[score long rooms].include?(look) ? { score: ThoughtRepository.all } : {})
     }
   end
 

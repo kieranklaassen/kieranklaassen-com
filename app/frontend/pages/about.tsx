@@ -10,7 +10,7 @@ export default function About() {
           content="About Kieran Klaassen, a creator, engineer, composer, and baker."
         />
       </Head>
-      <article className="glass-panel prose prose-xl mx-auto mt-8 max-w-[938px] px-8 py-16">
+      <article data-paint="sheet" data-key="about" className="glass-panel wc-sheet-plain prose prose-xl mx-auto mt-8 max-w-[938px] px-8 py-16">
         <h2>About</h2>
         <p>
           I&apos;m Kieran, a founder and engineering leader who loves turning ideas into useful,

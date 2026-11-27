@@ -1,0 +1,79 @@
+require "test_helper"
+
+class LooksTest < ActionDispatch::IntegrationTest
+  test "the site is one long page in watercolor unless another look is chosen" do
+    get root_path
+    assert_response :success
+    assert_match(/(?:"|&quot;)look(?:"|&quot;):(?:"|&quot;)long/, response.body)
+    assert_match(/(?:"|&quot;)chooseLook(?:"|&quot;):false/, response.body)
+    assert_empty cookies[:look].to_s
+  end
+
+  test "the blocks are kept" do
+    get root_path(look: "blocks")
+    refute_includes response.body, 'data-look="'
+    get about_path
+    assert_match(/(?:"|&quot;)look(?:"|&quot;):(?:"|&quot;)blocks/, response.body)
+  end
+
+  test "a look is remembered from one page to the next" do
+    get root_path(look: "estuary")
+    assert_equal "estuary", cookies[:look]
+    get about_path
+    assert_match(/(?:"|&quot;)look(?:"|&quot;):(?:"|&quot;)estuary/, response.body)
+  end
+
+  test "a look nobody made is not taken" do
+    get root_path(look: "nonsense")
+    assert_empty cookies[:look].to_s
+  end
+
+  test "an article is laid out edge to edge unless another layout is chosen" do
+    get PostRepository.all.first.path, params: { look: "rooms" }
+    assert_match(/(?:"|&quot;)art(?:"|&quot;):(?:"|&quot;)wide/, response.body)
+  end
+
+  test "a layout of an article is remembered from one article to the next" do
+    first, second = PostRepository.all.first(2)
+    get first.path, params: { look: "rooms", art: "river" }
+    assert_equal "river", cookies[:art]
+    get second.path
+    assert_match(/(?:"|&quot;)art(?:"|&quot;):(?:"|&quot;)river/, response.body)
+    get second.path, params: { art: "nonsense" }
+    assert_equal "river", cookies[:art]
+  end
+
+  test "only the score is handed every thought" do
+    get root_path(look: "page")
+    refute_match(/(?:"|&quot;)score(?:"|&quot;):\[/, response.body)
+    get root_path(look: "score")
+    assert_match(/(?:"|&quot;)score(?:"|&quot;):\[/, response.body)
+  end
+
+  test "a look for each page gives every page its own" do
+    skip "set INERTIA_SSR_URL and SSR_STRICT=1 after building the SSR bundle" unless ENV["SSR_STRICT"] == "1"
+
+    { root_path(look: "rooms") => "name", "/posts" => "score", PostRepository.all.first.path => "article", about_path => "mosaic" }.each do |path, room|
+      get path
+      assert_includes response.body, %(class="wc-body" data-look="#{room}")
+    end
+  end
+
+  test "one long page is the name, the score and the estuary" do
+    skip "set INERTIA_SSR_URL and SSR_STRICT=1 after building the SSR bundle" unless ENV["SSR_STRICT"] == "1"
+
+    get root_path(look: "long")
+    assert_equal %w[wc-header wc-staff wc-river], response.body.scan(/class="(wc-header|wc-staff|wc-river)"/).flatten
+  end
+
+  test "every look is rendered on the server" do
+    skip "set INERTIA_SSR_URL and SSR_STRICT=1 after building the SSR bundle" unless ENV["SSR_STRICT"] == "1"
+
+    (InertiaController::LOOKS - %w[blocks rooms]).each do |look|
+      get root_path(look:)
+      assert_response :success
+      assert_includes response.body, %(data-look="#{look}")
+      assert_includes response.body, "How I Polish Software That Agents Built"
+    end
+  end
+end
