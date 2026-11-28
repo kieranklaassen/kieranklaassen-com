@@ -65,6 +65,9 @@ export class Painter {
   readonly canvas: HTMLCanvasElement
   private gl: WebGL2RenderingContext
   private uniforms: Record<string, WebGLUniformLocation | null> = {}
+  private program: WebGLProgram | undefined
+  private shaders: WebGLShader[] = []
+  private linked = false
   private buffer: WebGLBuffer | null = null
   private data = new Float32Array(FLOATS * 256)
 
@@ -94,12 +97,16 @@ export class Painter {
   private constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext) {
     this.canvas = canvas
     this.gl = gl
-    this.setUp()
+    this.compile()
   }
 
-  setUp() {
+  /** Starts the compiler and asks it nothing: an answer waits until it is done, and the page with it. */
+  private compile() {
     const { gl } = this
     const program = gl.createProgram()!
+    this.linked = false
+    this.program = program
+    this.shaders = []
     for (const [type, source] of [
       [gl.VERTEX_SHADER, VERTEX],
       [gl.FRAGMENT_SHADER, FRAGMENT],
@@ -108,9 +115,42 @@ export class Painter {
       gl.shaderSource(shader, source)
       gl.compileShader(shader)
       gl.attachShader(program, shader)
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader) ?? 'shader')
+      this.shaders.push(shader)
     }
     gl.linkProgram(program)
+  }
+
+  /** Whether it can paint, once the compiler is done. Where a browser cannot say when that is, it is waited for. */
+  async ready(): Promise<boolean> {
+    const { gl } = this
+    const parallel = gl.getExtension('KHR_parallel_shader_compile')
+    while (
+      parallel &&
+      !this.linked &&
+      !gl.isContextLost() &&
+      gl.getProgramParameter(this.program!, parallel.COMPLETION_STATUS_KHR) === false
+    )
+      await new Promise((done) => window.setTimeout(done, 8))
+    // a lost context is set up again when it is restored
+    if (this.linked || gl.isContextLost()) return true
+    try {
+      this.finish()
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  setUp() {
+    this.compile()
+    this.finish()
+  }
+
+  private finish() {
+    const { gl } = this
+    const program = this.program!
+    for (const shader of this.shaders)
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader) ?? 'shader')
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program) ?? 'program')
     gl.useProgram(program)
 
@@ -148,6 +188,7 @@ export class Painter {
     gl.activeTexture(gl.TEXTURE0)
     gl.enable(gl.BLEND)
     gl.enable(gl.SCISSOR_TEST)
+    this.linked = true
   }
 
   setMask(width: number, height: number, field: Uint8Array) {
