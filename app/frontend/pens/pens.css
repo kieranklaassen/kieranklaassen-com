@@ -14,11 +14,11 @@
 .wc-row button:hover, .wc-back-out button:hover:enabled { border-color: var(--ink); }
 .wc-hold { padding-left: 12px !important; }
 .wc-hold[aria-expanded="true"] { background: #f3e3c4 !important; }
-.wc-hold svg { width: 12px; height: 30px; rotate: 28deg; }
-.wc-tray { pointer-events: auto; max-width: 100%; padding: 0 12px 10px; background: rgb(250 246 236 / 96%); border: 1px solid rgb(31 26 29 / 26%); border-radius: 18px 22px 19px 23px; box-shadow: 0 8px 28px rgb(40 30 40 / 16%); }
+.wc-hold svg { width: 10px; height: 32px; rotate: 28deg; }
+.wc-tray { pointer-events: auto; max-width: 100%; padding: 0 12px 10px; background: #faf6ec; border: 1px solid rgb(31 26 29 / 26%); border-radius: 18px 22px 19px 23px; box-shadow: 0 8px 28px rgb(40 30 40 / 16%); }
 .wc-stand { display: flex; gap: 2px; padding-top: 20px; overflow: hidden; border-bottom: 3px solid #cdb48a; }
-.wc-pen { flex: 1 1 50px; min-width: 44px; height: 68px; padding: 0; overflow: visible; background: none; border: 0; }
-.wc-pen svg { width: 30px; height: 76px; margin: 0 auto; translate: 0 12px; transition: translate 0.18s ease-out; }
+.wc-pen { flex: 1 1 50px; min-width: 44px; height: 68px; padding: 0; background: none; border: 0; }
+.wc-pen svg { width: 30px; height: 96px; margin: 0 auto; translate: 0 12px; transition: translate 0.18s ease-out; }
 .wc-pen:hover svg { translate: 0 6px; }
 .wc-pen[aria-pressed="true"] svg { translate: 0 -10px; }
 .wc-pens .wc-pen:focus-visible { outline-offset: -3px; }

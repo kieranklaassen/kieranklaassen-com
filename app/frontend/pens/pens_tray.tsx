@@ -18,9 +18,9 @@ const titleOf = (tool: Tool) => (tool === 'eraser' ? 'Eraser' : PENS[tool].title
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 const grainOf = (colour: string) => `wc-grain-${colour.slice(1)}`
 
-const PAPER_SPECKS = (() => {
+const SPECKS = (() => {
   const random = seeded(7)
-  return Array.from({ length: 150 }, () => `M${(random() * GRAIN).toFixed(1)} ${(random() * GRAIN).toFixed(1)}h${(0.6 + random()).toFixed(1)}v${(0.6 + 0.7 * random()).toFixed(1)}h-1z`).join('')
+  return Array.from({ length: 420 }, () => `M${(random() * GRAIN).toFixed(1)} ${(random() * GRAIN).toFixed(1)}h${(0.4 + 0.5 * random()).toFixed(1)}v0.7h-0.5z`).join('')
 })()
 
 /** Graphite catches on the paper's tooth and leaves the rest bare. */
@@ -29,8 +29,8 @@ const Grains = memo(function Grains() {
     <defs>
       {PENS.pencil.colours.map(([, colour]) => (
         <pattern key={colour} id={grainOf(colour)} width={GRAIN} height={GRAIN} patternUnits="userSpaceOnUse">
-          <path d={`M0 0h${GRAIN}v${GRAIN}H0z`} fill={colour} opacity="0.5" />
-          <path d={PAPER_SPECKS} fill={colour} />
+          <path d={`M0 0h${GRAIN}v${GRAIN}H0z`} fill={colour} opacity="0.62" />
+          <path d={SPECKS} fill={colour} />
         </pattern>
       ))}
     </defs>
