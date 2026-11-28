@@ -4,12 +4,12 @@ import { SiteShell } from '../components/site_shell'
 import { Pens } from '../pens/pens_tray'
 import { PaintedSheet } from '../watercolor/sheet'
 import { Sound } from './sound'
-import { ARTS, LOOKS, roomsOf, type Art, type Look } from './looks'
+import { ARTS, LOOKS, roomLayoutOf, type Art, type Look } from './rooms'
 
 export function LookShell({ children }: PropsWithChildren) {
   const { props, url, component } = usePage<{ look: Look; art: Art; chooseLook: boolean }>()
   const look = props.look
-  const rooms = roomsOf(look, component, props.art)
+  const rooms = roomLayoutOf(look, component, props.art)
   const path = url.split(/[?#]/)[0]
   const chooser = props.chooseLook && <LookChooser look={look} art={rooms?.art} path={path} />
 
@@ -23,7 +23,7 @@ export function LookShell({ children }: PropsWithChildren) {
 
   return (
     <div className="wc" data-art={rooms.art}>
-      <PaintedSheet compose={rooms.compose} page={url} />
+      <PaintedSheet room={rooms} page={url} />
       <div className="wc-head" data-look={rooms.head}>
         <LookHeader small={component.startsWith('posts/show')} />
       </div>

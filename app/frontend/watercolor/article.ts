@@ -2,7 +2,7 @@
 // is written. There are four ways of laying it out, to choose from.
 
 import { pictureOf } from '../art/pictures'
-import { banks, courseOf, courseRound, grown, letterInk, meets, NARROW, noteInk, of, PAPER, pencil, still, tide, toneOf, wander, winding, writtenIn, type Compose, type Page, type PaintBox } from './compose'
+import { banks, courseOf, courseRound, grown, letterInk, meets, NARROW, noteInk, of, PAPER, pencil, still, tide, toneOf, wander, winding, writtenIn, type Compose, type Page, type PaintBox } from './compose_shared'
 import { lettersOf } from './letters'
 import { Cutter } from './mask'
 import { Kind, type Rect, type Wash } from './painter'

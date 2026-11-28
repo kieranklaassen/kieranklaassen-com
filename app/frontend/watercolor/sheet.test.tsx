@@ -120,4 +120,24 @@ describe('PaintedSheet', () => {
     expect(mocks.laySheet).toHaveBeenCalledTimes(2)
     expect(() => act(() => root.unmount())).not.toThrow()
   })
+
+  it('loads the room composer lazily and skips re-running when re-rendered with an equal room layout', async () => {
+    const cleanup = vi.fn()
+    mocks.seedOfVisit.mockReturnValue(314)
+    mocks.laySheet.mockReturnValue(cleanup)
+
+    act(() => root.render(<PaintedSheet room={{ head: 'name', body: 'long' }} page="/" />))
+    act(() => root.render(<PaintedSheet room={{ head: 'name', body: 'long' }} page="/" />))
+
+    expect(mocks.laySheet).toHaveBeenCalledTimes(1)
+    const [, source, seed] = mocks.laySheet.mock.calls[0]
+    expect(seed).toBe(314)
+    expect(source).toBeInstanceOf(Promise)
+    const resolved = await source
+    expect(typeof resolved).toBe('function')
+    expect(cleanup).not.toHaveBeenCalled()
+
+    act(() => root.unmount())
+    expect(cleanup).toHaveBeenCalledTimes(1)
+  })
 })

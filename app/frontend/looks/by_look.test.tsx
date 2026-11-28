@@ -3,8 +3,8 @@ import { act, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { river, wide } from '../watercolor/article'
-import { longPage, mosaic, score } from '../watercolor/compose'
-import type { Art, Look, Rooms } from './looks'
+import { longPage, mosaic, score, type Compose } from '../watercolor/compose'
+import { loadCompose, type Art, type Look, type RoomLayout } from './looks'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -74,36 +74,41 @@ describe('ByLook', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it.each<{ look: Look; component: string; art?: Art; expected: Rooms }>([
+  it.each<{ look: Look; component: string; art?: Art; expected: RoomLayout; compose: Compose }>([
     {
       look: 'long',
       component: 'home',
-      expected: { head: 'name', body: 'long', compose: longPage },
+      expected: { head: 'name', body: 'long' },
+      compose: longPage,
     },
     {
       look: 'rooms',
       component: 'posts/index',
-      expected: { head: 'score', body: 'score', compose: score },
+      expected: { head: 'score', body: 'score' },
+      compose: score,
     },
     {
       look: 'mosaic',
       component: 'about',
-      expected: { head: 'mosaic', body: 'mosaic', compose: mosaic },
+      expected: { head: 'mosaic', body: 'mosaic' },
+      compose: mosaic,
     },
     {
       look: 'long',
       component: 'posts/show',
-      expected: { head: 'article', body: 'article', art: 'wide', compose: wide },
+      expected: { head: 'article', body: 'article', art: 'wide' },
+      compose: wide,
     },
     {
       look: 'rooms',
       component: 'posts/show',
       art: 'river',
-      expected: { head: 'article', body: 'article', art: 'river', compose: river },
+      expected: { head: 'article', body: 'article', art: 'river' },
+      compose: river,
     },
-  ])('passes resolved rooms to painted for look=$look component=$component art=$art', ({ look, component, art, expected }) => {
+  ])('passes resolved rooms to painted for look=$look component=$component art=$art', async ({ look, component, art, expected, compose }) => {
     setPage({ look, component, art })
-    const painted = vi.fn((rooms: Rooms) => (
+    const painted = vi.fn((rooms: RoomLayout) => (
       <div data-head={rooms.head} data-body={rooms.body} data-art={rooms.art ?? ''}>
         Painted
       </div>
@@ -117,6 +122,7 @@ describe('ByLook', () => {
 
     expect(painted).toHaveBeenCalledTimes(1)
     expect(painted).toHaveBeenCalledWith(expected)
+    await expect(loadCompose(expected)).resolves.toBe(compose)
     expect(container.textContent).toBe('Painted')
     expect(container.querySelector('div')?.getAttribute('data-body')).toBe(expected.body)
     expect(container.querySelector('div')?.getAttribute('data-art')).toBe(expected.art ?? '')
