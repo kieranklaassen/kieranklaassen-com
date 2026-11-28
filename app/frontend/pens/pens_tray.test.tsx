@@ -235,6 +235,11 @@ describe('Pens', () => {
   })
 
   it('loads saved ink automatically on mount when storage already has strokes for the page', async () => {
+    const actualWorkspace = await vi.importActual<typeof import('./pens_workspace')>('./pens_workspace')
+    let resolveWorkspace!: () => void
+    const workspaceGate = new Promise<void>((resolve) => {
+      resolveWorkspace = resolve
+    })
     keepChange('/saved', {
       added: [
         {
@@ -247,11 +252,199 @@ describe('Pens', () => {
       ],
       removed: [],
     })
-    await act(async () => {
-      root.render(<Pens key="/saved" path="/saved" />)
-      await vi.dynamicImportSettled()
+    const getItemSpy = vi.spyOn(localStorage, 'getItem')
+    vi.resetModules()
+    vi.doMock('./pens_workspace', async () => {
+      await workspaceGate
+      return actualWorkspace
     })
-    expect(inked()).toHaveLength(1)
-    expect(inked()[0].getAttribute('stroke')).toBe('#b4473a')
+
+    try {
+      const { Pens: ColdPens } = await import('./pens_tray')
+      act(() => root.render(<ColdPens key="/saved" path="/saved" />))
+
+      expect(getItemSpy).toHaveBeenCalledWith('wc-ink:/saved')
+      expect(button('Pens')?.getAttribute('aria-expanded')).toBe('false')
+      expect(button('Marker')).toBeUndefined()
+      expect(inked()).toHaveLength(0)
+
+      await act(async () => {
+        resolveWorkspace()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(inked()).toHaveLength(1)
+      expect(inked()[0].getAttribute('stroke')).toBe('#b4473a')
+      expect(button('Pens')?.getAttribute('aria-expanded')).toBe('false')
+    } finally {
+      vi.doUnmock('./pens_workspace')
+    }
+  })
+
+  it('recovers from a failed workspace chunk import and opens cleanly on retry', async () => {
+    const actualWorkspace = await vi.importActual<typeof import('./pens_workspace')>('./pens_workspace')
+    const unhandled: unknown[] = []
+    const onUnhandled = (event: PromiseRejectionEvent) => unhandled.push(event.reason)
+    window.addEventListener('unhandledrejection', onUnhandled)
+
+    let attempts = 0
+    vi.resetModules()
+    vi.doMock('./pens_workspace', async () => {
+      attempts += 1
+      if (attempts === 1) throw new Error('chunk failed')
+      return actualWorkspace
+    })
+
+    try {
+      const { Pens: ColdPens } = await import('./pens_tray')
+      act(() => root.render(<ColdPens key="/retry" path="/retry" />))
+
+      await act(async () => {
+        button('Pens')!.click()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(unhandled).toEqual([])
+      expect(button('Pens')?.getAttribute('aria-expanded')).toBe('false')
+      expect(button('Marker')).toBeUndefined()
+
+      vi.doMock('./pens_workspace', () => actualWorkspace)
+      await act(async () => {
+        button('Pens')!.click()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(unhandled).toEqual([])
+      expect(button('Pens')?.getAttribute('aria-expanded')).toBe('true')
+      expect(button('Marker')).toBeDefined()
+    } finally {
+      window.removeEventListener('unhandledrejection', onUnhandled)
+      vi.doUnmock('./pens_workspace')
+    }
+  })
+
+  it('stays collapsed and skips workspace import when localStorage.getItem throws', async () => {
+    const actualWorkspace = await vi.importActual<typeof import('./pens_workspace')>('./pens_workspace')
+    const workspaceLoaded = vi.fn()
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new Error('SecurityError')
+      },
+      setItem: vi.fn(),
+    })
+    vi.resetModules()
+    vi.doMock('./pens_workspace', async () => {
+      workspaceLoaded()
+      return actualWorkspace
+    })
+
+    try {
+      const { Pens: ColdPens } = await import('./pens_tray')
+      await act(async () => {
+        root.render(<ColdPens key="/blocked" path="/blocked" />)
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(workspaceLoaded).not.toHaveBeenCalled()
+      expect(button('Pens')?.getAttribute('aria-expanded')).toBe('false')
+      expect(button('Marker')).toBeUndefined()
+    } finally {
+      vi.doUnmock('./pens_workspace')
+    }
+  })
+
+  it('does not update state when unmounted while workspace import is pending', async () => {
+    const actualWorkspace = await vi.importActual<typeof import('./pens_workspace')>('./pens_workspace')
+    let resolveWorkspace!: () => void
+    const workspaceGate = new Promise<void>((resolve) => {
+      resolveWorkspace = resolve
+    })
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.resetModules()
+    vi.doMock('./pens_workspace', async () => {
+      await workspaceGate
+      return actualWorkspace
+    })
+
+    try {
+      const { Pens: ColdPens } = await import('./pens_tray')
+      act(() => root.render(<ColdPens key="/unmount" path="/unmount" />))
+      act(() => button('Pens')!.click())
+      act(() => root.unmount())
+
+      await act(async () => {
+        resolveWorkspace()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(errorSpy).not.toHaveBeenCalled()
+    } finally {
+      vi.doUnmock('./pens_workspace')
+    }
+  })
+
+  it('dispatches wc:unfolded synchronously once on cold open and cancels pending open when Sound unfolds mid-load on narrow screens', async () => {
+    const actualWorkspace = await vi.importActual<typeof import('./pens_workspace')>('./pens_workspace')
+    const details: string[] = []
+    const onUnfolded = (event: Event) => details.push((event as CustomEvent<string>).detail)
+    window.addEventListener('wc:unfolded', onUnfolded)
+
+    let resolveFirst!: () => void
+    const firstGate = new Promise<void>((resolve) => {
+      resolveFirst = resolve
+    })
+    vi.resetModules()
+    vi.doMock('./pens_workspace', async () => {
+      await firstGate
+      return actualWorkspace
+    })
+
+    try {
+      const { Pens: ColdPens } = await import('./pens_tray')
+      act(() => root.render(<ColdPens key="/sync" path="/sync" />))
+
+      act(() => button('Pens')!.click())
+      expect(details).toEqual(['pens'])
+
+      await act(async () => {
+        resolveFirst()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(button('Marker')).toBeDefined()
+      expect(details).toEqual(['pens'])
+
+      let resolveSecond!: () => void
+      const secondGate = new Promise<void>((resolve) => {
+        resolveSecond = resolve
+      })
+      details.length = 0
+      narrow = true
+      vi.resetModules()
+      vi.doMock('./pens_workspace', async () => {
+        await secondGate
+        return actualWorkspace
+      })
+
+      const { Pens: NarrowColdPens } = await import('./pens_tray')
+      act(() => root.render(<NarrowColdPens key="/narrow-race" path="/narrow-race" />))
+
+      act(() => button('Pens')!.click())
+      expect(details).toEqual(['pens'])
+
+      act(() => void window.dispatchEvent(new CustomEvent('wc:unfolded', { detail: 'sound' })))
+
+      await act(async () => {
+        resolveSecond()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+
+      expect(button('Marker')).toBeUndefined()
+      expect(button('Pens')?.getAttribute('aria-expanded')).toBe('false')
+      expect(details).toEqual(['pens', 'sound'])
+    } finally {
+      window.removeEventListener('wc:unfolded', onUnfolded)
+      vi.doUnmock('./pens_workspace')
+    }
   })
 })

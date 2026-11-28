@@ -1,5 +1,5 @@
 import { hashOf } from '../watercolor/pigments'
-import type { RoomLayout } from '../looks/rooms'
+import type { Art, RoomLayout } from '../looks/rooms'
 
 /** What is heard outside. */
 export type Sky = 'sea' | 'rain' | 'wind' | 'fire' | 'dust'
@@ -23,7 +23,7 @@ const SKY_OF: [RegExp, Sky][] = [
 ]
 
 /** Every page is in a key of its own, with its own weather, and its title is played on its own instrument. */
-export function placeOf(rooms: Pick<RoomLayout, 'art' | 'body'>, url: string): Place {
+export function placeOf(rooms: { body: RoomLayout['body']; art?: Art }, url: string): Place {
   const path = url.split('?')[0]
   const key = hashOf(path) % 5
   if (rooms.art) {

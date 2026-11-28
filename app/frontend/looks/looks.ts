@@ -8,7 +8,7 @@ const ART: Record<Art, Compose> = { book, wide, around, river }
 
 const COMPOSE: Record<Room, Compose> = { page: smallSquares, name: paintedName, estuary, score, mosaic }
 
-export interface Rooms extends RoomLayout {
+export type Rooms = RoomLayout & {
   compose: Compose
 }
 
@@ -17,6 +17,6 @@ export function roomsOf(look: Look | undefined, component: string, art: Art = 'w
   const layout = roomLayoutOf(look, component, art)
   if (!layout) return undefined
   if (layout.body === 'long') return { ...layout, compose: longPage }
-  if (layout.art) return { ...layout, compose: ART[layout.art] }
-  return { ...layout, compose: COMPOSE[layout.body as Room] }
+  if (layout.body === 'article') return { ...layout, compose: ART[layout.art] }
+  return { ...layout, compose: COMPOSE[layout.body] }
 }

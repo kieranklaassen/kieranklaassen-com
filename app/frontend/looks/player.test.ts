@@ -438,4 +438,23 @@ describe('Instrument', () => {
     vi.advanceTimersByTime(1)
     expect(ctx.compressors[0].disconnect).toHaveBeenCalledTimes(1)
   })
+
+  it('does not start playback or strike notes after close', async () => {
+    const instrument = new Instrument()
+    await instrument.ready()
+
+    instrument.close()
+    keys.hush.mockClear()
+
+    const heard = vi.fn()
+    const ended = vi.fn()
+    instrument.play([{ lane: 0, year: 0, length: 10, at: 0, heard }], ended)
+    instrument.strike({ lane: 0, year: 0, length: 10 }, 0.5, 0)
+
+    vi.advanceTimersByTime(30000)
+    expect(keys.strike).not.toHaveBeenCalled()
+    expect(heard).not.toHaveBeenCalled()
+    expect(ended).not.toHaveBeenCalled()
+    expect(keys.hush).not.toHaveBeenCalled()
+  })
 })

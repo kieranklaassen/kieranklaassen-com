@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ComponentType } from 'react'
+import { NARROW, UNFOLDED, type Unfolds } from '../looks/fold'
 
 type Workspace = ComponentType<{ path: string; startOpen?: boolean }>
 
@@ -8,7 +9,13 @@ let loaded: Workspace | undefined
 let loading: Promise<Workspace> | undefined
 
 function loadWorkspace() {
-  return (loading ??= import('./pens_workspace').then((module) => (loaded = module.PensWorkspace)))
+  return (loading ??= import('./pens_workspace').then(
+    (module) => (loaded = module.PensWorkspace),
+    (error) => {
+      loading = undefined
+      throw error
+    },
+  ))
 }
 
 function hasSavedState(path: string) {
@@ -34,18 +41,36 @@ export function Pens({ path }: { path: string }) {
 
   useEffect(() => {
     if (Workspace || !hasSavedState(path)) return
-    void loadWorkspace().then((component) => {
-      if (mounted.current) setWorkspace(() => component)
-    })
+    void loadWorkspace()
+      .then((component) => {
+        if (mounted.current) setWorkspace(() => component)
+      })
+      .catch(() => {})
   }, [Workspace, path])
+
+  useEffect(() => {
+    if (Workspace || !startOpen) return
+    const told = (event: Event) => {
+      if ((event as CustomEvent<Unfolds>).detail !== 'pens' && window.matchMedia(NARROW).matches) setStartOpen(false)
+    }
+    window.addEventListener(UNFOLDED, told)
+    return () => window.removeEventListener(UNFOLDED, told)
+  }, [Workspace, startOpen])
 
   if (Workspace) return <Workspace path={path} startOpen={startOpen} />
 
   const openTray = () => {
-    setStartOpen(true)
-    void loadWorkspace().then((component) => {
-      if (mounted.current) setWorkspace(() => component)
-    })
+    if (!startOpen) {
+      window.dispatchEvent(new CustomEvent<Unfolds>(UNFOLDED, { detail: 'pens' }))
+      setStartOpen(true)
+    }
+    void loadWorkspace()
+      .then((component) => {
+        if (mounted.current) setWorkspace(() => component)
+      })
+      .catch(() => {
+        if (mounted.current) setStartOpen(false)
+      })
   }
 
   return (

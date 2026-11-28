@@ -33,10 +33,17 @@ const ROOM_OF_PAGE: Record<string, Room> = {
   not_found: 'page',
 }
 
-export interface RoomLayout {
-  head: Room | 'article'
-  body: Room | 'long' | 'article'
-  art?: Art
+export type RoomLayout =
+  | { head: 'name'; body: 'long'; art?: undefined }
+  | { head: 'article'; body: 'article'; art: Art }
+  | { head: Room; body: Room; art?: undefined }
+
+const ROOM_LOADERS: Record<Room, () => Promise<Compose>> = {
+  page: () => import('../watercolor/small_squares').then((module) => module.smallSquares),
+  name: () => import('../watercolor/long_page').then((module) => module.paintedName),
+  estuary: () => import('../watercolor/estuary').then((module) => module.estuary),
+  score: () => import('../watercolor/score').then((module) => module.score),
+  mosaic: () => import('../watercolor/mosaic').then((module) => module.mosaic),
 }
 
 /** Which rooms apply to a page under a look, without importing composer code. */
@@ -52,20 +59,9 @@ export function roomLayoutOf(look: Look | undefined, component: string, art: Art
 /** Loads the composer for a resolved room layout on demand. */
 export async function loadCompose(rooms: RoomLayout): Promise<Compose> {
   if (rooms.body === 'long') return (await import('../watercolor/long_page')).longPage
-  if (rooms.art === 'wide') return (await import('../watercolor/article_wide')).wide
-  if (rooms.art) return (await import('../watercolor/article_layouts'))[rooms.art]
-  switch (rooms.body) {
-    case 'page':
-      return (await import('../watercolor/small_squares')).smallSquares
-    case 'name':
-      return (await import('../watercolor/long_page')).paintedName
-    case 'estuary':
-      return (await import('../watercolor/estuary')).estuary
-    case 'score':
-      return (await import('../watercolor/score')).score
-    case 'mosaic':
-      return (await import('../watercolor/mosaic')).mosaic
-    default:
-      return (await import('../watercolor/estuary')).estuary
+  if (rooms.body === 'article') {
+    if (rooms.art === 'wide') return (await import('../watercolor/article_wide')).wide
+    return (await import('../watercolor/article_layouts'))[rooms.art]
   }
+  return ROOM_LOADERS[rooms.body]()
 }

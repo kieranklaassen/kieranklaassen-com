@@ -12,7 +12,15 @@ export function PaintedSheet({ compose, room, page }: { compose?: Compose; room?
 
   useEffect(() => {
     seed.current ||= seedOfVisit()
-    const source = compose ?? (head && body ? loadCompose({ head, body, art }) : undefined)
+    const layout: RoomLayout | undefined =
+      body === 'long'
+        ? { head: 'name', body: 'long' }
+        : body === 'article' && art
+          ? { head: 'article', body: 'article', art }
+          : head && body && head !== 'article' && body !== 'article'
+            ? { head, body }
+            : undefined
+    const source = compose ?? (layout ? loadCompose(layout) : undefined)
     return holder.current && source ? laySheet(holder.current, source, seed.current) : undefined
   }, [compose, head, body, art, page])
 

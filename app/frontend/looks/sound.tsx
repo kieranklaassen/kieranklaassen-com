@@ -3,12 +3,12 @@ import { placeOf } from '../sound/place'
 import { ALL, arm, close, fade, keep, kept, listen, moveTo, NAMES, open, sounding, turn, want, type Parts } from '../sound/switch'
 import type { Part } from '../sound/studio'
 import { useUnfold } from './fold'
-import type { RoomLayout } from './rooms'
+import type { Art, RoomLayout } from './rooms'
 
 /** Three small drops. */
 const THREE = [5, 12, 19].map((x, i) => `M${x} ${i === 1 ? 5.5 : 8}c1.3 1.9 2.8 3.5 2.8 5.5a2.8 2.8 0 0 1-5.6 0c0-2 1.5-3.6 2.8-5.5z`).join('')
 
-export function Sound({ rooms, url }: { rooms: Pick<RoomLayout, 'art' | 'body'>; url: string }) {
+export function Sound({ rooms, url }: { rooms: { body: RoomLayout['body']; art?: Art }; url: string }) {
   const on = useSyncExternalStore(listen, sounding, () => false)
   const [parts, setParts] = useState<Parts>(ALL)
   const [shown, unfold] = useUnfold('sound')
