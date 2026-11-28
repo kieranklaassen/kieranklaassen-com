@@ -20,7 +20,7 @@ vi.mock('@inertiajs/react', () => ({
   ),
 }))
 
-import NotFound from './not_found'
+import NotFound from '../../pages/not_found'
 
 describe('NotFound', () => {
   let container: HTMLDivElement

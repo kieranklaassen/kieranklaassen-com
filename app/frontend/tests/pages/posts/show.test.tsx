@@ -2,8 +2,8 @@
 import { act, type AnchorHTMLAttributes, type PropsWithChildren, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Art, Look } from '../../looks/looks'
-import type { Post } from '../../types/page'
+import type { Art, Look } from '../../../looks/looks'
+import type { Post } from '../../../types/page'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -27,7 +27,7 @@ vi.mock('@inertiajs/react', () => ({
   usePage: mocks.usePage,
 }))
 
-import PostShow, { AiAssistanceDisclosure, withInitial } from './show'
+import PostShow, { AiAssistanceDisclosure, withInitial } from '../../../pages/posts/show'
 
 const BASE_POST: Post = {
   slug: 'compound-engineering',

@@ -2,8 +2,8 @@
 import { act, type AnchorHTMLAttributes, type PropsWithChildren, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Look } from '../looks/looks'
-import type { GithubRepositorySummary, PostSummary } from '../types/page'
+import type { Look } from '../../looks/looks'
+import type { GithubRepositorySummary, PostSummary } from '../../types/page'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -27,7 +27,7 @@ vi.mock('@inertiajs/react', () => ({
   usePage: mocks.usePage,
 }))
 
-import Home, { HomeContent } from './home'
+import Home, { HomeContent } from '../../pages/home'
 
 const POSTS: PostSummary[] = [
   {
