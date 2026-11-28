@@ -237,7 +237,7 @@ describe('laySheet', () => {
 
     expect(compose).toHaveBeenCalledTimes(1)
     expect(fakePainter.setPaper).toHaveBeenCalledWith([0.97, 0.95, 0.91])
-    expect(sheet.querySelectorAll('canvas')).toHaveLength(2) // 800px / 512px tile height
+    expect(sheet.querySelectorAll('canvas')).toHaveLength(2)
     expect(shell.dataset.painted).toBe('')
     expect(FakeResizeObserver.instances[0].observe).toHaveBeenCalledWith(shell)
 
@@ -284,7 +284,6 @@ describe('laySheet', () => {
     expect(ear.view).toBeUndefined()
     expect(FakeResizeObserver.instances[0].disconnect).toHaveBeenCalledTimes(1)
 
-    // Listeners were removed: scroll and context events do nothing.
     window.dispatchEvent(new Event('scroll'))
     expect(rafQueue.size).toBe(0)
 
@@ -304,19 +303,16 @@ describe('laySheet', () => {
 
     const leave = track(laySheet(sheet, compose, 17))!
 
-    // Trigger frame() via scroll before tiles exist.
     window.dispatchEvent(new Event('scroll'))
     expect(rafQueue.size).toBe(1)
     expect(() => runFrames(100)).not.toThrow()
     expect(fakePainter.paint).not.toHaveBeenCalled()
     expect(rafQueue.size).toBe(0)
 
-    // Bare-paper click before tiles exist must not splash, sound, or schedule a frame.
     shell.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0, clientX: 500, clientY: 500 }))
     expect(hears).not.toHaveBeenCalled()
     expect(rafQueue.size).toBe(0)
 
-    // Once ready, laid, and settled, bare-paper clicks create a splash.
     painterReady.resolve(true)
     fontsReady.resolve()
     await flushMicrotasks()
@@ -373,10 +369,8 @@ describe('laySheet', () => {
 
     runFrames(500)
     expect(fakePainter.paint).toHaveBeenCalledTimes(2)
-    // Settled immediately: no further animation frames scheduled.
     expect(rafQueue.size).toBe(0)
 
-    // Bare-paper click and wc:again do not schedule motion under reduced motion.
     const hears = vi.fn()
     ear.hears = hears
     shell.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0, clientX: 600, clientY: 600 }))
@@ -401,30 +395,25 @@ describe('laySheet', () => {
     fontsReady.resolve()
     await flushMicrotasks()
 
-    // Initial paint and settle so no animation frame remains pending.
     runFrames(1000)
     expect(fakePainter.paint).toHaveBeenCalledTimes(2)
     runFrames(3000)
     expect(rafQueue.size).toBe(0)
     fakePainter.paint.mockClear()
 
-    // Context lost prevents default so the browser attempts restore.
     const lost = new Event('webglcontextlost', { cancelable: true })
     fakePainter.canvas.dispatchEvent(lost)
     expect(lost.defaultPrevented).toBe(true)
 
-    // Context restored sets up the painter again and schedules a re-lay + repaint.
     fakePainter.canvas.dispatchEvent(new Event('webglcontextrestored'))
     expect(fakePainter.setUp).toHaveBeenCalledTimes(1)
     expect(rafQueue.size).toBe(1)
 
-    // First frame runs lay(), recreating unpainted tiles and requesting a paint frame.
     runFrames(3100)
     expect(compose).toHaveBeenCalledTimes(2)
     expect(fakePainter.setPaper).toHaveBeenCalledTimes(2)
     expect(rafQueue.size).toBe(1)
 
-    // Second frame paints every visible tile onto the restored context.
     runFrames(3200)
     expect(fakePainter.paint).toHaveBeenCalledTimes(2)
 
@@ -440,7 +429,6 @@ describe('laySheet', () => {
     fontsReady.resolve()
     await flushMicrotasks()
 
-    // Initial lay() queued a frame; also trigger a context restore to queue a composeAsked rAF.
     const pendingFrameId = [...rafQueue.keys()][0]
     expect(pendingFrameId).toBeDefined()
     fakePainter.canvas.dispatchEvent(new Event('webglcontextrestored'))
@@ -461,7 +449,6 @@ describe('laySheet', () => {
     expect(shell.dataset.painted).toBeUndefined()
     expect(ear.view).toBeUndefined()
 
-    // Subsequent events on window, shell, and painter.canvas are ignored.
     fakePainter.setUp.mockClear()
     const hears = vi.fn()
     ear.hears = hears
