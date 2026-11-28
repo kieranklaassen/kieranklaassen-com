@@ -64,6 +64,13 @@ describe('LookShell', () => {
   let container: HTMLDivElement
   let root: Root
 
+  const chooserLinks = () =>
+    Array.from(container.querySelectorAll<HTMLAnchorElement>('.wc-chooser a')).map((link) => ({
+      href: link.getAttribute('href'),
+      title: link.textContent,
+      current: link.getAttribute('aria-current'),
+    }))
+
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     mocks.usePage.mockReset()
@@ -157,12 +164,8 @@ describe('LookShell', () => {
     act(() => root.render(<LookShell>Article</LookShell>))
 
     expect(mocks.paintedSheet).toHaveBeenCalledWith({ compose: book, page: '/posts/essay?art=wide&utm=1' })
-    const links = Array.from(container.querySelectorAll<HTMLAnchorElement>('.wc-chooser a'))
-    expect(links.map((link) => ({
-      href: link.getAttribute('href'),
-      title: link.textContent,
-      current: link.getAttribute('aria-current'),
-    }))).toEqual(
+    expect(container.querySelector('.wc-chooser')?.getAttribute('aria-label')).toBe('Look')
+    expect(chooserLinks()).toEqual(
       ARTS.map((one) => ({
         href: `/posts/essay?art=${one.art}`,
         title: one.title,
@@ -181,12 +184,8 @@ describe('LookShell', () => {
 
       act(() => root.render(<LookShell>Content</LookShell>))
 
-      const links = Array.from(container.querySelectorAll<HTMLAnchorElement>('.wc-chooser a'))
-      expect(links.map((link) => ({
-        href: link.getAttribute('href'),
-        title: link.textContent,
-        current: link.getAttribute('aria-current'),
-      }))).toEqual(
+      expect(container.querySelector('.wc-chooser')?.getAttribute('aria-label')).toBe('Look')
+      expect(chooserLinks()).toEqual(
         LOOKS.map((one) => ({
           href: `${expectedPath}?look=${one.look}`,
           title: one.title,

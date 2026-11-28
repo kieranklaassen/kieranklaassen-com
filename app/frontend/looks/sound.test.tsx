@@ -208,6 +208,13 @@ describe('Sound', () => {
       expect(again).not.toHaveBeenCalled()
       expect(toggleButton().getAttribute('aria-pressed')).toBe('true')
 
+      act(() => moreButton()?.click())
+      expect(partButtons().map((button) => [button.textContent, button.getAttribute('aria-pressed')])).toEqual([
+        ['Music', 'false'],
+        ['Weather', 'true'],
+        ['Paint', 'true'],
+      ])
+
       act(() => root.render(<Sound rooms={HOME_ROOMS} url="/about" />))
       expect(firstCleanup).toHaveBeenCalledTimes(1)
       const secondCleanup = switchState.getArmCleanup()

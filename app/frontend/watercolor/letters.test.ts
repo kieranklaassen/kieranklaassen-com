@@ -31,7 +31,7 @@ describe('lettersOf', () => {
   afterEach(() => {
     host.remove()
     if (originalRangeRect) Object.defineProperty(Range.prototype, 'getBoundingClientRect', originalRangeRect)
-    else delete (Range.prototype as Partial<Range>).getBoundingClientRect
+    else Reflect.deleteProperty(Range.prototype, 'getBoundingClientRect')
     vi.restoreAllMocks()
   })
 
@@ -99,14 +99,13 @@ describe('lettersOf', () => {
       A: { w: 56, h: 88, uv: [0, 0, 0.1, 0.2], alpha: new Uint8ClampedArray(56 * 88) },
       B: { w: 52, h: 88, uv: [0.2, 0, 0.1, 0.2], alpha: new Uint8ClampedArray(52 * 88) },
     }
-    let callIndex = 0
-    const order = ['A', 'B']
     const cut = vi.fn((_w: number, _h: number, _scale: number, _field: number, draw: (ctx: CanvasRenderingContext2D) => void) => {
       const fillText = vi.fn()
       const drawContext = { font: '', textBaseline: '', fillText }
       draw(drawContext as unknown as CanvasRenderingContext2D)
+      const [char] = fillText.mock.calls[0]
       drawCalls.push({ font: drawContext.font, textBaseline: drawContext.textBaseline, args: fillText.mock.calls[0] })
-      return cuts[order[callIndex++]]
+      return cuts[char as string]
     })
 
     const result = lettersOf(host, 100, 50, { cut } as unknown as Cutter)
@@ -189,15 +188,11 @@ describe('lettersOf', () => {
     const w = 4
     const h = 5
     const alpha = new Uint8ClampedArray(w * h)
-    // Column 0: threshold boundary 127 must be ignored.
     alpha[4 * w + 0] = 127
-    // Column 1: higher pixel (py=1) and lower pixel > 127 (py=3) above an ignored 127 (py=4).
     alpha[1 * w + 1] = 200
     alpha[3 * w + 1] = 128
     alpha[4 * w + 1] = 127
-    // Column 2: single painted pixel at top row (py=0).
     alpha[0 * w + 2] = 255
-    // Column 3: single painted pixel at bottom row (py=4).
     alpha[4 * w + 3] = 128
 
     const cut = vi.fn((): Cut => ({ w, h, uv: [0, 0, 1, 1], alpha }))
