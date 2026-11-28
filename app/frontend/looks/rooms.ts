@@ -52,7 +52,8 @@ export function roomLayoutOf(look: Look | undefined, component: string, art: Art
 /** Loads the composer for a resolved room layout on demand. */
 export async function loadCompose(rooms: RoomLayout): Promise<Compose> {
   if (rooms.body === 'long') return (await import('../watercolor/long_page')).longPage
-  if (rooms.art) return (await import('../watercolor/article'))[rooms.art]
+  if (rooms.art === 'wide') return (await import('../watercolor/article_wide')).wide
+  if (rooms.art) return (await import('../watercolor/article_layouts'))[rooms.art]
   switch (rooms.body) {
     case 'page':
       return (await import('../watercolor/small_squares')).smallSquares
