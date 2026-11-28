@@ -171,6 +171,7 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
+      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
 
@@ -199,6 +200,7 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
+      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
 
@@ -246,7 +248,11 @@ describe('Score', () => {
     ear.hush = hush
     mount([makePost({ slug: 'pending', date: '2025-01-01' })])
 
-    act(() => button('Play the score')!.click())
+    await act(async () => {
+      button('Play the score')!.click()
+      await vi.dynamicImportSettled()
+      await Promise.resolve()
+    })
     expect(ear.playing).toBe(true)
 
     ear.playing = false
@@ -287,6 +293,7 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
+      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
 
@@ -319,6 +326,7 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
+      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
     expect(mockInstrument.instances).toHaveLength(2)
@@ -329,6 +337,7 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
+      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
 

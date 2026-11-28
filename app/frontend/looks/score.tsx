@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type SyntheticEvent } from 'react'
 import { ear } from '../sound/ear'
-import { Instrument } from './player'
+import type { Instrument } from './player'
 import type { PostSummary } from '../types/page'
 
 const LANES: [string, RegExp][] = [
@@ -43,6 +43,7 @@ export function Score({ posts }: { posts: PostSummary[] }) {
 
   const staff = useRef<HTMLDivElement>(null)
   const instrument = useRef<Instrument>(undefined)
+  const loading = useRef(false)
   const heard = useRef<Element>(undefined)
   const [playing, setPlaying] = useState(false)
   const [sounding, setSounding] = useState(false)
@@ -58,24 +59,31 @@ export function Score({ posts }: { posts: PostSummary[] }) {
 
   const press = async () => {
     if (playing) return instrument.current?.stop()
-    if (!Instrument.possible) return
-    const mine = (instrument.current ??= new Instrument())
-    ear.playing = true
-    setPlaying(true)
-    await mine.ready()
-    if (instrument.current !== mine || !ear.playing) return
-    const marks = [...(staff.current?.querySelectorAll('.wc-note') ?? [])]
-    mine.play(
-      laid.map(({ post, lane, left }, i) => ({ ...note(post, lane), at: left, heard: () => show(marks[i]) })),
-      () => {
-        show()
-        setPlaying(false)
-        ear.playing = false
-        ear.hush?.(false)
-      },
-    )
-    ear.hush?.(true)
-    setSounding(true)
+    if (loading.current) return
+    loading.current = true
+    try {
+      const { Instrument } = await import('./player')
+      if (!Instrument.possible) return
+      const mine = (instrument.current ??= new Instrument())
+      ear.playing = true
+      setPlaying(true)
+      await mine.ready()
+      if (instrument.current !== mine || !ear.playing) return
+      const marks = [...(staff.current?.querySelectorAll('.wc-note') ?? [])]
+      mine.play(
+        laid.map(({ post, lane, left }, i) => ({ ...note(post, lane), at: left, heard: () => show(marks[i]) })),
+        () => {
+          show()
+          setPlaying(false)
+          ear.playing = false
+          ear.hush?.(false)
+        },
+      )
+      ear.hush?.(true)
+      setSounding(true)
+    } finally {
+      loading.current = false
+    }
   }
 
   // Once it has been played, the strokes sound under the hand too.
