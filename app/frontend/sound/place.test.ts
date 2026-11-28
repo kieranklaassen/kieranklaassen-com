@@ -77,9 +77,9 @@ describe('placeOf', () => {
       expect(placeOf(bookArticle, '/posts/albumen').sky).not.toBe('dust')
       expect(placeOf(bookArticle, '/posts/bak').sky).not.toBe('fire')
 
-      const nonBoundaryRainSlugs = ['/posts/decode', '/posts/email', '/posts/reagent', '/posts/gems']
-      const matchedNonRain = nonBoundaryRainSlugs.some((url) => placeOf(bookArticle, url).sky !== 'rain')
-      expect(matchedNonRain).toBe(true)
+      for (const url of ['/posts/decode', '/posts/email', '/posts/reagent', '/posts/gems']) {
+        expect(placeOf(bookArticle, url).sky).not.toBe('rain')
+      }
     })
 
     it('applies keyword precedence in dust > sea > fire > rain order', () => {
