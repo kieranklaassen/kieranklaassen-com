@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { book, river } from '../watercolor/article'
 import { longPage, mosaic } from '../watercolor/compose'
-import { ARTS, LOOKS, type Art, type Look, type Rooms } from './looks'
+import { ARTS, LOOKS, loadCompose, type Art, type Look, type RoomLayout } from './looks'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -34,7 +34,7 @@ vi.mock('../components/site_shell', () => ({
 }))
 
 vi.mock('../watercolor/sheet', () => ({
-  PaintedSheet: (props: { compose: Rooms['compose']; page: string }) => {
+  PaintedSheet: (props: { room: RoomLayout; page: string }) => {
     mocks.paintedSheet(props)
     return <div data-testid="painted-sheet" />
   },
@@ -48,7 +48,7 @@ vi.mock('../pens/pens_tray', () => ({
 }))
 
 vi.mock('./sound', () => ({
-  Sound: (props: { rooms: Rooms; url: string }) => {
+  Sound: (props: { rooms: RoomLayout; url: string }) => {
     mocks.sound(props)
     return <div data-testid="sound" />
   },
@@ -111,7 +111,7 @@ describe('LookShell', () => {
     expect(container.querySelector('.wc-chooser')).toBeNull()
   })
 
-  it('renders watercolor layout, PaintedSheet, LookHeader, Pens, and Sound for a non-article look', () => {
+  it('renders watercolor layout, PaintedSheet, LookHeader, Pens, and Sound for a non-article look', async () => {
     setPage({ look: 'long', url: '/', component: 'home' })
 
     act(() => root.render(<LookShell>Home body</LookShell>))
@@ -120,7 +120,9 @@ describe('LookShell', () => {
     expect(shell).not.toBeNull()
     expect(shell?.getAttribute('data-art')).toBeNull()
 
-    expect(mocks.paintedSheet).toHaveBeenCalledWith({ compose: longPage, page: '/' })
+    const expectedRoom: RoomLayout = { head: 'name', body: 'long' }
+    expect(mocks.paintedSheet).toHaveBeenCalledWith({ room: expectedRoom, page: '/' })
+    await expect(loadCompose(expectedRoom)).resolves.toBe(longPage)
     expect(container.querySelector('.wc-head')?.getAttribute('data-look')).toBe('name')
 
     const header = container.querySelector('.wc-header')
@@ -135,37 +137,41 @@ describe('LookShell', () => {
 
     expect(mocks.pens).toHaveBeenCalledWith({ path: '/' })
     expect(mocks.sound).toHaveBeenCalledWith({
-      rooms: { head: 'name', body: 'long', compose: longPage },
+      rooms: expectedRoom,
       url: '/',
     })
     expect(container.querySelector('.wc-chooser')).toBeNull()
   })
 
-  it('sets data-art and compact header (data-small) on posts/show pages', () => {
+  it('sets data-art and compact header (data-small) on posts/show pages', async () => {
     setPage({ look: 'rooms', art: 'river', url: '/posts/2026/river', component: 'posts/show' })
 
     act(() => root.render(<LookShell>Article</LookShell>))
 
+    const riverRoom: RoomLayout = { head: 'article', body: 'article', art: 'river' }
     expect(container.querySelector('.wc')?.getAttribute('data-art')).toBe('river')
     expect(container.querySelector('.wc-head')?.getAttribute('data-look')).toBe('article')
     expect(container.querySelector('.wc-header')?.getAttribute('data-small')).toBe('true')
     expect(container.querySelector('main.wc-body')?.getAttribute('data-look')).toBe('article')
     expect(container.querySelector('main.wc-body')?.getAttribute('data-page')).toBe('posts/show')
-    expect(mocks.paintedSheet).toHaveBeenCalledWith({ compose: river, page: '/posts/2026/river' })
+    expect(mocks.paintedSheet).toHaveBeenCalledWith({ room: riverRoom, page: '/posts/2026/river' })
+    await expect(loadCompose(riverRoom)).resolves.toBe(river)
     expect(mocks.pens).toHaveBeenCalledWith({ path: '/posts/2026/river' })
     expect(mocks.sound).toHaveBeenCalledWith({
-      rooms: { head: 'article', body: 'article', art: 'river', compose: river },
+      rooms: riverRoom,
       url: '/posts/2026/river',
     })
 
     setPage({ look: 'mosaic', url: '/posts/preview', component: 'posts/show_preview' })
     act(() => root.render(<LookShell>Preview</LookShell>))
+    const mosaicRoom: RoomLayout = { head: 'mosaic', body: 'mosaic' }
     expect(container.querySelector('.wc-header')?.getAttribute('data-small')).toBe('true')
-    expect(mocks.paintedSheet).toHaveBeenLastCalledWith({ compose: mosaic, page: '/posts/preview' })
+    expect(mocks.paintedSheet).toHaveBeenLastCalledWith({ room: mosaicRoom, page: '/posts/preview' })
+    await expect(loadCompose(mosaicRoom)).resolves.toBe(mosaic)
     expect(mocks.pens).toHaveBeenLastCalledWith({ path: '/posts/preview' })
   })
 
-  it('renders LookChooser with ARTS (?art=), strips existing query params, and marks active art', () => {
+  it('renders LookChooser with ARTS (?art=), strips existing query params, and marks active art', async () => {
     setPage({
       look: 'long',
       art: 'book',
@@ -176,7 +182,9 @@ describe('LookShell', () => {
 
     act(() => root.render(<LookShell>Article</LookShell>))
 
-    expect(mocks.paintedSheet).toHaveBeenCalledWith({ compose: book, page: '/posts/essay?art=wide&utm=1' })
+    const bookRoom: RoomLayout = { head: 'article', body: 'article', art: 'book' }
+    expect(mocks.paintedSheet).toHaveBeenCalledWith({ room: bookRoom, page: '/posts/essay?art=wide&utm=1' })
+    await expect(loadCompose(bookRoom)).resolves.toBe(book)
     expect(mocks.pens).toHaveBeenCalledWith({ path: '/posts/essay' })
     expect(container.querySelector('.wc-chooser')?.getAttribute('aria-label')).toBe('Look')
     expect(chooserLinks()).toEqual(

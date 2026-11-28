@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { around, book, river, wide } from '../watercolor/article'
 import { estuary, longPage, mosaic, paintedName, score, smallSquares } from '../watercolor/compose'
-import { roomsOf, type Art, type Room } from './looks'
+import { loadCompose, roomLayoutOf, roomsOf, type Art, type Room } from './looks'
 
 describe('roomsOf', () => {
   it('returns undefined when no look is chosen or the blocks look is active', () => {
@@ -99,6 +99,30 @@ describe('roomsOf', () => {
           body: room,
           compose,
         })
+      }
+    })
+  })
+
+  describe('loadCompose', () => {
+    it('loads the same composer as roomsOf for every look and article art', async () => {
+      const cases: [Parameters<typeof roomsOf>[0], string, Art?][] = [
+        ['long', 'home'],
+        ['long', 'posts/show', 'wide'],
+        ['long', 'posts/show', 'book'],
+        ['long', 'posts/show', 'around'],
+        ['long', 'posts/show', 'river'],
+        ['long', 'posts/index'],
+        ['long', 'about'],
+        ['long', 'not_found'],
+        ['long', 'unknown'],
+        ['rooms', 'home'],
+        ['estuary', 'about'],
+      ]
+      for (const [look, component, art] of cases) {
+        const expected = roomsOf(look, component, art)
+        const layout = roomLayoutOf(look, component, art)
+        expect(layout).toBeDefined()
+        await expect(loadCompose(layout!)).resolves.toBe(expected!.compose)
       }
     })
   })

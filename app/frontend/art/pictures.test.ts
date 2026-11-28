@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { pictureOf, type Picture, type Pigment, type Shape } from './pictures'
+import { localPictureOf } from './pictures_local'
+import { found } from './pictures_shared'
 
 const LOCAL_CURATED_SLUGS = [
   'automatically-add-tokens-to-active-record-models',
@@ -167,5 +169,53 @@ describe('pictureOf', () => {
       unknownSlugs.map((slug) => pictureOf(slug).shapes.map((shape) => shape.d).join('|')),
     )
     expect(fallbackSignatures.size).toBe(unknownSlugs.length)
+  })
+})
+
+describe('localPictureOf', () => {
+  it.each(LOCAL_CURATED_SLUGS)('matches pictureOf for local curated post %s', (slug) => {
+    const local = localPictureOf(slug)
+    const full = pictureOf(slug)
+
+    expectValidPicture(local, 4)
+    expect(local.shapes).toEqual(full.shapes)
+    expect(local.details).toEqual(full.details)
+    expect(sampleGround(local.ground)).toEqual(sampleGround(full.ground))
+  })
+
+  it.each(EXTERNAL_CURATED_SLUGS)('excludes external curated post %s and returns deterministic fallback', (slug) => {
+    const first = localPictureOf(slug)
+    const second = localPictureOf(slug)
+    const fallback = found(slug)
+    const external = pictureOf(slug)
+
+    expectGround(first.ground)
+    for (const shape of first.shapes) expectValidShape(shape)
+    expect(first.details).toHaveLength(4)
+    for (const detail of first.details) {
+      expect(detail.length).toBeGreaterThan(0)
+      for (const shape of detail) expectValidShape(shape)
+    }
+    expect(first.shapes).toEqual(second.shapes)
+    expect(first.details).toEqual(second.details)
+    expect(sampleGround(first.ground)).toEqual(sampleGround(second.ground))
+    expect(first.shapes).toEqual(fallback.shapes)
+    expect(first.details).toEqual(fallback.details)
+    expect(sampleGround(first.ground)).toEqual(sampleGround(fallback.ground))
+    expect(first.shapes).not.toEqual(external.shapes)
+  })
+
+  it('falls back deterministically for unknown slugs matching pictureOf', () => {
+    const unknownSlugs = ['unlisted-essay', 'another-draft-2026', '', 'slug-with-unicode-é-and-123']
+
+    for (const slug of unknownSlugs) {
+      const local = localPictureOf(slug)
+      const full = pictureOf(slug)
+
+      expectValidPicture(local, 4)
+      expect(local.shapes).toEqual(full.shapes)
+      expect(local.details).toEqual(full.details)
+      expect(sampleGround(local.ground)).toEqual(sampleGround(full.ground))
+    }
   })
 })

@@ -8,14 +8,17 @@ import { Kind, Painter, type Wash } from './painter'
 interface Deferred<T> {
   promise: Promise<T>
   resolve: (value: T) => void
+  reject: (reason?: unknown) => void
 }
 
 function deferred<T>(): Deferred<T> {
   let resolve!: (value: T) => void
-  const promise = new Promise<T>((r) => {
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((r, j) => {
     resolve = r
+    reject = j
   })
-  return { promise, resolve }
+  return { promise, resolve, reject }
 }
 
 function flushMicrotasks() {
@@ -508,5 +511,170 @@ describe('laySheet', () => {
     expect(hears).not.toHaveBeenCalled()
     expect(lost.defaultPrevented).toBe(false)
     expect(fakePainter.setUp).not.toHaveBeenCalled()
+  })
+
+  it('waits for a deferred Promise<Compose> that resolves after painter.ready() and fonts.ready, then paints normally', async () => {
+    const { shell, sheet } = makeSheet({ width: 1000, height: 800 })
+    const wash = makeWash({ x: 50, y: 50, w: 100, h: 100 })
+    const compose = vi.fn<Compose>(() => ({
+      washes: [wash],
+      paper: [0.97, 0.95, 0.91],
+    }))
+    const composeReady = deferred<Compose>()
+
+    const leave = track(laySheet(sheet, composeReady.promise, 123))!
+
+    painterReady.resolve(true)
+    fontsReady.resolve()
+    await flushMicrotasks()
+
+    expect(compose).not.toHaveBeenCalled()
+    expect(sheet.querySelectorAll('canvas')).toHaveLength(0)
+    expect(shell.dataset.painted).toBeUndefined()
+    expect(FakeResizeObserver.instances[0].observe).not.toHaveBeenCalled()
+
+    composeReady.resolve(compose)
+    await flushMicrotasks()
+
+    expect(compose).toHaveBeenCalledTimes(1)
+    expect(fakePainter.setPaper).toHaveBeenCalledWith([0.97, 0.95, 0.91])
+    expect(sheet.querySelectorAll('canvas')).toHaveLength(2)
+    expect(shell.dataset.painted).toBe('')
+    expect(FakeResizeObserver.instances[0].observe).toHaveBeenCalledWith(shell)
+
+    expect(runFrames(1000)).toBe(1)
+    expect(fakePainter.paint).toHaveBeenCalledTimes(2)
+    expect(wash.grow).toBeGreaterThan(0)
+
+    leave()
+  })
+
+  it('tears down listeners, ResizeObserver, and ear.view via leave() when Promise<Compose> rejects', async () => {
+    const unhandled: unknown[] = []
+    const onUnhandled = (event: PromiseRejectionEvent) => unhandled.push(event.reason)
+    window.addEventListener('unhandledrejection', onUnhandled)
+
+    try {
+      const { shell, sheet } = makeSheet()
+      const composeReady = deferred<Compose>()
+
+      track(laySheet(sheet, composeReady.promise, 19))
+      expect(ear.view).toBeTypeOf('function')
+
+      painterReady.resolve(true)
+      fontsReady.resolve()
+      composeReady.reject(new Error('composer chunk failed'))
+      await flushMicrotasks()
+
+      expect(unhandled).toEqual([])
+      expect(sheet.querySelectorAll('canvas')).toHaveLength(0)
+      expect(shell.dataset.painted).toBeUndefined()
+      expect(ear.view).toBeUndefined()
+      expect(FakeResizeObserver.instances[0].disconnect).toHaveBeenCalledTimes(1)
+
+      window.dispatchEvent(new Event('scroll'))
+      expect(rafQueue.size).toBe(0)
+
+      const lostEvent = new Event('webglcontextlost', { cancelable: true })
+      fakePainter.canvas.dispatchEvent(lostEvent)
+      expect(lostEvent.defaultPrevented).toBe(false)
+
+      fakePainter.canvas.dispatchEvent(new Event('webglcontextrestored'))
+      expect(fakePainter.setUp).not.toHaveBeenCalled()
+    } finally {
+      window.removeEventListener('unhandledrejection', onUnhandled)
+    }
+  })
+
+  it('does not double-lay or skip observer.observe(shell) when restored() fires while Promise<Compose> is pending, then repaints on restore after started', async () => {
+    const { shell, sheet } = makeSheet()
+    const compose = vi.fn<Compose>(() => ({ washes: [makeWash()], paper: [1, 1, 1] }))
+    const composeReady = deferred<Compose>()
+
+    const leave = track(laySheet(sheet, composeReady.promise, 29))!
+    painterReady.resolve(true)
+    fontsReady.resolve()
+    await flushMicrotasks()
+
+    fakePainter.canvas.dispatchEvent(new Event('webglcontextrestored'))
+    expect(fakePainter.setUp).toHaveBeenCalledTimes(1)
+    expect(rafQueue.size).toBe(0)
+    expect(compose).not.toHaveBeenCalled()
+    expect(fakePainter.paint).not.toHaveBeenCalled()
+    expect(sheet.querySelectorAll('canvas')).toHaveLength(0)
+    expect(shell.dataset.painted).toBeUndefined()
+
+    composeReady.resolve(compose)
+    await flushMicrotasks()
+
+    expect(compose).toHaveBeenCalledTimes(1)
+    expect(FakeResizeObserver.instances[0].observe).toHaveBeenCalledTimes(1)
+    expect(FakeResizeObserver.instances[0].observe).toHaveBeenCalledWith(shell)
+    expect(shell.dataset.painted).toBe('')
+    expect(runFrames(500)).toBe(1)
+    expect(fakePainter.paint).toHaveBeenCalledTimes(2)
+    runFrames(2500)
+    fakePainter.paint.mockClear()
+
+    fakePainter.canvas.dispatchEvent(new Event('webglcontextrestored'))
+    expect(fakePainter.setUp).toHaveBeenCalledTimes(2)
+    expect(rafQueue.size).toBe(1)
+
+    runFrames(2600)
+    expect(compose).toHaveBeenCalledTimes(2)
+    expect(rafQueue.size).toBe(1)
+
+    runFrames(2700)
+    expect(fakePainter.paint).toHaveBeenCalledTimes(2)
+
+    leave()
+  })
+
+  it('does not compose or paint when leave() is called while Promise<Compose> is pending', async () => {
+    const { shell, sheet } = makeSheet()
+    const compose = vi.fn<Compose>(() => ({ washes: [makeWash()], paper: [1, 1, 1] }))
+    const composeReady = deferred<Compose>()
+
+    const leave = track(laySheet(sheet, composeReady.promise, 31))!
+    painterReady.resolve(true)
+    fontsReady.resolve()
+    await flushMicrotasks()
+
+    leave()
+    composeReady.resolve(compose)
+    await flushMicrotasks()
+    runFrames(600)
+
+    expect(compose).not.toHaveBeenCalled()
+    expect(fakePainter.setPaper).not.toHaveBeenCalled()
+    expect(fakePainter.paint).not.toHaveBeenCalled()
+    expect(sheet.querySelectorAll('canvas')).toHaveLength(0)
+    expect(shell.dataset.painted).toBeUndefined()
+    expect(ear.view).toBeUndefined()
+    expect(FakeResizeObserver.instances[0].observe).not.toHaveBeenCalled()
+  })
+
+  it('suppresses unhandled rejection when Promise<Compose> rejects after early return on detached sheet or missing painter', async () => {
+    const unhandled: unknown[] = []
+    const onUnhandled = (event: PromiseRejectionEvent) => unhandled.push(event.reason)
+    window.addEventListener('unhandledrejection', onUnhandled)
+
+    try {
+      const detached = document.createElement('div')
+      const detachedCompose = deferred<Compose>()
+      expect(laySheet(detached, detachedCompose.promise, 7)).toBeUndefined()
+      detachedCompose.reject(new Error('detached rejection'))
+
+      vi.spyOn(Painter, 'get').mockReturnValue(undefined)
+      const { sheet } = makeSheet()
+      const missingPainterCompose = deferred<Compose>()
+      expect(laySheet(sheet, missingPainterCompose.promise, 8)).toBeUndefined()
+      missingPainterCompose.reject(new Error('missing painter rejection'))
+
+      await flushMicrotasks()
+      expect(unhandled).toEqual([])
+    } finally {
+      window.removeEventListener('unhandledrejection', onUnhandled)
+    }
   })
 })

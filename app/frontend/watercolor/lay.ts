@@ -1,4 +1,4 @@
-import type { Compose, Composition, PaintBox } from './compose'
+import type { Compose, Composition, PaintBox } from './compose_shared'
 import { ear, type Gesture } from '../sound/ear'
 import { clamp, seeded } from './pigments'
 import { Kind, Painter, reachOf, type Rect, type Wash } from './painter'
@@ -50,10 +50,22 @@ export function seedOfVisit() {
  * The paper under a page. It is painted in tiles, near the window only and only when something
  * changed, so a page at rest costs nothing and scrolling moves what is already painted.
  */
-export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisit()): (() => void) | undefined {
+export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>, seed = seedOfVisit()): (() => void) | undefined {
   const shell = sheet.parentElement
   const painter = Painter.get()
-  if (!shell || !painter) return undefined
+  if (!shell || !painter) {
+    if (typeof compose !== 'function') void compose.catch(() => {})
+    return undefined
+  }
+
+  let composeFn: Compose | undefined = typeof compose === 'function' ? compose : undefined
+  const loaded =
+    typeof compose === 'function'
+      ? Promise.resolve(compose)
+      : compose.then(
+          (fn) => (composeFn = fn),
+          () => undefined,
+        )
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   let composition: Composition = { washes: [], paper: [1, 1, 1] }
@@ -63,6 +75,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   let frameAsked = 0
   let composeAsked = 0
   let gone = false
+  let started = false
   let ratio = 1
   let size = ''
   let under: Wash | undefined
@@ -204,15 +217,16 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   }
 
   const lay = () => {
+    cancelAnimationFrame(composeAsked)
     composeAsked = 0
-    if (gone) return
+    if (gone || !composeFn) return
     const width = shell.clientWidth
     const height = Math.max(shell.scrollHeight, window.innerHeight)
     const board = window.innerHeight > BOARD
     ratio = board ? Math.min(1, Math.sqrt(BOARD_PIXELS / (width * height))) : Math.min(window.devicePixelRatio || 1, MOST_PIXELS)
     const before = composition.washes
     const laidBefore = before.length > 0
-    composition = compose({ width, height, boxes: measure, shell, random: seeded(seed) })
+    composition = composeFn({ width, height, boxes: measure, shell, random: seeded(seed) })
     size = `${width}x${Math.max(shell.scrollHeight, window.innerHeight)}`
     painter.setPaper(composition.paper)
     if (composition.course) painter.setCourse(composition.course)
@@ -397,6 +411,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   const scrolled = () => ask()
   const restored = () => {
     painter.setUp()
+    if (!started) return
     size = ''
     layAgain()
   }
@@ -409,9 +424,10 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
     if (composition.washes.length && !gone) layAgain()
   })
   const faced = Promise.race([faces, new Promise((done) => window.setTimeout(done, 2500))])
-  void Promise.all([painter.ready(), faced]).then(([paints]) => {
-    if (gone || composition.washes.length) return
-    if (!paints) return leave()
+  void Promise.all([painter.ready(), faced, loaded]).then(([paints]) => {
+    if (gone || started) return
+    if (!paints || !composeFn) return leave()
+    started = true
     lay()
     observer.observe(shell)
   })
