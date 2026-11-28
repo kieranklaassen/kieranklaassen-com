@@ -4,8 +4,11 @@ let constructed: FakeAudioContext[]
 
 class FakeAudioContext {
   readonly id: number
+  readonly audioSessionTypeAtConstruction: string | undefined
   constructor() {
     this.id = constructed.length + 1
+    const { audioSession } = navigator as Navigator & { audioSession?: { type: string } }
+    this.audioSessionTypeAtConstruction = audioSession?.type
     constructed.push(this)
   }
 }
@@ -45,6 +48,7 @@ describe('theContext', () => {
 
     expect(audioSession.type).toBe('ambient')
     expect(constructed).toHaveLength(1)
+    expect(constructed[0].audioSessionTypeAtConstruction).toBe('ambient')
 
     audioSession.type = 'auto'
     const second = theContext()

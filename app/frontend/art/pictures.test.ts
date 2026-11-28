@@ -86,37 +86,33 @@ function expectValidShape(shape: Shape) {
   }
 }
 
+function expectValidPicture(picture: Picture, detailCount?: number) {
+  expectGround(picture.ground)
+  expect(picture.shapes.length).toBeGreaterThan(0)
+  for (const shape of picture.shapes) expectValidShape(shape)
+
+  if (detailCount !== undefined) {
+    expect(picture.details).toHaveLength(detailCount)
+  } else {
+    expect(picture.details.length).toBeGreaterThan(0)
+  }
+  for (const detail of picture.details) {
+    expect(detail.length).toBeGreaterThan(0)
+    for (const shape of detail) expectValidShape(shape)
+  }
+}
+
 function sampleGround(ground: Picture['ground']) {
   return SAMPLE_POINTS.flatMap((u) => SAMPLE_POINTS.map((v) => ground(u, v)))
 }
 
 describe('pictureOf', () => {
   it.each(LOCAL_CURATED_SLUGS)('returns a valid curated picture with 4 details for local post %s', (slug) => {
-    const picture = pictureOf(slug)
-
-    expectGround(picture.ground)
-    expect(picture.shapes.length).toBeGreaterThan(0)
-    for (const shape of picture.shapes) expectValidShape(shape)
-
-    expect(picture.details).toHaveLength(4)
-    for (const detail of picture.details) {
-      expect(detail.length).toBeGreaterThan(0)
-      for (const shape of detail) expectValidShape(shape)
-    }
+    expectValidPicture(pictureOf(slug), 4)
   })
 
   it.each(EXTERNAL_CURATED_SLUGS)('returns a valid curated picture for external post %s', (slug) => {
-    const picture = pictureOf(slug)
-
-    expectGround(picture.ground)
-    expect(picture.shapes.length).toBeGreaterThan(0)
-    for (const shape of picture.shapes) expectValidShape(shape)
-
-    expect(picture.details.length).toBeGreaterThan(0)
-    for (const detail of picture.details) {
-      expect(detail.length).toBeGreaterThan(0)
-      for (const shape of detail) expectValidShape(shape)
-    }
+    expectValidPicture(pictureOf(slug))
   })
 
   it('returns fresh, structurally equal picture objects on repeated calls', () => {
@@ -164,16 +160,7 @@ describe('pictureOf', () => {
       expect(first.shapes).toEqual(second.shapes)
       expect(first.details).toEqual(second.details)
       expect(sampleGround(first.ground)).toEqual(sampleGround(second.ground))
-
-      expectGround(first.ground)
-      expect(first.shapes.length).toBeGreaterThan(0)
-      for (const shape of first.shapes) expectValidShape(shape)
-
-      expect(first.details).toHaveLength(4)
-      for (const detail of first.details) {
-        expect(detail.length).toBeGreaterThan(0)
-        for (const shape of detail) expectValidShape(shape)
-      }
+      expectValidPicture(first, 4)
     }
 
     const fallbackSignatures = new Set(
