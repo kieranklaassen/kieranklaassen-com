@@ -90,7 +90,6 @@ function mockGL(options: MockGLOptions = {}) {
 
   const state: { done: boolean | null; lost: boolean; waits: number } = { done: false, lost: false, waits: 0 }
   const uniforms: Record<string, { uniform: string }> = {}
-  const shaders: { type: number; index: number }[] = []
   const buffers: { id: number }[] = []
   const uploaded: Float32Array[] = []
   let shaderCompileIndex = 0
@@ -104,16 +103,12 @@ function mockGL(options: MockGLOptions = {}) {
       if (throwOnCreateProgram) throw new Error('program boom')
       return { program: true }
     }),
-    createShader: vi.fn((type: number) => {
-      const shader = { type, index: shaders.length }
-      shaders.push(shader)
-      return shader
-    }),
+    createShader: vi.fn((type: number) => ({ type })),
     shaderSource: vi.fn(),
     compileShader: vi.fn(),
     attachShader: vi.fn(),
     linkProgram: vi.fn(),
-    getShaderParameter: vi.fn((shader: { index: number }, what: number) => {
+    getShaderParameter: vi.fn((_shader: unknown, what: number) => {
       if (what === COMPILE_STATUS) {
         state.waits++
         if (Array.isArray(compiles)) {
@@ -337,7 +332,6 @@ describe('Painter.setUp and GPU state setters', () => {
     expect(fns.useProgram).toHaveBeenCalledTimes(1)
     expect(fns.enableVertexAttribArray).toHaveBeenCalledWith(0)
     expect(fns.vertexAttribPointer).toHaveBeenCalledWith(0, 2, FLOAT, false, 0, 0)
-    // aInk2 had location -1 and must be skipped; the other 6 instance attributes get divisor 1
     expect(fns.vertexAttribDivisor).toHaveBeenCalledTimes(6)
     expect(fns.vertexAttribPointer).toHaveBeenCalledWith(1, 4, FLOAT, false, 28 * 4, 0)
     expect(fns.vertexAttribPointer).toHaveBeenCalledWith(2, 4, FLOAT, false, 28 * 4, 16)
@@ -429,12 +423,10 @@ describe('Painter.paint', () => {
     expect(p.canvas.width).toBe(200)
     expect(p.canvas.height).toBe(100)
 
-    // Same dimensions: neither setter is invoked again
     p.paint(target, tile, tile, [], 2)
     expect(widthSet).toHaveBeenCalledTimes(1)
     expect(heightSet).toHaveBeenCalledTimes(1)
 
-    // Changed height only: both setters run to match new size
     p.paint(target, { x: 0, y: 0, w: 100, h: 60 }, tile, [], 2)
     expect(widthSet).toHaveBeenCalledTimes(2)
     expect(heightSet).toHaveBeenCalledTimes(2)
@@ -466,15 +458,9 @@ describe('Painter.paint', () => {
     const target = target2d()
 
     const tile: Rect = { x: 10, y: 20, w: 100, h: 80 }
-    // Rect partially overhangs the right edge so x1 clamps to width (200)
     const rect: Rect = { x: 25.4, y: 30.2, w: 120, h: 20.5 }
     p.paint(target, tile, rect, [], 2)
 
-    // width = 200, height = 160
-    // x0 = floor((25.4 - 10) * 2) = 30
-    // y0 = floor((30.2 - 20) * 2) = 20
-    // x1 = min(200, ceil((145.4 - 10) * 2)) = 200
-    // y1 = min(160, ceil((50.7 - 20) * 2)) = 62
     expect(fns.viewport).toHaveBeenCalledWith(0, 0, 200, 160)
     expect(fns.scissor).toHaveBeenCalledWith(30, 160 - 62, 170, 42)
     expect(fns.uniform4f).toHaveBeenCalledWith(uniforms.uTile, 10, 20, 100, 80)
@@ -496,26 +482,20 @@ describe('Painter.paint', () => {
     const rect: Rect = { x: 200, y: 200, w: 50, h: 50 }
 
     const washes: Wash[] = [
-      // dry washes inside rect: culled
       makeWash({ x: 210, y: 210, w: 10, h: 10, grow: 0 }),
       makeWash({ x: 210, y: 210, w: 10, h: 10, grow: -0.5 }),
-      // Square (reach 34): right edge at 200 - 34 = 166 -> culled; at 167 -> kept
       makeWash({ kind: Kind.Square, x: 156, y: 210, w: 10, h: 10, grow: 1 }),
       makeWash({ kind: Kind.Square, x: 157, y: 210, w: 10, h: 10, grow: 1 }),
-      // Puddle (reach 60): left edge at 250 + 60 = 310 -> culled; at 309 -> kept
       makeWash({ kind: Kind.Puddle, x: 310, y: 210, w: 10, h: 10, grow: 1 }),
       makeWash({ kind: Kind.Puddle, x: 309, y: 210, w: 10, h: 10, grow: 1 }),
-      // Bank (reach 150): top edge at 250 + 150 = 400 -> culled; at 399 -> kept
       makeWash({ kind: Kind.Bank, x: 210, y: 400, w: 10, h: 10, grow: 1 }),
       makeWash({ kind: Kind.Bank, x: 210, y: 399, w: 10, h: 10, grow: 1 }),
-      // Above rect: bottom edge at 200 - 34 = 166 -> culled
       makeWash({ kind: Kind.Square, x: 210, y: 156, w: 10, h: 10, grow: 1 }),
     ]
 
     uploaded.length = 0
     p.paint(target, tile, rect, washes, 1)
 
-    // 1 paper + 3 kept washes
     expect(fns.drawArraysInstanced).toHaveBeenCalledWith(TRIANGLE_STRIP, 0, 4, 4)
     const packed = uploaded[0]
     expect(packed.length).toBe(4 * 28)
@@ -553,12 +533,10 @@ describe('Painter.paint', () => {
 
     const firstPass = uploaded[0]
     expect(firstPass.length).toBe(2 * 28)
-    // Paper slot: all zeros except index 11 = -1
     const expectedPaper = new Float32Array(28)
     expectedPaper[11] = -1
     expect(Array.from(firstPass.slice(0, 28))).toEqual(Array.from(expectedPaper))
 
-    // Explicit wash slot
     expect(Array.from(firstPass.slice(28, 56))).toEqual([
       11, 22, 33, 44,
       Math.fround(0.25), Math.fround(0.5), Math.fround(0.75), Math.fround(0.8),
@@ -569,7 +547,6 @@ describe('Painter.paint', () => {
       9, 10, 11, 12,
     ])
 
-    // Second paint reuses the same slot with omitted optional fields: stale drop/extra must be overwritten with defaults
     const minimal = makeWash({
       kind: Kind.Pencil,
       x: 1,
@@ -601,7 +578,6 @@ describe('Painter.paint', () => {
     const target = target2d()
     const tile: Rect = { x: 0, y: 0, w: 400, h: 400 }
 
-    // 260 washes + 1 paper = 261 instances (> initial 256-instance capacity)
     const washes = Array.from({ length: 260 }, (_, i) => makeWash({ x: i, y: 10, w: 5, h: 5, grow: 1 }))
 
     uploaded.length = 0

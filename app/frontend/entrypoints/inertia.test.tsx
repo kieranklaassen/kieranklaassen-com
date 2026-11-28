@@ -37,10 +37,8 @@ vi.mock('../looks/shell', () => ({
 }))
 
 function createDeferredPromise() {
-  let resolve!: () => void
   let reject!: (reason?: unknown) => void
-  const promise = new Promise<void>((res, rej) => {
-    resolve = res
+  const promise = new Promise<void>((_, rej) => {
     reject = rej
   })
   let caught: Promise<unknown> | undefined
@@ -51,7 +49,6 @@ function createDeferredPromise() {
   }) as typeof promise.catch
   return {
     promise,
-    resolve,
     reject,
     getCaught: () => caught,
   }
@@ -117,38 +114,28 @@ describe('inertia entrypoint', () => {
     expect(mocks.createRoot).not.toHaveBeenCalled()
   })
 
-  it('creates a fresh root and renders when el is not server-rendered', async () => {
-    await import('./inertia')
-    const config = mocks.createInertiaApp.mock.calls[0][0]
-    const App = (props: Record<string, unknown>) => <main>{String(props.page)}</main>
-    const el = document.createElement('div')
-    const props = { page: 'about' }
+  it.each<string | undefined>([undefined, 'false'])(
+    'creates a fresh root and renders when el.dataset.serverRendered is %s',
+    async (serverRendered) => {
+      await import('./inertia')
+      const config = mocks.createInertiaApp.mock.calls[0][0]
+      const App = (props: Record<string, unknown>) => <main>{String(props.page)}</main>
+      const el = document.createElement('div')
+      if (serverRendered !== undefined) el.dataset.serverRendered = serverRendered
+      const props = { page: 'about' }
 
-    const result = config.setup({ el, App, props })
+      const result = config.setup({ el, App, props })
 
-    expect(result).toBeUndefined()
-    expect(mocks.createRoot).toHaveBeenCalledTimes(1)
-    expect(mocks.createRoot).toHaveBeenCalledWith(el)
-    expect(mocks.render).toHaveBeenCalledTimes(1)
-    const [tree] = mocks.render.mock.calls[0] as [ReactElement]
-    expect(tree.type).toBe(App)
-    expect(tree.props).toEqual(props)
-    expect(mocks.hydrateRoot).not.toHaveBeenCalled()
-  })
-
-  it('also uses createRoot when el.dataset.serverRendered is "false"', async () => {
-    await import('./inertia')
-    const config = mocks.createInertiaApp.mock.calls[0][0]
-    const App = () => <div />
-    const el = document.createElement('div')
-    el.dataset.serverRendered = 'false'
-
-    config.setup({ el, App, props: {} })
-
-    expect(mocks.createRoot).toHaveBeenCalledWith(el)
-    expect(mocks.render).toHaveBeenCalledTimes(1)
-    expect(mocks.hydrateRoot).not.toHaveBeenCalled()
-  })
+      expect(result).toBeUndefined()
+      expect(mocks.createRoot).toHaveBeenCalledTimes(1)
+      expect(mocks.createRoot).toHaveBeenCalledWith(el)
+      expect(mocks.render).toHaveBeenCalledTimes(1)
+      const [tree] = mocks.render.mock.calls[0] as [ReactElement]
+      expect(tree.type).toBe(App)
+      expect(tree.props).toEqual(props)
+      expect(mocks.hydrateRoot).not.toHaveBeenCalled()
+    },
+  )
 
   it('rethrows createInertiaApp rejection when #app exists in the document', async () => {
     const appEl = document.createElement('div')

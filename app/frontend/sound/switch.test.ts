@@ -65,9 +65,9 @@ let fakeBand: FakeBand
 const realSetTimeout = globalThis.setTimeout
 
 async function waitUntil(predicate: () => boolean) {
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 100; i++) {
     if (predicate()) return
-    await new Promise((resolve) => realSetTimeout(resolve, 1))
+    await new Promise((resolve) => realSetTimeout(resolve, 0))
   }
   throw new Error('Timed out waiting for async condition')
 }
@@ -247,7 +247,6 @@ describe('open, close, listeners, and studio controls', () => {
     const unlisten = sound.listen(listener)
 
     expect(sound.sounding()).toBe(false)
-    // Safe no-ops before any studio exists
     sound.moveTo(SAMPLE_PLACE)
     sound.turn('music', false)
     sound.fade(false)
@@ -269,7 +268,6 @@ describe('open, close, listeners, and studio controls', () => {
     expect(sound.sounding()).toBe(true)
     expect(listener).toHaveBeenCalledTimes(1)
 
-    // Reuses the same studio on a second open and fades down when document is hidden
     page.hidden = true
     await sound.open(SECOND_PLACE, { music: false, weather: true, paint: false })
     expect(studios).toHaveLength(1)
@@ -277,7 +275,6 @@ describe('open, close, listeners, and studio controls', () => {
     expect(studio.fade).toHaveBeenLastCalledWith(false, false)
     expect(listener).toHaveBeenCalledTimes(2)
 
-    // Delegated control helpers
     sound.moveTo(SAMPLE_PLACE)
     sound.turn('paint', true)
     sound.fade(true)
@@ -285,7 +282,6 @@ describe('open, close, listeners, and studio controls', () => {
     expect(studio.turn).toHaveBeenLastCalledWith('paint', true)
     expect(studio.fade).toHaveBeenLastCalledWith(true)
 
-    // Close stops sounding, fades down, rests band, clears ear hooks, and notifies listeners
     sound.close()
     expect(sound.sounding()).toBe(false)
     expect(studio.fade).toHaveBeenLastCalledWith(false)
@@ -294,7 +290,6 @@ describe('open, close, listeners, and studio controls', () => {
     expect(ear.hush).toBeUndefined()
     expect(listener).toHaveBeenCalledTimes(3)
 
-    // Unsubscribed listener receives no more notifications
     unlisten()
     sound.close()
     expect(listener).toHaveBeenCalledTimes(3)
@@ -331,7 +326,6 @@ describe('open, close, listeners, and studio controls', () => {
     const first = sound.open(SAMPLE_PLACE, { music: false, weather: false, paint: false })
     const second = sound.open(SECOND_PLACE, { music: true, weather: true, paint: true })
 
-    // First resolves before second finishes, but its word is already stale
     finishFirst()
     await first
     expect(studios).toHaveLength(0)
@@ -388,7 +382,6 @@ describe('open, close, listeners, and studio controls', () => {
     expect(studios[0].band).toBeUndefined()
     expect(sound.sounding()).toBe(true)
 
-    // Interval ticks keep running safely without band
     vi.advanceTimersByTime(250)
     expect(studios[0].ahead).toHaveBeenCalledTimes(2)
   })
@@ -407,11 +400,9 @@ describe('interval scheduling, scroll stirring, and wc:rain events', () => {
     await waitUntil(() => studios[0]?.band === fakeBand)
     const studio = studios[0]
 
-    // Initial tick fired immediately during open
     expect(studio.ahead).toHaveBeenCalledTimes(1)
     expect(studio.ahead).toHaveBeenCalledWith(11.2, expect.any(Function))
 
-    // Next tick (250ms) runs with band attached
     context.currentTime = 10.25
     vi.advanceTimersByTime(250)
 
@@ -420,7 +411,6 @@ describe('interval scheduling, scroll stirring, and wc:rain events', () => {
     expect(fakeBand.ahead).toHaveBeenCalledTimes(1)
     expect(fakeBand.ahead).toHaveBeenCalledWith(view, expect.any(Function))
 
-    // Trigger rain callback: one in the future (+400ms) and one already past (clamped to 0ms)
     const rainCb = studio.ahead.mock.calls[1][1] as (at: number) => void
     rainCb(10.65)
     rainCb(9.0)
@@ -433,7 +423,6 @@ describe('interval scheduling, scroll stirring, and wc:rain events', () => {
     vi.advanceTimersByTime(1)
     expect(rains).toHaveLength(2)
 
-    // Trigger chord callback: three drops at 0ms, 500ms, 1100ms
     rains.length = 0
     const chordCb = fakeBand.ahead.mock.calls[0][1] as () => void
     chordCb()
@@ -449,7 +438,6 @@ describe('interval scheduling, scroll stirring, and wc:rain events', () => {
     vi.advanceTimersByTime(10)
     expect(rains).toHaveLength(3)
 
-    // Closing stops interval ticks
     const callsBeforeClose = studio.ahead.mock.calls.length
     sound.close()
     vi.advanceTimersByTime(1000)
@@ -462,25 +450,21 @@ describe('interval scheduling, scroll stirring, and wc:rain events', () => {
     await sound.open(SAMPLE_PLACE, sound.ALL)
     await waitUntil(() => studios[0]?.band === fakeBand)
 
-    // Scroll by 700px -> stirred = 0.5; first tick multiplies by 0.8 -> 0.4
     win.scrollY = 900
     win.dispatchEvent(new Event('scroll'))
     vi.advanceTimersByTime(250)
     expect(fakeBand.stir).toHaveBeenLastCalledWith(expect.closeTo(0.4, 5))
 
-    // Huge scroll clamps stirred to 1; next tick multiplies by 0.8 -> 0.8
     win.scrollY = 5000
     win.dispatchEvent(new Event('scroll'))
     vi.advanceTimersByTime(250)
     expect(fakeBand.stir).toHaveBeenLastCalledWith(expect.closeTo(0.8, 5))
 
-    // Let it decay until delta <= 0.02 so stir stops being called
     for (let i = 0; i < 25; i++) vi.advanceTimersByTime(250)
     const settledCalls = fakeBand.stir.mock.calls.length
     vi.advanceTimersByTime(1000)
     expect(fakeBand.stir).toHaveBeenCalledTimes(settledCalls)
 
-    // After close, scroll events no longer stir
     sound.close()
     win.scrollY = 0
     win.dispatchEvent(new Event('scroll'))
@@ -530,19 +514,16 @@ describe('delayed suspend and givesWay while sounding', () => {
     await sound.open(SAMPLE_PLACE, sound.ALL)
     const studio = studios[0]
 
-    // Blur with non-IFRAME activeElement does nothing
     page.activeElement = { tagName: 'BUTTON' }
     win.dispatchEvent(new Event('blur'))
     expect(sound.sounding()).toBe(true)
 
-    // Blur with IFRAME activeElement gives way and closes
     page.activeElement = { tagName: 'IFRAME' }
     win.dispatchEvent(new Event('blur'))
     expect(sound.sounding()).toBe(false)
     expect(studio.fade).toHaveBeenLastCalledWith(false)
     expect(ear.hears).toBeUndefined()
 
-    // Subsequent arm() does not start until want() resets gaveWay
     const start = vi.fn()
     sound.arm(start)
     click()
