@@ -1,16 +1,26 @@
-/** What unfolds in a corner of the window. On a narrow one there is room for one of them at a time. */
+import { useEffect, useState } from 'react'
+
 type Unfolds = 'pens' | 'sound'
 
 const UNFOLDED = 'wc:unfolded'
 const NARROW = '(max-width: 640px)'
 
-export const tellUnfolded = (what: Unfolds) => window.dispatchEvent(new CustomEvent<Unfolds>(UNFOLDED, { detail: what }))
+/** Whether something in a corner of the window is unfolded. A narrow window has room for one such thing at a time. */
+export function useUnfold(mine: Unfolds): [open: boolean, toggle: () => void] {
+  const [open, setOpen] = useState(false)
 
-/** Folds when the other one unfolds and there is no room for both. */
-export function onUnfolded(other: Unfolds, fold: () => void) {
-  const told = (event: Event) => {
-    if ((event as CustomEvent<Unfolds>).detail === other && window.matchMedia(NARROW).matches) fold()
+  useEffect(() => {
+    const told = (event: Event) => {
+      if ((event as CustomEvent<Unfolds>).detail !== mine && window.matchMedia(NARROW).matches) setOpen(false)
+    }
+    window.addEventListener(UNFOLDED, told)
+    return () => window.removeEventListener(UNFOLDED, told)
+  }, [mine])
+
+  const toggle = () => {
+    if (!open) window.dispatchEvent(new CustomEvent<Unfolds>(UNFOLDED, { detail: mine }))
+    setOpen(!open)
   }
-  window.addEventListener(UNFOLDED, told)
-  return () => window.removeEventListener(UNFOLDED, told)
+
+  return [open, toggle]
 }

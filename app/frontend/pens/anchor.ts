@@ -1,4 +1,4 @@
-import type { Anchor, Point, Stroke } from './ink'
+import { round, type Anchor, type Point, type Stroke } from './ink'
 
 export interface Box {
   x: number
@@ -27,7 +27,7 @@ function boxIn(shell: HTMLElement) {
   return ({ left, top, width, height }: DOMRect): Box => ({ x: left - from.left, y: top - from.top, w: width, h: height })
 }
 
-export function boundsOf(points: Point[]): Box {
+function boundsOf(points: Point[]): Box {
   let [left, top, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity]
   for (const [x, y] of points) {
     left = Math.min(left, x)
@@ -36,6 +36,11 @@ export function boundsOf(points: Point[]): Box {
     bottom = Math.max(bottom, y)
   }
   return { x: left, y: top, w: right - left, h: bottom - top }
+}
+
+function centreOf(points: Point[]) {
+  const { x, y, w, h } = boundsOf(points)
+  return [x + w / 2, y + h / 2]
 }
 
 const far = (box: Box, x: number, y: number) => Math.hypot(Math.max(box.x - x, 0, x - box.x - box.w), Math.max(box.y - y, 0, y - box.y - box.h))
@@ -105,14 +110,12 @@ function wordsAlong(points: Point[], block: HTMLElement, box: Box, boxOf: (rect:
   return { from: along[0].at, to: along[along.length - 1].at + 1, x: x - box.x, y: y - box.y, w, h }
 }
 
-const within = (points: Point[], { x, y }: Box) => points.map(([px, py, wide]): Point => [Math.round((px - x) * 10) / 10, Math.round((py - y) * 10) / 10, Math.round(wide * 100) / 100])
+const within = (points: Point[], { x, y }: Box) => points.map(([px, py, wide]): Point => [round(px - x), round(py - y), Math.round(wide * 100) / 100])
 
 /** Ties a stroke that was drawn on the page to what it was drawn on: the smallest block that is nearest. */
 export function anchor(points: Point[], shell: HTMLElement): { at: Anchor; points: Point[] } {
   const boxOf = boxIn(shell)
-  const drawn = boundsOf(points)
-  const x = drawn.x + drawn.w / 2
-  const y = drawn.y + drawn.h / 2
+  const [x, y] = centreOf(points)
   const [nearest] = blocksOf(shell)
     .map((element, block) => ({ element, block, box: boxOf(element.getBoundingClientRect()) }))
     .filter(({ box }) => box.w > 0 && box.h > 0)
@@ -182,9 +185,7 @@ export function place({ points, at }: Stroke, blocks: HTMLElement[], shell: HTML
     const lines = linesOf([...range.getClientRects()]).map(({ x, y, w, h }) => boxOf(new DOMRect(x, y, w, h)))
     if (lines.length) return cut(points, at.words, lines)
   }
-  const drawn = boundsOf(points)
-  const x = drawn.x + drawn.w / 2
-  const y = drawn.y + drawn.h / 2
+  const [x, y] = centreOf(points)
   const scale = Math.min(1, box.w / at.w)
   return [points.map(([px, py, wide]): Point => [box.x + (x / at.w) * box.w + (px - x) * scale, box.y + (y / at.h) * box.h + (py - y) * scale, wide])]
 }

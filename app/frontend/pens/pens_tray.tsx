@@ -1,11 +1,11 @@
 import { memo, useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
-import { onUnfolded, tellUnfolded } from '../looks/fold'
+import { useUnfold } from '../looks/fold'
 import { seeded } from '../watercolor/pigments'
 import { anchor, blocksOf, place } from './anchor'
 import { hits, inkOf, pressed, type Point, type Stroke } from './ink'
 import { colours as keptColours, FIRST_COLOURS, keepChange, keepColours, keptInk, withChange, type Change, type Colours } from './kept'
 import { PenPicture } from './pen_pictures'
-import { PEN_NAMES, PENS, type PenName, type Tool } from './pens'
+import { PEN_NAMES, PENS, type Pen, type PenName, type Tool } from './pens'
 
 const TOOLS: Tool[] = [...PEN_NAMES, 'eraser']
 const RUBBER = 9
@@ -70,7 +70,7 @@ export function Pens({ path }: { path: string }) {
   const [places, setPlaces] = useState(new Map<string, Point[][]>())
   const [live, setLive] = useState<Point[]>()
   const [held, setHeld] = useState<Tool>()
-  const [open, setOpen] = useState(false)
+  const [open, unfold] = useUnfold('pens')
   const [chosen, setChosen] = useState<Colours>(FIRST_COLOURS)
 
   useEffect(() => {
@@ -79,19 +79,16 @@ export function Pens({ path }: { path: string }) {
     setChosen(keptColours())
   }, [path])
 
-  useEffect(() => onUnfolded('sound', () => setOpen(false)), [])
-
   // The page is laid out anew now and then, and the ink goes with what it is on.
   useEffect(() => {
     const shell = layer.current?.parentElement
-    if (!shell) return
+    setLive(undefined)
+    if (!shell || !strokes.length) return
     const lay = () => {
       const blocks = blocksOf(shell)
       setPlaces(new Map(strokes.map((stroke) => [stroke.id, place(stroke, blocks, shell) ?? []])))
     }
     lay()
-    setLive(undefined)
-    if (!strokes.length) return
     let left = false
     const observer = new ResizeObserver(lay)
     observer.observe(shell)
@@ -195,7 +192,7 @@ export function Pens({ path }: { path: string }) {
     setLive([...line.points])
   }
 
-  const draw = (line: Drawing, pen: (typeof PENS)[PenName], event: { clientX: number; clientY: number; timeStamp: number; pointerType: string; pressure: number }) => {
+  const draw = (line: Drawing, pen: Pen, event: { clientX: number; clientY: number; timeStamp: number; pointerType: string; pressure: number }) => {
     const [x, y] = at(event)
     const [bx, by, before] = line.points[line.points.length - 1]
     const gone = Math.hypot(x - bx, y - by)
@@ -205,9 +202,13 @@ export function Pens({ path }: { path: string }) {
     line.at = event.timeStamp
   }
 
-  const lift = (event: PointerEvent<HTMLDivElement>) => {
-    touches.current.delete(event.pointerId)
+  const forget = ({ pointerId }: PointerEvent) => {
+    touches.current.delete(pointerId)
     if (!touches.current.size) panning.current = false
+  }
+
+  const lift = (event: PointerEvent<HTMLDivElement>) => {
+    forget(event)
     if (rubbing.current?.pointer === event.pointerId) rubbing.current = undefined
     const line = drawing.current
     const shell = layer.current?.parentElement
@@ -217,8 +218,7 @@ export function Pens({ path }: { path: string }) {
   }
 
   const cancel = (event: PointerEvent<HTMLDivElement>) => {
-    touches.current.delete(event.pointerId)
-    if (!touches.current.size) panning.current = false
+    forget(event)
     if (drawing.current?.pointer === event.pointerId || rubbing.current?.pointer === event.pointerId) drop()
   }
 
@@ -232,11 +232,6 @@ export function Pens({ path }: { path: string }) {
     const next = { ...chosen, [pen]: colour }
     setChosen(next)
     keepColours(next)
-  }
-
-  const unfold = () => {
-    if (!open) tellUnfolded('pens')
-    setOpen(!open)
   }
 
   const pen = held === 'eraser' ? undefined : held

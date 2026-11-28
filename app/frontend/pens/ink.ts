@@ -25,7 +25,7 @@ export interface Stroke {
 }
 
 const DOT = 0.01
-const round = (n: number) => Math.round(n * 10) / 10
+export const round = (n: number) => Math.round(n * 10) / 10
 
 /** How wide a pen's line is now. A stylus says how hard it is pressed; anything else is thinner when it is fast. */
 export function pressed(pen: Pen, { pointerType, pressure }: { pointerType: string; pressure: number }, speed: number, before: number) {
