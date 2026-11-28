@@ -13,7 +13,7 @@ interface Laid {
 }
 
 /** Lays every block as text of ten pixels a letter, broken where it reaches the block's width. */
-function layOut(laid: Map<Element, Laid>) {
+function layOut(laid: Map<Element, Laid>, between = LINE) {
   const heightOf = (one: Element, w: number) => Math.ceil(((one.textContent?.length ?? 0) * CHAR) / w) * LINE
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
     const at = laid.get(this)
@@ -24,7 +24,7 @@ function layOut(laid: Map<Element, Laid>) {
     const at = laid.get(block)!
     const each = Math.floor(at.w / CHAR)
     const rects: DOMRect[] = []
-    for (let i = this.startOffset; i < this.endOffset; i++) rects.push(new DOMRect(at.x + (i % each) * CHAR, at.y + Math.floor(i / each) * LINE + 4, CHAR, 22))
+    for (let i = this.startOffset; i < this.endOffset; i++) rects.push(new DOMRect(at.x + (i % each) * CHAR, at.y + Math.floor(i / each) * between + 4, CHAR, 22))
     return rects as unknown as DOMRectList
   }
 }
@@ -74,6 +74,30 @@ describe('a stroke along a line', () => {
     layOut(new Map([[p, { x: 0, y: 0, w: 300 }]]))
     const under: Point[] = [[100, 28, 1], [180, 29, 1]]
     expect(anchor(under, shell).at.words).toMatchObject({ from: 10, to: 18 })
+  })
+})
+
+describe('a stroke along a line of a tightly set title', () => {
+  it('is taken for the line it goes through, not the one whose letters reach into it', () => {
+    const shell = page(`<p>${WORDS}${WORDS}</p>`)
+    layOut(new Map([[shell.querySelector('p')!, { x: 0, y: 0, w: 300 }]]), 17)
+    const through: Point[] = [[100, 29, 1], [180, 30, 1]] // the first line's letters end at 26, the second's begin at 21
+    expect(anchor(through, shell).at.words).toMatchObject({ from: 40, to: 48 })
+  })
+})
+
+describe('a stroke along words that are no longer there', () => {
+  it('stays with its block', () => {
+    const shell = page(`<p>${WORDS}${WORDS}</p>`)
+    const p = shell.querySelector('p')!
+    const laid = new Map([[p, { x: 0, y: 0, w: 600 }]])
+    layOut(laid)
+    const { at, points } = anchor([[500, 16, 1], [580, 16, 1]], shell)
+    expect(at.words).toMatchObject({ from: 50, to: 58 })
+    p.textContent = `${WORDS}${WORDS}`.slice(0, 48)
+    const placed = place(strokeOf(points, at), blocksOf(shell), shell)!
+    expect(placed).toHaveLength(1)
+    expect(reach(placed[0])).toMatchObject({ x: 500, w: 80 })
   })
 })
 

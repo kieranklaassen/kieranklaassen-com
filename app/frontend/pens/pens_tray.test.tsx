@@ -3,7 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { keptInk } from './kept'
+import { keepChange, keptInk } from './kept'
 import { Pens } from './pens_tray'
 
 declare global {
@@ -125,6 +125,50 @@ describe('Pens', () => {
     expect(inked()).toHaveLength(1)
     press('Undo')
     expect(inked()).toHaveLength(2)
+    expect(keptInk('/a')).toHaveLength(2)
+  })
+
+  it('erases in one movement what one press of Undo brings back', () => {
+    press('Pens')
+    press('Marker')
+    draw([10, 10], [200, 10])
+    draw([10, 300], [200, 300])
+    press('Eraser')
+    point('pointerdown', 100, 0)
+    point('pointermove', 100, 40)
+    point('pointermove', 100, 320)
+    point('pointerup', 100, 320)
+    expect(inked()).toHaveLength(0)
+    press('Undo')
+    expect(inked()).toHaveLength(2)
+  })
+
+  it('brings back what a finger erased when it was the first of two', () => {
+    vi.stubGlobal('scrollBy', vi.fn())
+    press('Pens')
+    press('Marker')
+    draw([10, 10], [200, 10])
+    press('Eraser')
+    point('pointerdown', 100, 10, { id: 1, kind: 'touch' })
+    expect(inked()).toHaveLength(0)
+    point('pointerdown', 300, 400, { id: 2, kind: 'touch' })
+    expect(inked()).toHaveLength(1)
+    expect(keptInk('/a')).toHaveLength(1)
+    point('pointerup', 100, 10, { id: 1, kind: 'touch' })
+    point('pointerup', 300, 400, { id: 2, kind: 'touch' })
+    press('Undo')
+    expect(inked()).toHaveLength(0)
+  })
+
+  it('clears what another tab has drawn since, too', () => {
+    press('Pens')
+    press('Marker')
+    draw([10, 10], [200, 10])
+    const [mine] = keptInk('/a')
+    keepChange('/a', { added: [{ ...mine, id: 'theirs' }], removed: [] })
+    press('Clear page')
+    expect(keptInk('/a')).toEqual([])
+    press('Undo')
     expect(keptInk('/a')).toHaveLength(2)
   })
 

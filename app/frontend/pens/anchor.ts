@@ -99,7 +99,9 @@ function wordsAlong(points: Point[], block: HTMLElement, box: Box, boxOf: (rect:
     }
   }
   const reaching = ({ box: { x, y, w, h } }: { box: Box }) => middle >= y && middle <= y + h * (1 + UNDER) && drawn.h <= h * FLAT && x + w / 2 > drawn.x && x + w / 2 < drawn.x + drawn.w
-  const line = letters.find(reaching)
+  // the letters of tightly set lines reach into one another
+  const off = ({ box: { y, h } }: { box: Box }) => Math.abs(y + h / 2 - middle)
+  const [line] = letters.filter(reaching).sort((a, b) => off(a) - off(b))
   if (!line) return undefined
   const along = letters.filter((one) => reaching(one) && Math.abs(one.box.y - line.box.y) < line.box.h / 2)
   if (along.length < 2) return undefined

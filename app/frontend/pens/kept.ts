@@ -30,7 +30,7 @@ function isStroke(one: Partial<Stroke> | null): one is Stroke {
 }
 
 export function withChange(strokes: Stroke[], { added, removed }: Change) {
-  const gone = new Set(removed.map(({ id }) => id))
+  const gone = new Set([...removed, ...added].map(({ id }) => id))
   return [...strokes.filter(({ id }) => !gone.has(id)), ...added]
 }
 

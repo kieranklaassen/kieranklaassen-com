@@ -51,6 +51,13 @@ const Ink = memo(function Ink({ stroke, pieces }: { stroke: Stroke; pieces: Poin
   return pieces.map((points, i) => <path key={i} data-stroke={stroke.id} {...drawn(stroke.pen, stroke.colour, points)} />)
 })
 
+interface Rubbing {
+  pointer: number
+  at: [number, number]
+  /** Everything that one movement erases is one change. */
+  change?: Change
+}
+
 interface Drawing {
   pointer: number
   points: Point[]
@@ -63,7 +70,7 @@ export function Pens({ path }: { path: string }) {
   const mine = useRef<Stroke[]>([])
   const done = useRef<Change[]>([])
   const drawing = useRef<Drawing>(undefined)
-  const rubbing = useRef<{ pointer: number; at: [number, number] }>(undefined)
+  const rubbing = useRef<Rubbing>(undefined)
   const touches = useRef(new Map<number, number>())
   const panning = useRef(false)
   const [strokes, setStrokes] = useState<Stroke[]>([])
@@ -102,8 +109,12 @@ export function Pens({ path }: { path: string }) {
   }, [strokes])
 
   const drop = () => {
+    const erased = rubbing.current?.change
     drawing.current = rubbing.current = undefined
     setLive(undefined)
+    if (!erased) return
+    done.current = done.current.filter((one) => one !== erased)
+    change({ added: erased.removed, removed: [] }, false)
   }
 
   const putDown = () => {
@@ -143,9 +154,14 @@ export function Pens({ path }: { path: string }) {
     return [event.clientX - from.left, event.clientY - from.top]
   }
 
-  const rub = (from: [number, number], to: [number, number]) => {
+  const rub = (rubbed: Rubbing, to: [number, number]) => {
+    const from = rubbed.at
+    rubbed.at = to
     const removed = mine.current.filter(({ id, pen }) => places.get(id)?.some((points) => hits(points, RUBBER + PENS[pen].width / 2, from, to)))
-    if (removed.length) change({ added: [], removed })
+    if (!removed.length) return
+    if (!rubbed.change) done.current.push((rubbed.change = { added: [], removed: [] }))
+    rubbed.change.removed.push(...removed)
+    change({ added: [], removed }, false)
   }
 
   const middle = () => [...touches.current.values()].reduce((sum, y) => sum + y, 0) / touches.current.size
@@ -163,7 +179,7 @@ export function Pens({ path }: { path: string }) {
     const [x, y] = at(event)
     if (held === 'eraser') {
       rubbing.current = { pointer: event.pointerId, at: [x, y] }
-      return rub([x, y], [x, y])
+      return rub(rubbing.current, [x, y])
     }
     drawing.current = { pointer: event.pointerId, points: [[x, y, pressed(PENS[held], event, 0.6, 1)]], at: event.timeStamp }
     setLive([...drawing.current.points])
@@ -180,10 +196,7 @@ export function Pens({ path }: { path: string }) {
     }
     const rubbed = rubbing.current
     if (rubbed?.pointer === event.pointerId) {
-      const to = at(event)
-      rub(rubbed.at, to)
-      rubbed.at = to
-      return
+      return rub(rubbed, at(event))
     }
     const line = drawing.current
     if (line?.pointer !== event.pointerId || !held || held === 'eraser') return

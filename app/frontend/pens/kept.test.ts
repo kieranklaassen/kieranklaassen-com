@@ -32,6 +32,12 @@ describe('kept ink', () => {
     expect(keptInk('/a').map(({ id }) => id)).toEqual(['2'])
   })
 
+  it('keeps a stroke once, though two tabs each bring it back', () => {
+    keepChange('/a', { added: [stroke('1')], removed: [] })
+    keepChange('/a', { added: [stroke('1')], removed: [] })
+    expect(keptInk('/a')).toHaveLength(1)
+  })
+
   it('reads nothing from what is malformed or of another version', () => {
     keepChange('/a', { added: [stroke('1')], removed: [] })
     const [[key, value]] = [...stored]
@@ -64,6 +70,8 @@ describe('kept ink', () => {
     vi.stubGlobal('localStorage', { getItem: refuse, setItem: refuse })
     expect(keptInk('/a')).toEqual([])
     expect(() => keepChange('/a', { added: [stroke('1')], removed: [] })).not.toThrow()
+    expect(colours().pencil).toBe('#4b4246')
+    expect(() => keepColours(colours())).not.toThrow()
   })
 
   it('remembers the colour of each pen, if the pen holds it', () => {
