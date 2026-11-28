@@ -108,8 +108,12 @@ beforeEach(async () => {
   }
   bandMake = vi.fn(async () => fakeBand)
 
+  const localContext = context
+  const localStudios = studios
+  const localBandMake = bandMake
+
   vi.doMock('./context', () => ({
-    theContext: () => context,
+    theContext: () => localContext,
   }))
   vi.doMock('./studio', () => ({
     Studio: class MockStudio implements FakeStudioInstance {
@@ -122,12 +126,12 @@ beforeEach(async () => {
       hears = vi.fn()
       ahead = vi.fn()
       constructor(readonly context: FakeContext) {
-        studios.push(this)
+        localStudios.push(this)
       }
     },
   }))
   vi.doMock('./band', () => ({
-    Band: { make: bandMake },
+    Band: { make: localBandMake },
   }))
 
   click = (within) => {
@@ -296,6 +300,7 @@ describe('open, close, listeners, and studio controls', () => {
   })
 
   it('cancels an in-flight open when close overtakes it', async () => {
+    vi.useFakeTimers()
     let finishResume!: () => void
     context.resume.mockReturnValue(new Promise<void>((resolve) => (finishResume = resolve)))
     const listener = vi.fn()
