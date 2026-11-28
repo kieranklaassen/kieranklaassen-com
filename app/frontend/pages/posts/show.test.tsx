@@ -47,6 +47,25 @@ function setPage(look?: Look, art?: Art) {
   })
 }
 
+let container: HTMLDivElement
+let root: Root
+
+const mount = (element: ReactElement) => act(() => root.render(element))
+
+beforeEach(() => {
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true
+  mocks.usePage.mockReset()
+  container = document.createElement('div')
+  document.body.append(container)
+  root = createRoot(container)
+})
+
+afterEach(() => {
+  act(() => root.unmount())
+  container.remove()
+  vi.restoreAllMocks()
+})
+
 describe('withInitial', () => {
   it('wraps the first letter of a leading paragraph and ignores later paragraphs', () => {
     expect(withInitial('<p>Hello world</p><p>Again</p>')).toBe(
@@ -69,23 +88,6 @@ describe('withInitial', () => {
 })
 
 describe('AiAssistanceDisclosure', () => {
-  let container: HTMLDivElement
-  let root: Root
-
-  const mount = (element: ReactElement) => act(() => root.render(element))
-
-  beforeEach(() => {
-    globalThis.IS_REACT_ACT_ENVIRONMENT = true
-    container = document.createElement('div')
-    document.body.append(container)
-    root = createRoot(container)
-  })
-
-  afterEach(() => {
-    act(() => root.unmount())
-    container.remove()
-  })
-
   it('renders the disclosure paragraph only when visible is true', () => {
     mount(<AiAssistanceDisclosure visible={false} />)
     expect(container.innerHTML).toBe('')
@@ -98,25 +100,6 @@ describe('AiAssistanceDisclosure', () => {
 })
 
 describe('PostShow', () => {
-  let container: HTMLDivElement
-  let root: Root
-
-  const mount = (element: ReactElement) => act(() => root.render(element))
-
-  beforeEach(() => {
-    globalThis.IS_REACT_ACT_ENVIRONMENT = true
-    mocks.usePage.mockReset()
-    container = document.createElement('div')
-    document.body.append(container)
-    root = createRoot(container)
-  })
-
-  afterEach(() => {
-    act(() => root.unmount())
-    container.remove()
-    vi.restoreAllMocks()
-  })
-
   it('sets head metadata and renders the plain article under the blocks look', () => {
     setPage('blocks')
 
@@ -164,7 +147,7 @@ describe('PostShow', () => {
     const heading = article?.querySelector<HTMLHeadingElement>('h2[data-paint="title"]')
     expect(heading?.getAttribute('data-key')).toBe('compound-engineering')
     expect(heading?.style.getPropertyValue('--longest')).toBe('9')
-    expect(heading?.style.getPropertyValue('--letters')).toBe(Math.sqrt('Short title'.length).toFixed(2))
+    expect(heading?.style.getPropertyValue('--letters')).toBe('3.32')
 
     const when = article?.querySelector('.wc-when[data-paint="quiet"]')
     expect(when?.querySelector('time')?.getAttribute('dateTime')).toBe('2026-01-01')
@@ -178,9 +161,9 @@ describe('PostShow', () => {
   })
 
   it.each([
-    { title: 'Tiny', longest: '9', letters: Math.sqrt(4).toFixed(2) },
-    { title: 'Extraordinary thoughts', longest: '13', letters: Math.sqrt(22).toFixed(2) },
-    { title: 'Self-improvement', longest: '11', letters: Math.sqrt(16).toFixed(2) },
+    { title: 'Tiny', longest: '9', letters: '2.00' },
+    { title: 'Extraordinary thoughts', longest: '13', letters: '4.69' },
+    { title: 'Self-improvement', longest: '11', letters: '4.00' },
   ])('computes --longest=$longest and --letters=$letters for ArtPost title "$title"', ({ title, longest, letters }) => {
     setPage('rooms', 'book')
 
