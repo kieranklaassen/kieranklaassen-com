@@ -56,7 +56,6 @@ class ViteAutoBuildLockTest < ActiveSupport::TestCase
       end
       result_pipes.each { |_, w| w.close }
 
-      # Release all four processes together so they race on the cold build.
       start_writer.write("1111")
       start_writer.close
 
@@ -105,13 +104,23 @@ class ViteAutoBuildLockTest < ActiveSupport::TestCase
         sleep 0.01
       end
 
-      # While the writer holds the build lock and has truncated manifest.json,
-      # refresh must wait for the build to finish rather than raising JSON::ParserError.
       manifest = vite.manifest.refresh
       assert_equal "/vite-test/assets/inertia-abc123.js", manifest.dig("entrypoints/inertia.tsx", "file")
+
+      Process.waitpid(writer_pid)
+      writer_pid = nil
     ensure
       if writer_pid
-        Process.waitpid(writer_pid)
+        begin
+          Process.kill("KILL", writer_pid)
+        rescue Errno::ESRCH
+          nil
+        end
+        begin
+          Process.waitpid(writer_pid)
+        rescue Errno::ECHILD
+          nil
+        end
       end
     end
   end
@@ -177,7 +186,6 @@ class ViteAutoBuildLockTest < ActiveSupport::TestCase
         FileUtils.mkdir_p(out_dir)
         manifest_path = File.join(out_dir, "manifest.json")
 
-        # Truncate manifest.json to simulate Vite rewriting the output directory.
         File.write(manifest_path, "")
         File.write(#{mid_build_flag.inspect}, "1") if #{signal_mid_build.inspect}
         sleep 0.15

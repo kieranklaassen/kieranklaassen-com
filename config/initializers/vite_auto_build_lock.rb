@@ -22,14 +22,14 @@ module ViteAutoBuildLock
   THREAD_KEY = :vite_auto_build_locks
 
   def self.lock_path_for(config, ssr: false)
-    Pathname(config.build_cache_dir).join("build#{"-ssr" if ssr}-#{config.mode}.lock")
+    Pathname(config.build_cache_dir).join("build#{"-ssr" if ssr}-#{config.mode}.lock").expand_path
   end
 
   def self.synchronize(config, mode: File::LOCK_EX, ssr: false)
     path = lock_path_for(config, ssr: ssr)
     key = path.to_s
-    held = (Thread.current[THREAD_KEY] ||= {})
-    current = held[key]
+    held = Thread.current[THREAD_KEY]
+    current = held&.[](key)
 
     if current && current[0] == Process.pid
       return yield if current[1] == File::LOCK_EX || current[1] == mode
@@ -40,6 +40,7 @@ module ViteAutoBuildLock
     path.dirname.mkpath
     File.open(path, File::RDWR | File::CREAT) do |file|
       file.flock(mode)
+      held = (Thread.current[THREAD_KEY] ||= {})
       held[key] = [ Process.pid, mode ]
       begin
         yield
