@@ -328,6 +328,49 @@ describe('laySheet', () => {
     leave()
   })
 
+  it('says when it is laid, once what it composes stands where it will', async () => {
+    const { shell, sheet } = makeSheet()
+    const order: string[] = []
+    shell.addEventListener('wc:laid', () => order.push('laid'))
+    track(
+      laySheet(
+        sheet,
+        () => {
+          order.push('composed')
+          return { washes: [makeWash()], paper: [1, 1, 1] }
+        },
+        17,
+      ),
+    )
+    painterReady.resolve(true)
+    fontsReady.resolve()
+    await flushMicrotasks()
+    expect(order.slice(0, 2)).toEqual(['composed', 'laid'])
+  })
+
+  it.each(['wc-ink', 'wc-pens'])('throws no paint and drops no water where it is drawn on (%s)', async (name) => {
+    const { shell, sheet } = makeSheet()
+    const drawn = document.createElement('div')
+    drawn.className = name
+    shell.append(drawn)
+    const hears = vi.fn()
+    ear.hears = hears
+    track(laySheet(sheet, () => ({ washes: [makeWash()], paper: [1, 1, 1] }), 17))
+    painterReady.resolve(true)
+    fontsReady.resolve()
+    await flushMicrotasks()
+    runFrames(200)
+    runFrames(2200)
+    hears.mockClear()
+
+    drawn.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0, clientX: 500, clientY: 500 }))
+    drawn.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 80, clientY: 80 }))
+    expect(hears).not.toHaveBeenCalled()
+
+    shell.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 80, clientY: 80 }))
+    expect(hears).toHaveBeenCalledWith(expect.objectContaining({ gesture: 'drop' }))
+  })
+
   it('tears down cleanly without painting if unmounted before ready() resolves', async () => {
     const { shell, sheet } = makeSheet()
     const compose = vi.fn<Compose>(() => ({ washes: [makeWash()], paper: [1, 1, 1] }))

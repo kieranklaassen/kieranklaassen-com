@@ -50,6 +50,7 @@ describe('the sound, on unless it is turned off', () => {
     const start = vi.fn()
     sound.arm(start)
     click('.wc-sound')
+    click('.wc-pens')
     expect(start).not.toHaveBeenCalled()
   })
 

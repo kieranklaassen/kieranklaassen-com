@@ -1,0 +1,37 @@
+/* ---- Pens, and the ink that they leave on a page. ---- */
+.wc-ink { position: absolute; z-index: 8; inset: 0; pointer-events: none; }
+.wc-ink[data-inked] { mix-blend-mode: multiply; }
+.wc-ink[data-held] { pointer-events: auto; cursor: crosshair; touch-action: pinch-zoom; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.wc-ink[data-held="eraser"] { cursor: cell; }
+.wc-ink svg { display: block; width: 100%; height: 100%; pointer-events: none; }
+.wc-ink path { mix-blend-mode: multiply; }
+
+.wc-pens { position: fixed; z-index: 11; left: 16px; bottom: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: calc(100vw - 32px); pointer-events: none; }
+.wc-pens button { pointer-events: auto; min-height: 44px; font: 600 15px/1 var(--font-sans); color: var(--ink); cursor: pointer; }
+.wc-pens button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.wc-row { display: flex; gap: 6px; }
+.wc-row button, .wc-back-out button { display: inline-flex; align-items: center; gap: 7px; padding: 0 16px; background: rgb(248 243 232 / 92%); border: 1px solid rgb(31 26 29 / 26%); border-radius: 22px 19px 23px 20px; }
+.wc-row button:hover, .wc-back-out button:hover:enabled { border-color: var(--ink); }
+.wc-hold { padding-left: 12px !important; }
+.wc-hold[aria-expanded="true"] { background: #f3e3c4 !important; }
+.wc-hold svg { width: 10px; height: 32px; rotate: 28deg; }
+.wc-tray { pointer-events: auto; max-width: 100%; padding: 0 12px 10px; background: #faf6ec; border: 1px solid rgb(31 26 29 / 26%); border-radius: 18px 22px 19px 23px; box-shadow: 0 8px 28px rgb(40 30 40 / 16%); }
+.wc-stand { display: flex; gap: 2px; padding-top: 20px; overflow: hidden; border-bottom: 3px solid #cdb48a; }
+.wc-pen { flex: 1 1 50px; min-width: 44px; height: 68px; padding: 0; background: none; border: 0; }
+.wc-pen svg { width: 30px; height: 96px; margin: 0 auto; translate: 0 12px; transition: translate 0.18s ease-out; }
+.wc-pen:hover svg { translate: 0 6px; }
+.wc-pen[aria-pressed="true"] svg { translate: 0 -10px; }
+.wc-pens .wc-pen:focus-visible { outline-offset: -3px; }
+.wc-inks { display: flex; flex-wrap: wrap; align-items: center; min-height: 44px; padding-top: 8px; }
+.wc-dip { width: 44px; padding: 0; background: none; border: 0; }
+.wc-dip::before { content: ""; display: block; width: 24px; height: 24px; margin: 0 auto; background: var(--dip); border: 1px solid rgb(31 26 29 / 24%); border-radius: 55% 45% 52% 48% / 52% 58% 42% 48%; }
+.wc-dip[aria-pressed="true"]::before { box-shadow: 0 0 0 2px #faf6ec, 0 0 0 4px var(--ink); }
+.wc-back-out { display: flex; gap: 6px; margin-left: auto; }
+.wc-back-out button:disabled { opacity: 0.4; cursor: default; }
+@media (max-width: 640px) {
+  .wc-hold { width: 48px; min-height: 48px !important; padding: 0 !important; justify-content: center; }
+  .wc-hold span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .wc-down { min-height: 48px !important; }
+}
+@media (prefers-reduced-motion: reduce) { .wc-pen svg { transition: none; } }
+@media print { .wc-pens { display: none; } }
