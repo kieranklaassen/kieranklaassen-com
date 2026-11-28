@@ -327,7 +327,6 @@ describe('paintedTitle', () => {
     expect(mask!.width).toBe(2048)
     expect(mask!.height).toBeGreaterThan(0)
 
-    // Font size > 90 uses lower density (1.15), and long titles compress the per-letter step below 60ms
     const longBigTitle = makeTitleBox('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234', { x: 40, y: 80, w: 800, h: 120 }, 'capturing-flow', '104px')
     const longWashes = paintedTitle(longBigTitle, page, new Cutter(), seeded(9), 100)
     expect(longWashes).toHaveLength(30)
@@ -384,11 +383,9 @@ describe('article compositions', () => {
     expect(a.washes.some((w) => w.kind === Kind.Square)).toBe(true)
     expect(a.washes.some((w) => w.kind === Kind.Letter)).toBe(true)
 
-    // Wide places falling squares and left-margin vignettes beside headings below the header
     const proseLeft = Math.round((wideOpts.width - 620) / 2)
     expect(a.washes.some((w) => w.y > 520 && w.y < wideOpts.height - 200 && w.x < proseLeft)).toBe(true)
 
-    // Narrow omits both the below-picture falling squares and margin vignettes while still rendering header and footer
     const narrow = wide(makeArticlePage({ ...wideOpts, width: 580, height: 1500 }))
     expect(narrow.paper).toEqual(PAPER)
     expect(narrow.mask).toBeDefined()
@@ -450,7 +447,6 @@ describe('article compositions', () => {
     const wandered = [...pageA.shell.querySelectorAll<HTMLElement>('[data-wander]')]
     expect(wandered.some((el) => el.style.translate !== '')).toBe(true)
 
-    // Narrow viewport clears wander translations and routes courseRound around written blocks
     const narrowPage = makeArticlePage({ width: 580, height: 1500, includeWander: true })
     const preWandered = narrowPage.shell.querySelector<HTMLElement>('[data-wander]')!
     preWandered.style.translate = '12px 0'

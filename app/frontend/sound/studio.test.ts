@@ -193,11 +193,11 @@ class FakeAudioContext {
 function makeStudio(random: () => number = () => 0.5) {
   const ctx = new FakeAudioContext()
   const studio = new Studio(ctx as unknown as BaseAudioContext, random)
-  const out = ctx.gains[0]
-  const air = ctx.gains[2]
   const music = studio.inputs.music as unknown as FakeGainNode
   const weather = studio.inputs.weather as unknown as FakeGainNode
-  const paint = ctx.gains[5]
+  const air = music.connections[0] as FakeGainNode
+  const out = air.connections[0] as FakeGainNode
+  const paint = ctx.gains.find((node) => node !== air && node.connections.includes(out) && node.gain.value === 1)!
   return { ctx, studio, out, air, music, weather, paint }
 }
 
@@ -339,7 +339,6 @@ describe('Studio', () => {
       expect(scheduledStarts.some((f) => Math.abs(f - pitch) / pitch < 0.005)).toBe(true)
     }
 
-    // With sky !== 'sea', wave omits the highpass foam layer; switching to sea with near > 0.2 adds it.
     expect(ctx.filters.some((f) => f.type === 'highpass')).toBe(false)
 
     ctx.currentTime = 21
@@ -348,6 +347,13 @@ describe('Studio', () => {
     studio.ahead(22)
     const newDrones = ctx.oscillators.slice(beforeCount).filter((o) => o.type === 'sine' && o.startedAt === 21.6)
     expect(newDrones).toHaveLength(12)
+    const nextStarts = newDrones.map((o) => {
+      const first = o.frequency.calls[0]
+      return first?.op === 'setValueAtTime' ? first.value : 0
+    })
+    for (const pitch of chordOf(CENTERS[4] - 12, 5)) {
+      expect(nextStarts.some((f) => Math.abs(f - pitch) / pitch < 0.005)).toBe(true)
+    }
 
     ctx.currentTime = 30
     studio.ahead(32)
@@ -359,20 +365,17 @@ describe('Studio', () => {
       const { ctx, studio, music } = makeStudio(() => 0.1)
       const [whiteBuffer, pinkBuffer] = ctx.buffers
 
-      // square with random < 0.3 adds a brush (2 sources, triangle bite) + 1 bubble oscillator
       studio.hears(heard({ gesture: 'square', pan: 2 }), 1)
       expect(ctx.sources).toHaveLength(2)
       expect(ctx.sources.map((s) => s.buffer)).toEqual([whiteBuffer, pinkBuffer])
       expect(ctx.oscillators).toHaveLength(2)
       expect(ctx.panners[0].pan.value).toBe(1)
 
-      // square with random >= 0.3 skips the extra bubble
       const quiet = makeStudio(() => 0.9)
       quiet.studio.hears(heard({ gesture: 'square', pan: -2 }), 1)
       expect(quiet.ctx.oscillators).toHaveLength(1)
       expect(quiet.ctx.panners[0].pan.value).toBe(-1)
 
-      // letter without band creates a brush + a tuned sing
       const beforeLetterOsc = ctx.oscillators.length
       const beforeLetterSrc = ctx.sources.length
       studio.hears(heard({ gesture: 'letter', index: 5 }), 2)
@@ -381,21 +384,18 @@ describe('Studio', () => {
       const letterSing = ctx.oscillators[ctx.oscillators.length - 1]
       expect(letterSing.frequency.value).toBeCloseTo(noteOf(CENTERS[0], (5 % 12) - 4) * 2, 4)
 
-      // puddle creates 1 bubble + 1 short brush
       const beforePuddleOsc = ctx.oscillators.length
       const beforePuddleSrc = ctx.sources.length
       studio.hears(heard({ gesture: 'puddle' }), 3)
       expect(ctx.oscillators.length - beforePuddleOsc).toBe(2)
       expect(ctx.sources.length - beforePuddleSrc).toBe(2)
 
-      // bank creates a wide brush only
       const beforeBankOsc = ctx.oscillators.length
       const beforeBankSrc = ctx.sources.length
       studio.hears(heard({ gesture: 'bank' }), 4)
       expect(ctx.oscillators.length - beforeBankOsc).toBe(1)
       expect(ctx.sources.length - beforeBankSrc).toBe(2)
 
-      // flood creates a brush + sing at the page pitch
       const beforeFloodOsc = ctx.oscillators.length
       const beforeFloodSrc = ctx.sources.length
       studio.hears(heard({ gesture: 'flood', light: 0.5, warmth: 0.5 }), 5)
@@ -403,7 +403,6 @@ describe('Studio', () => {
       expect(ctx.sources.length - beforeFloodSrc).toBe(3)
       expect(ctx.oscillators[ctx.oscillators.length - 1].frequency.value).toBeCloseTo(noteOf(CENTERS[0], degreeOf(0.5, 0.5)), 4)
 
-      // run creates descending bubble oscillators and no noise sources
       const beforeRunOsc = ctx.oscillators.length
       const beforeRunSrc = ctx.sources.length
       studio.hears(heard({ gesture: 'run', lasts: 1 }), 6)
@@ -414,19 +413,16 @@ describe('Studio', () => {
       const lastFreq = runBubbles[runBubbles.length - 1].frequency.calls[0]
       expect(firstFreq?.op === 'setValueAtTime' && lastFreq?.op === 'setValueAtTime' && firstFreq.value > lastFreq.value).toBe(true)
 
-      // drop creates bubble + sing
       const beforeDropOsc = ctx.oscillators.length
       const beforeDropSrc = ctx.sources.length
       studio.hears(heard({ gesture: 'drop' }), 7)
       expect(ctx.oscillators.length - beforeDropOsc).toBe(2)
       expect(ctx.sources.length - beforeDropSrc).toBe(1)
 
-      // rain without band routes sing into parts.music
       const beforeRainPan = ctx.panners.length
       studio.hears(heard({ gesture: 'rain' }), 8)
       expect(ctx.panners[beforeRainPan].connections).toContain(music)
 
-      // splash creates thud + slap + spray bubbles + sing
       const beforeSplashOsc = ctx.oscillators.length
       const beforeSplashSrc = ctx.sources.length
       studio.hears(heard({ gesture: 'splash', size: 0.5 }), 9)
@@ -442,12 +438,10 @@ describe('Studio', () => {
 
       const degree = degreeOf(0.6, 0.4)
 
-      // letter calls band.letter(index) and skips the local sing
       studio.hears(heard({ gesture: 'letter', index: 4 }), 1)
       expect(band.letter).toHaveBeenCalledWith(4)
-      expect(ctx.sources).toHaveLength(2) // brush only, no sing pink source
+      expect(ctx.sources).toHaveLength(2)
 
-      // rain delegates entirely to band.touch without creating local audio nodes
       const beforeRainSources = ctx.sources.length
       const beforeRainOsc = ctx.oscillators.length
       studio.hears(heard({ gesture: 'rain', light: 0.6, warmth: 0.4 }), 2)
@@ -455,7 +449,6 @@ describe('Studio', () => {
       expect(ctx.sources).toHaveLength(beforeRainSources)
       expect(ctx.oscillators).toHaveLength(beforeRainOsc)
 
-      // drop calls band.touch and softens the local sing peak to 0.05
       const beforeDropGains = ctx.gains.length
       studio.hears(heard({ gesture: 'drop', light: 0.6, warmth: 0.4 }), 3)
       expect(band.touch).toHaveBeenCalledWith(degree, 0.2)
@@ -466,7 +459,6 @@ describe('Studio', () => {
         .map((c) => c.value)
       expect(dropPeaks).toContain(0.05)
 
-      // splash calls band.touch(degree - 7, 0.3)
       studio.hears(heard({ gesture: 'splash', light: 0.6, warmth: 0.4 }), 4)
       expect(band.touch).toHaveBeenCalledWith(degree - 7, 0.3)
     })
@@ -474,28 +466,22 @@ describe('Studio', () => {
     it('enforces the MOST = 5 strokes-per-100ms rate limit with headroom for large strokes and bypass for drops/rain/splash', () => {
       const { ctx, studio } = makeStudio(() => 0.5)
 
-      // 5 small strokes in the same 100ms window all play
       for (let i = 0; i < 5; i++) studio.hears(heard({ gesture: 'bank', size: 0.2 }), 1 + i * 0.01)
       expect(ctx.sources).toHaveLength(10)
 
-      // 6th small stroke within 100ms is dropped
       studio.hears(heard({ gesture: 'bank', size: 0.2 }), 1.05)
       expect(ctx.sources).toHaveLength(10)
 
-      // Large strokes (size > 0.3) get MOST + 2 = 7 slots total
       studio.hears(heard({ gesture: 'bank', size: 0.5 }), 1.06)
       studio.hears(heard({ gesture: 'bank', size: 0.5 }), 1.07)
       expect(ctx.sources).toHaveLength(14)
 
-      // 8th stroke (even large) is dropped
       studio.hears(heard({ gesture: 'bank', size: 0.8 }), 1.08)
       expect(ctx.sources).toHaveLength(14)
 
-      // Ungated gestures still play while the window is saturated
       studio.hears(heard({ gesture: 'drop' }), 1.08)
       expect(ctx.sources).toHaveLength(15)
 
-      // Once 100ms elapses, the rate-limit window clears and small strokes play again
       studio.hears(heard({ gesture: 'bank', size: 0.2 }), 1.2)
       expect(ctx.sources).toHaveLength(17)
     })
@@ -516,13 +502,11 @@ describe('Studio', () => {
       expect(rain).toHaveBeenCalledTimes(1)
       expect(rain).toHaveBeenCalledWith(11.4)
 
-      // Calling again for the same horizon schedules nothing new
       studio.ahead(13, rain)
       expect(ctx.oscillators).toHaveLength(firstOscCount)
       expect(ctx.sources).toHaveLength(firstSrcCount)
       expect(rain).toHaveBeenCalledTimes(1)
 
-      // Without a rain callback, ahead synthesizes fallback rain into parts.music
       const fallback = makeStudio(() => 0.5)
       fallback.ctx.currentTime = 10
       fallback.studio.ahead(12)
@@ -541,12 +525,10 @@ describe('Studio', () => {
       expect(rain).toHaveBeenCalledTimes(1)
       expect(rain).toHaveBeenCalledWith(10)
 
-      // Before nextRain (~10 + 1.2 + 3.4 * 0.5^1.5 ≈ 12.40), rain does not fire again
       ctx.currentTime = 11
       studio.ahead(20, rain)
       expect(rain).toHaveBeenCalledTimes(1)
 
-      // After advancing past nextRain, rain fires once more
       ctx.currentTime = 15
       studio.ahead(25, rain)
       expect(rain).toHaveBeenCalledTimes(2)
