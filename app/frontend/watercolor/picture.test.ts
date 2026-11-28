@@ -15,10 +15,6 @@ function expectValidRgb(rgb: RGB) {
   }
 }
 
-/**
- * Minimal 2D canvas + Path2D stub that maps each SVG path string to a sheet-space box
- * (or a default box) and rasterizes alpha into a buffer so boundsOf/laid/plate run cleanly in jsdom.
- */
 function stubCanvas(boxesByPath: Map<string, Rect>, fallback?: Rect) {
   const operations: { kind: 'fill' | 'stroke' | 'lift'; d?: string }[] = []
 
@@ -171,11 +167,9 @@ describe('groundOf', () => {
       totalArea += wash.w * wash.h
     }
 
-    // With loose = 0 and no skip, cells cover most of the rectangle (modulo gaps)
     expect(totalArea).toBeGreaterThan(rect.w * rect.h * 0.7)
     expect(totalArea).toBeLessThanOrEqual(rect.w * rect.h * 1.05)
 
-    // Coverage reaches near all four edges
     expect(Math.min(...a.map((w) => w.x))).toBeLessThan(rect.x + 15)
     expect(Math.max(...a.map((w) => w.x + w.w))).toBeGreaterThan(rect.x + rect.w - 15)
     expect(Math.min(...a.map((w) => w.y))).toBeLessThan(rect.y + 15)
@@ -208,7 +202,6 @@ describe('groundOf', () => {
       expect(v).toBeLessThanOrEqual(1)
     }
 
-    // Ground warmth influences the resulting washes
     const warmWashes = groundOf(rect, flatWarm, 50, seeded(3), 0)
     const coolWashes = groundOf(rect, flatCool, 50, seeded(3), 0)
     const meanWarmBias = (ws: typeof warmWashes) => ws.reduce((sum, w) => sum + (w.ink[0] - w.ink[2]), 0) / ws.length
@@ -265,7 +258,6 @@ describe('runsOff, laid, and plate', () => {
     const cutter = new Cutter()
     const washes = laid([leftFill, leftBrush, middleFill, emptyShape], WHOLE, 100, 50, 2, cutter, seeded(4), 300, true)
 
-    // emptyShape produces no wash; the 3 drawn shapes do
     expect(washes).toHaveLength(3)
     for (const wash of washes) {
       expect(wash.kind).toBe(Kind.Letter)
@@ -276,13 +268,11 @@ describe('runsOff, laid, and plate', () => {
       expect(wash.field).toBeLessThanOrEqual(15)
     }
 
-    // Coordinates match x + box.x * k - pad (pad = 8)
     expect(washes[0].x).toBe(100 + 0 * 2 - 8)
     expect(washes[0].y).toBe(50 + 10 * 2 - 8)
     expect(washes[2].x).toBe(100 + 50 * 2 - 8)
     expect(washes[2].y).toBe(50 + 20 * 2 - 8)
 
-    // Only leftFill (not leftBrush, not middleFill) triggers destination-out lift
     expect(ops.filter((op) => op.kind === 'lift')).toHaveLength(1)
     expect(cutter.sheet()).toBeDefined()
   })
@@ -297,7 +287,6 @@ describe('runsOff, laid, and plate', () => {
     expect(first.some((w) => w.kind === Kind.Square)).toBe(true)
     expect(first.some((w) => w.kind === Kind.Letter)).toBe(true)
 
-    // Fallback slug generates a picture and produces valid washes too
     const fallback = plate(box, 'unlisted-article-slug', new Cutter(), seeded(19), true)
     expect(fallback.some((w) => w.kind === Kind.Square)).toBe(true)
     expect(fallback.some((w) => w.kind === Kind.Letter)).toBe(true)

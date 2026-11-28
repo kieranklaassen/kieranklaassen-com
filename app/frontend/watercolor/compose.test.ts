@@ -97,14 +97,12 @@ describe('rectangle geometry helpers', () => {
     expect(meets(a, { x: 12, y: 12, w: 5, h: 5 })).toBe(true)
     expect(meets(a, a)).toBe(true)
 
-    // Touching edges and corner do not meet
     expect(meets(a, { x: 30, y: 10, w: 20, h: 20 })).toBe(false)
     expect(meets(a, { x: -10, y: 10, w: 20, h: 20 })).toBe(false)
     expect(meets(a, { x: 10, y: 30, w: 20, h: 20 })).toBe(false)
     expect(meets(a, { x: 10, y: -10, w: 20, h: 20 })).toBe(false)
     expect(meets(a, { x: 30, y: 30, w: 20, h: 20 })).toBe(false)
 
-    // Symmetric
     const separated = { x: 100, y: 100, w: 10, h: 10 }
     expect(meets(a, separated)).toBe(false)
     expect(meets(separated, a)).toBe(false)
@@ -121,13 +119,9 @@ describe('rectangle geometry helpers', () => {
   it('beside picks the largest remaining piece around one or multiple obstacles', () => {
     const cell = { x: 0, y: 0, w: 100, h: 100 }
 
-    // Obstacle on the left leaves the right strip (70x100) as largest
     expect(beside(cell, [{ x: 0, y: 0, w: 30, h: 100 }], 10)).toEqual({ x: 30, y: 0, w: 70, h: 100 })
-
-    // Obstacle near the top-left: right strip is 70x100 (7000) vs bottom strip 100x60 (6000)
     expect(beside(cell, [{ x: 0, y: 0, w: 30, h: 40 }], 10)).toEqual({ x: 30, y: 0, w: 70, h: 100 })
 
-    // Multiple overlapping obstacles carve sequentially without overlapping any taken box
     const taken: Rect[] = [
       { x: 0, y: 0, w: 30, h: 100 },
       { x: 25, y: 0, w: 75, h: 40 },
@@ -141,9 +135,7 @@ describe('rectangle geometry helpers', () => {
   it('beside returns undefined when obstacles consume or shrink the cell below least', () => {
     const cell = { x: 10, y: 10, w: 50, h: 50 }
     expect(beside(cell, [{ x: 0, y: 0, w: 100, h: 100 }], 1)).toBeUndefined()
-    // Remaining right strip is 12x50, smaller than least = 15
     expect(beside(cell, [{ x: 10, y: 10, w: 38, h: 50 }], 15)).toBeUndefined()
-    // Exactly at least = 12 succeeds
     expect(beside(cell, [{ x: 10, y: 10, w: 38, h: 50 }], 12)).toEqual({ x: 48, y: 10, w: 12, h: 50 })
   })
 
@@ -167,7 +159,7 @@ describe('ruled, pencil, toneOf, noteInk, and letterInk', () => {
       [
         { x: 200, y: 40, w: 40, h: 30 },
         { x: 80, y: 40, w: 30, h: 30 },
-        { x: 10, y: 100, w: 50, h: 20 }, // off the line
+        { x: 10, y: 100, w: 50, h: 20 },
       ],
       seeded(1),
     )
@@ -177,12 +169,9 @@ describe('ruled, pencil, toneOf, noteInk, and letterInk', () => {
       { x: 240, w: 60, kind: Kind.Pencil },
     ])
 
-    // Gaps <= 24px are dropped; vertical orientation splits along y
     const vertical = ruled(
       { x: 40, y: 0, w: 3, h: 140 },
-      [
-        { x: 20, y: 20, w: 40, h: 30 }, // leaves 20px above (<= 24, dropped)
-      ],
+      [{ x: 20, y: 20, w: 40, h: 30 }],
       seeded(2),
     )
     expect(vertical.map(({ y, h, kind }) => ({ y, h, kind }))).toEqual([{ y: 50, h: 90, kind: Kind.Pencil }])
@@ -203,7 +192,6 @@ describe('ruled, pencil, toneOf, noteInk, and letterInk', () => {
       expect(toneOf(key)).toEqual(tone)
       expect(tone.light).toBeGreaterThanOrEqual(0.04)
       expect(tone.light).toBeLessThanOrEqual(0.46)
-      // Warmth stays in either the cool end [0, 0.3) or warm end [0.7, 1)
       expect(tone.warmth < 0.3 || tone.warmth >= 0.7).toBe(true)
 
       const [ink, ink2] = noteInk(key)
@@ -258,7 +246,6 @@ describe('winding, tide, courseOf, courseAt, courseRound, and banks', () => {
     expect(mid[0]).toBeCloseTo(218, 4)
     expect(mid[1]).toBeCloseTo(59, 4)
 
-    // Clamps below 0 and beyond the end without NaN
     expect(courseAt(course, -50)).toEqual([200, 50])
     const far = courseAt(course, 99999)
     expect(Number.isFinite(far[0])).toBe(true)
@@ -278,14 +265,11 @@ describe('winding, tide, courseOf, courseAt, courseRound, and banks', () => {
     const around = courseRound([block], 400, 600)
     const [midAtBlock, halfAtBlock] = courseAt(around, 260)
     expect(midAtBlock).toBeCloseTo(200, 1)
-    // Includes 26px margin on both sides of the 200px block -> half width 126
     expect(halfAtBlock).toBeGreaterThanOrEqual(125)
 
-    // Far from the block, the creek narrows back down
     const [, halfAway] = courseAt(around, 540)
     expect(halfAway).toBeLessThan(20)
 
-    // A block close to the viewport edges (< 70px margin) expands past the page edge to avoid slivers
     const fullWidth = courseRound([{ x: 20, y: 200, w: 360, h: 120 }], 400, 600)
     const [, fullHalf] = courseAt(fullWidth, 260)
     expect(fullHalf).toBeGreaterThan(250)
@@ -312,7 +296,6 @@ describe('DOM helpers and Compose functions', () => {
     shell.appendChild(item)
 
     wander(shell, (y) => 500 + y * 0.1, 1000)
-    // Center y = 140 -> offset = +14.0px
     expect(item.style.translate).toBe('14.0px 0')
 
     still(shell)
@@ -360,17 +343,14 @@ describe('DOM helpers and Compose functions', () => {
     expect(a.paper).toEqual(PAPER)
     expectValidWashes(a.washes)
 
-    // First two washes correspond to card and sheet, with pale density for sheet
     expect(a.washes[0]).toMatchObject({ x: card.x, y: card.y, w: card.w, h: card.h, kind: Kind.Square })
     expect(a.washes[1]).toMatchObject({ x: sheet.x, y: sheet.y, w: sheet.w, h: sheet.h, density: 0.3 })
     expect(a.washes.some((w) => w.kind === Kind.Pencil)).toBe(true)
 
-    // Net squares (after the 2 cards) must stay outside the grown bare region
     const netSquares = a.washes.slice(2).filter((w) => w.kind === Kind.Square)
     expect(netSquares.length).toBeGreaterThan(0)
     for (const sq of netSquares) expect(meets(sq, bare)).toBe(false)
 
-    // Narrow viewport omits pencil rules and restricts net squares to band boxes
     const band = makeBox('band', { x: 0, y: 200, w: 500, h: 120 }, 'band-1')
     const narrow = smallSquares({
       width: 500,
@@ -416,7 +396,7 @@ describe('DOM helpers and Compose functions', () => {
     expectValidWashes(narrow.washes)
   })
 
-  it('score and paintedName compose deterministic washes from swatches, staff, phrases, lines, and rules', () => {
+  it('score composes deterministic washes from swatches, staff, notes, ticks, and phrases', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
     const staffEl = document.createElement('div')
@@ -463,8 +443,11 @@ describe('DOM helpers and Compose functions', () => {
     expect(scoreA.washes.some((w) => w.leads === h2)).toBe(true)
     expect(scoreA.washes.some((w) => w.leads === p)).toBe(true)
     expect(scoreA.washes.some((w) => w.kind === Kind.Pencil)).toBe(true)
+  })
 
-    // paintedName with line, swatch, rule (and longPage delegating when stream is absent vs present)
+  it('paintedName and longPage compose line, swatch, and rule washes and add estuary banks when a stream exists', () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+
     const lineEl = document.createElement('div')
     const ruleBox = makeBox('rule', { x: 40, y: 240, w: 500, h: 2 }, 'rule-1')
     const swatchBox = makeBox('swatch', { x: 20, y: 100, w: 16, h: 16 }, 'enthusiasm')
@@ -489,10 +472,8 @@ describe('DOM helpers and Compose functions', () => {
       random: seeded(31),
       long: true,
     })
-    // Long mode omits standalone swatch washes
     expect(paintedLong.washes.length).toBe(paintedShort.washes.length - 1)
 
-    // longPage falls back to paintedName without a stream, and adds banks + course with a stream
     const fallback = longPage({
       width: 1000,
       height: 600,

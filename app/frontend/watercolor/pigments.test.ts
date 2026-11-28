@@ -36,7 +36,6 @@ describe('seeded and hashOf', () => {
     const one = seeded(1)
     expect(Array.from({ length: 8 }, () => zero())).not.toEqual(Array.from({ length: 8 }, () => one()))
 
-    // -1 and 0xffffffff coerce to the same unsigned 32-bit seed
     const neg = seeded(-1)
     const max = seeded(0xffffffff)
     expect(Array.from({ length: 8 }, () => neg())).toEqual(Array.from({ length: 8 }, () => max()))
@@ -104,7 +103,6 @@ describe('four, clamp, mix, smooth, and mixInk', () => {
     }
 
     expect(smooth(0, 10, 2.5) + smooth(0, 10, 7.5)).toBeCloseTo(1, 10)
-    // Reversed bounds invert the transition cleanly
     expect(smooth(10, 0, 10)).toBe(0)
     expect(smooth(10, 0, 5)).toBe(0.5)
     expect(smooth(10, 0, 0)).toBe(1)
