@@ -149,7 +149,7 @@ const givesWay = () => {
 }
 
 /** What begins something else than the page's own sound. */
-const NOT_A_START = '.wc-sound, .wc-chooser, a[target="_blank"]'
+const NOT_A_START = '.wc-sound, .wc-pens, .wc-chooser, a[target="_blank"]'
 
 /**
  * Starts the sound at the first click or tap anywhere, which is as early as a browser allows. Not at a

@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react'
 import type { PropsWithChildren } from 'react'
 import { SiteShell } from '../components/site_shell'
+import { Pens } from '../pens/pens_tray'
 import { PaintedSheet } from '../watercolor/sheet'
 import { Sound } from './sound'
 import { ARTS, LOOKS, roomsOf, type Art, type Look } from './looks'
@@ -9,7 +10,8 @@ export function LookShell({ children }: PropsWithChildren) {
   const { props, url, component } = usePage<{ look: Look; art: Art; chooseLook: boolean }>()
   const look = props.look
   const rooms = roomsOf(look, component, props.art)
-  const chooser = props.chooseLook && <LookChooser look={look} art={rooms?.art} path={url.split('?')[0]} />
+  const path = url.split(/[?#]/)[0]
+  const chooser = props.chooseLook && <LookChooser look={look} art={rooms?.art} path={path} />
 
   if (!rooms)
     return (
@@ -28,6 +30,7 @@ export function LookShell({ children }: PropsWithChildren) {
       <main className="wc-body" data-look={rooms.body} data-page={component}>
         {children}
       </main>
+      <Pens key={path} path={path} />
       <Sound rooms={rooms} url={url} />
       {chooser}
     </div>

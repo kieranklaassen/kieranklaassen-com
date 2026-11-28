@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { placeOf } from '../sound/place'
 import { ALL, arm, close, fade, keep, kept, listen, moveTo, NAMES, open, sounding, turn, want, type Parts } from '../sound/switch'
 import type { Part } from '../sound/studio'
+import { onUnfolded, tellUnfolded } from './fold'
 import type { Rooms } from './looks'
 
 /** Three small drops. */
@@ -35,6 +36,8 @@ export function Sound({ rooms, url }: { rooms: Rooms; url: string }) {
     return () => document.removeEventListener('visibilitychange', seen)
   }, [on])
 
+  useEffect(() => onUnfolded('pens', () => setShown(false)), [])
+
   const press = async () => {
     want(!on)
     if (on) return close()
@@ -51,6 +54,11 @@ export function Sound({ rooms, url }: { rooms: Rooms; url: string }) {
     turn(part, next[part])
   }
 
+  const unfold = () => {
+    if (!shown) tellUnfolded('sound')
+    setShown(!shown)
+  }
+
   return (
     <div className="wc-sound" role="group" aria-label="Sound">
       {on && (
@@ -61,7 +69,7 @@ export function Sound({ rooms, url }: { rooms: Rooms; url: string }) {
                 {name}
               </button>
             ))}
-          <button type="button" className="wc-more" aria-expanded={shown} aria-label="Music, weather and paint" onClick={() => setShown(!shown)}>
+          <button type="button" className="wc-more" aria-expanded={shown} aria-label="Music, weather and paint" onClick={unfold}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d={THREE} />
             </svg>
