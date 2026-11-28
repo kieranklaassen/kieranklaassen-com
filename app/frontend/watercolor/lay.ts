@@ -1,7 +1,7 @@
 import type { Compose, Composition, PaintBox } from './compose_shared'
 import { ear, type Gesture } from '../sound/ear'
 import { clamp, seeded } from './pigments'
-import { Kind, Painter, reachOf, type Rect, type Wash } from './painter'
+import { Kind, Painter, reachOf, type Rect, type RGB, type Wash } from './painter'
 import { splash } from './splash'
 
 const TILE_HEIGHT = 512
@@ -27,6 +27,8 @@ interface Tile {
   dirty?: Rect
 }
 
+type Drop = NonNullable<Wash['drop']>
+
 interface Moving {
   wash: Wash
   start: number
@@ -34,11 +36,17 @@ interface Moving {
   kind: 'lay' | 'flood' | 'drop'
   goal?: number
   began?: number
-  drop?: [number, number, number, number]
+  drop?: Drop
   told?: boolean
 }
 
 const ease = (t: number) => 1 - (1 - t) ** 3
+
+const lightOf = ([r, g, b]: RGB) => clamp(r * 0.3 + g * 0.5 + b * 0.2)
+const warmthOf = ([r, , b]: RGB) => clamp(0.5 + (r - b) * 0.9)
+
+const holds = (wash: Wash, x: number, y: number) => x >= wash.x && x < wash.x + wash.w && y >= wash.y && y < wash.y + wash.h
+const takesDrops = (wash: Wash) => !wash.still && !wash.flood && wash.grow > 0.9
 
 export function seedOfVisit() {
   const asked = new URLSearchParams(window.location.search).get('seed')
@@ -118,14 +126,13 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
     if (!ear.hears) return
     const { top, bottom } = showing()
     if (wash.y > bottom || wash.y + wash.h < top) return
-    const [r, g, b] = wash.ink
     const pencil = wash.kind === Kind.Pencil
     ear.hears({
       gesture,
       pan: clamp(((wash.x + wash.w / 2) / window.innerWidth) * 2 - 1, -1, 1),
       size: pencil ? 0.01 : clamp(Math.sqrt(wash.w * wash.h) / 700),
-      light: pencil ? 1 : clamp(r * 0.3 + g * 0.5 + b * 0.2),
-      warmth: clamp(0.5 + (r - b) * 0.9),
+      light: pencil ? 1 : lightOf(wash.ink),
+      warmth: warmthOf(wash.ink),
       lasts: lasts / 1000,
       index: wash.index,
     })
@@ -266,14 +273,20 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
     composeAsked = requestAnimationFrame(lay)
   }
 
-  const at = (event: MouseEvent) => {
+  const pointOf = (event: MouseEvent) => {
     const from = origin()
-    const x = event.clientX - from.left
-    const y = event.clientY - from.top
-    const wash = composition.washes
-      .filter((w) => !w.still && !w.flood && w.grow > 0.9 && x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h)
-      .pop()
+    return { x: event.clientX - from.left, y: event.clientY - from.top }
+  }
+
+  const at = (event: MouseEvent) => {
+    const { x, y } = pointOf(event)
+    const wash = composition.washes.filter((w) => takesDrops(w) && holds(w, x, y)).pop()
     return { x, y, wash }
+  }
+
+  const dropOn = (wash: Wash, drop: Drop, after = 0) => {
+    moving = moving.filter((one) => !(one.kind === 'drop' && one.wash === wash))
+    moving.push({ wash, kind: 'drop', start: performance.now() + after, lasts: DROP_LASTS, drop })
   }
 
   // A drop of water where the pointer comes into a wash: it pushes the pigment out to a ring.
@@ -286,8 +299,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
     const { x, y, wash } = at(event)
     if (wash && (wash !== under || event.type === 'pointerdown')) {
       const radius = Math.min(64, 12 + 0.3 * Math.min(wash.w, wash.h))
-      moving = moving.filter((one) => !(one.kind === 'drop' && one.wash === wash))
-      moving.push({ wash, kind: 'drop', start: performance.now(), lasts: DROP_LASTS, drop: [x, y, radius, 1] })
+      dropOn(wash, [x, y, radius, 1])
       tell(wash, 'drop')
       ask()
     }
@@ -319,14 +331,12 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
   // Rain that is heard is seen: it falls on some wash in the window, and the wash is its note.
   const rained = () => {
     const { top, bottom } = showing()
-    const seen = composition.washes.filter((w) => !w.still && !w.flood && w.grow > 0.9 && w.h > 12 && w.w > 12 && w.y + w.h / 2 > top && w.y + w.h / 2 < bottom)
+    const seen = composition.washes.filter((w) => takesDrops(w) && w.h > 12 && w.w > 12 && w.y + w.h / 2 > top && w.y + w.h / 2 < bottom)
     const wash = seen[Math.floor(Math.random() * seen.length)]
     if (!wash) return
     tell(wash, 'rain')
     if (reduced) return
-    const drop: [number, number, number, number] = [wash.x + wash.w * (0.3 + 0.4 * Math.random()), wash.y + wash.h * (0.3 + 0.4 * Math.random()), Math.min(30, 6 + 0.22 * Math.min(wash.w, wash.h)), 0.9]
-    moving = moving.filter((one) => !(one.kind === 'drop' && one.wash === wash))
-    moving.push({ wash, kind: 'drop', start: performance.now(), lasts: DROP_LASTS, drop })
+    dropOn(wash, [wash.x + wash.w * (0.3 + 0.4 * Math.random()), wash.y + wash.h * (0.3 + 0.4 * Math.random()), Math.min(30, 6 + 0.22 * Math.min(wash.w, wash.h)), 0.9])
     ask()
   }
 
@@ -339,10 +349,9 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
     for (const w of composition.washes) {
       if (w.kind === Kind.Pencil || w.flood || w.grow < 0.5 || w.y > bottom || w.y + w.h < top) continue
       const much = Math.min(w.w * w.h, 60_000)
-      const [r, g, b] = w.ink
       weight += much
-      light += much * clamp(r * 0.3 + g * 0.5 + b * 0.2)
-      warmth += much * clamp(0.5 + (r - b) * 0.9)
+      light += much * lightOf(w.ink)
+      warmth += much * warmthOf(w.ink)
     }
     return weight ? { light: light / weight, warmth: warmth / weight } : undefined
   }
@@ -372,10 +381,9 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
     const off = own.y + own.h / 2 - line
     ;[1, -1, 0.5, -0.5].forEach((share, i) => {
       const y = line + off * share
-      const wash = i === 0 ? own : composition.washes.filter((w) => w.kind === 0 && !w.flood && x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h).pop()
+      const wash = i === 0 ? own : composition.washes.filter((w) => w.kind === 0 && !w.flood && holds(w, x, y)).pop()
       if (!wash) return
-      moving = moving.filter((one) => !(one.kind === 'drop' && one.wash === wash))
-      moving.push({ wash, kind: 'drop', start: performance.now() + i * 60, lasts: DROP_LASTS, drop: [x, y, Math.min(34, own.h * (i === 0 ? 0.5 : 0.42)), i === 0 ? 1 : 1.1] })
+      dropOn(wash, [x, y, Math.min(34, own.h * (i === 0 ? 0.5 : 0.42)), i === 0 ? 1 : 1.1], i * 60)
     })
     ask()
   }
@@ -384,10 +392,8 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
   const led = (event: MouseEvent) => {
     const target = event.target as Element | null
     if (!target?.closest('[data-of="article"]')) return
-    const from = origin()
-    const x = event.clientX - from.left
-    const y = event.clientY - from.top
-    const wash = composition.washes.find((w) => w.leads && x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h)
+    const { x, y } = pointOf(event)
+    const wash = composition.washes.find((w) => w.leads && holds(w, x, y))
     wash?.leads?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
   }
 
@@ -398,8 +404,8 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
     const related = (event as PointerEvent).relatedTarget as Node | null
     if (related && wash.flood?.contains(related)) return
     if (goal && event instanceof PointerEvent) {
-      const from = origin()
-      wash.from = [clamp((event.clientX - from.left - wash.x) / wash.w), clamp((event.clientY - from.top - wash.y) / wash.h)]
+      const { x, y } = pointOf(event)
+      wash.from = [clamp((x - wash.x) / wash.w), clamp((y - wash.y) / wash.h)]
     }
     moving = moving.filter((one) => one.wash !== wash)
     moving.push({ wash, kind: 'flood', start: performance.now(), lasts: reduced ? 1 : goal ? 900 : 500, goal, began: wash.grow })
@@ -408,14 +414,12 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
   }
   const wet = flood(1)
   const dry = flood(0)
-  const scrolled = () => ask()
   const restored = () => {
     painter.setUp()
     if (!started) return
     size = ''
     layAgain()
   }
-  const lost = (event: Event) => event.preventDefault()
 
   const observer = new ResizeObserver(layAgain)
   // letters are cut from the face they are set in, and a face that is slow is not waited for
@@ -431,46 +435,35 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
     lay()
     observer.observe(shell)
   })
-  window.addEventListener('scroll', scrolled, { passive: true })
-  window.addEventListener('resize', scrolled, { passive: true })
+  const listening = new AbortController()
+  const here = { signal: listening.signal }
+  const passive = { ...here, passive: true }
+  window.addEventListener('scroll', ask, passive)
+  window.addEventListener('resize', ask, passive)
   if (!reduced) {
-    window.addEventListener('pointermove', fall, { passive: true })
-    window.addEventListener('pointerdown', fall, { passive: true })
+    window.addEventListener('pointermove', fall, passive)
+    window.addEventListener('pointerdown', fall, passive)
+    shell.addEventListener('click', thrown, here)
   }
-  if (!reduced) shell.addEventListener('click', thrown)
   ear.view = view
-  window.addEventListener('wc:rain', rained)
-  window.addEventListener('wc:again', again)
-  shell.addEventListener('wc:heard', heard)
-  shell.addEventListener('click', led)
-  shell.addEventListener('pointerover', wet)
-  shell.addEventListener('pointerout', dry)
-  shell.addEventListener('focusin', wet)
-  shell.addEventListener('focusout', dry)
-  painter.canvas.addEventListener('webglcontextlost', lost)
-  painter.canvas.addEventListener('webglcontextrestored', restored)
+  window.addEventListener('wc:rain', rained, here)
+  window.addEventListener('wc:again', again, here)
+  shell.addEventListener('wc:heard', heard, here)
+  shell.addEventListener('click', led, here)
+  shell.addEventListener('pointerover', wet, here)
+  shell.addEventListener('pointerout', dry, here)
+  shell.addEventListener('focusin', wet, here)
+  shell.addEventListener('focusout', dry, here)
+  painter.canvas.addEventListener('webglcontextlost', (event) => event.preventDefault(), here)
+  painter.canvas.addEventListener('webglcontextrestored', restored, here)
 
   const leave = () => {
     gone = true
     cancelAnimationFrame(frameAsked)
     cancelAnimationFrame(composeAsked)
     observer.disconnect()
-    window.removeEventListener('scroll', scrolled)
-    window.removeEventListener('resize', scrolled)
-    window.removeEventListener('pointermove', fall)
-    window.removeEventListener('pointerdown', fall)
-    shell.removeEventListener('click', thrown)
+    listening.abort()
     if (ear.view === view) ear.view = undefined
-    window.removeEventListener('wc:rain', rained)
-    window.removeEventListener('wc:again', again)
-    shell.removeEventListener('wc:heard', heard)
-    shell.removeEventListener('click', led)
-    painter.canvas.removeEventListener('webglcontextlost', lost)
-    painter.canvas.removeEventListener('webglcontextrestored', restored)
-    shell.removeEventListener('pointerover', wet)
-    shell.removeEventListener('pointerout', dry)
-    shell.removeEventListener('focusin', wet)
-    shell.removeEventListener('focusout', dry)
     for (const tile of tiles) tile.canvas.remove()
     delete shell.dataset.painted
   }
