@@ -274,11 +274,11 @@ html:has(.wc) { background: #f8f3e8; }
 /* Where there is no paint, the score is plain strokes. Paint that is on its way comes first. */
 .wc:not([data-painted]) .wc-note { animation: wc-plain 0.6s 3s both; }
 @keyframes wc-plain { to { background: #2f6473; } }
-@media (scripting: none) { .wc-sound, .wc-buttons { display: none !important; } }
+@media (scripting: none) { .wc-sound, .wc-pens, .wc-buttons { display: none !important; } }
 
 /* ---- Sound. ---- */
-.wc-sound { position: fixed; z-index: 10; right: 16px; bottom: 14px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: calc(100vw - 32px); }
-.wc-sound button { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 16px 0 10px; font: 600 15px/1 var(--font-sans); color: var(--ink); background: rgb(248 243 232 / 92%); border: 1px solid rgb(31 26 29 / 26%); border-radius: 22px 19px 23px 20px; cursor: pointer; }
+.wc-sound { position: fixed; z-index: 10; right: 16px; bottom: 14px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: calc(100vw - 32px); pointer-events: none; }
+.wc-sound button { pointer-events: auto; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 16px 0 10px; font: 600 15px/1 var(--font-sans); color: var(--ink); background: rgb(248 243 232 / 92%); border: 1px solid rgb(31 26 29 / 26%); border-radius: 22px 19px 23px 20px; cursor: pointer; }
 .wc-sound button:hover { border-color: var(--ink); }
 .wc-sound button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .wc-sound svg { width: 24px; height: 24px; fill: #2f6473; }

@@ -14,6 +14,9 @@ const MOST_SPLASHES = 12
 const BOARD = 1600
 const BOARD_PIXELS = 6_000_000
 
+// Where somebody draws, the paint keeps still.
+const DRAWN_ON = '.wc-ink, .wc-pens'
+
 const GESTURE: Record<Kind, Gesture> = { [Kind.Square]: 'square', [Kind.Pencil]: 'square', [Kind.Letter]: 'letter', [Kind.Puddle]: 'puddle', [Kind.Bank]: 'bank', [Kind.Run]: 'run' }
 
 interface Tile {
@@ -239,6 +242,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
     }
     shell.dataset.painted = ''
     under = undefined
+    shell.dispatchEvent(new CustomEvent('wc:laid'))
     ask()
   }
 
@@ -261,6 +265,10 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   // A drop of water where the pointer comes into a wash: it pushes the pigment out to a ring.
   const fall = (event: PointerEvent) => {
     if (event.type === 'pointermove' && event.pointerType === 'touch') return
+    if (event.target instanceof Element && event.target.closest(DRAWN_ON)) {
+      under = undefined
+      return
+    }
     const { x, y, wash } = at(event)
     if (wash && (wash !== under || event.type === 'pointerdown')) {
       const radius = Math.min(64, 12 + 0.3 * Math.min(wash.w, wash.h))
@@ -275,7 +283,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose, seed = seedOfVisi
   // Paint thrown at bare paper, where nothing is to be pressed and nobody is selecting what is written.
   const thrown = (event: MouseEvent) => {
     const target = event.target as Element | null
-    if (!tiles.length || event.button || target?.closest('a, button, input, pre, iframe, [data-of]')) return
+    if (!tiles.length || event.button || target?.closest(`a, button, input, pre, iframe, [data-of], ${DRAWN_ON}`)) return
     if (!window.getSelection()?.isCollapsed) return
     const { x, y, wash } = at(event)
     if (wash) return
