@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   usePage: vi.fn(),
   siteShell: vi.fn(),
   paintedSheet: vi.fn(),
+  pens: vi.fn(),
   sound: vi.fn(),
 }))
 
@@ -36,6 +37,13 @@ vi.mock('../watercolor/sheet', () => ({
   PaintedSheet: (props: { compose: Rooms['compose']; page: string }) => {
     mocks.paintedSheet(props)
     return <div data-testid="painted-sheet" />
+  },
+}))
+
+vi.mock('../pens/pens_tray', () => ({
+  Pens: (props: { path: string }) => {
+    mocks.pens(props)
+    return <div data-testid="pens" />
   },
 }))
 
@@ -76,6 +84,7 @@ describe('LookShell', () => {
     mocks.usePage.mockReset()
     mocks.siteShell.mockReset()
     mocks.paintedSheet.mockReset()
+    mocks.pens.mockReset()
     mocks.sound.mockReset()
     container = document.createElement('div')
     document.body.append(container)
@@ -97,11 +106,12 @@ describe('LookShell', () => {
     expect(container.querySelector('[data-testid="site-shell"]')?.textContent).toBe('Page body')
     expect(container.querySelector('.wc')).toBeNull()
     expect(mocks.paintedSheet).not.toHaveBeenCalled()
+    expect(mocks.pens).not.toHaveBeenCalled()
     expect(mocks.sound).not.toHaveBeenCalled()
     expect(container.querySelector('.wc-chooser')).toBeNull()
   })
 
-  it('renders watercolor layout, PaintedSheet, LookHeader, and Sound for a non-article look', () => {
+  it('renders watercolor layout, PaintedSheet, LookHeader, Pens, and Sound for a non-article look', () => {
     setPage({ look: 'long', url: '/', component: 'home' })
 
     act(() => root.render(<LookShell>Home body</LookShell>))
@@ -123,6 +133,7 @@ describe('LookShell', () => {
     expect(main?.getAttribute('data-page')).toBe('home')
     expect(main?.textContent).toBe('Home body')
 
+    expect(mocks.pens).toHaveBeenCalledWith({ path: '/' })
     expect(mocks.sound).toHaveBeenCalledWith({
       rooms: { head: 'name', body: 'long', compose: longPage },
       url: '/',
@@ -141,6 +152,7 @@ describe('LookShell', () => {
     expect(container.querySelector('main.wc-body')?.getAttribute('data-look')).toBe('article')
     expect(container.querySelector('main.wc-body')?.getAttribute('data-page')).toBe('posts/show')
     expect(mocks.paintedSheet).toHaveBeenCalledWith({ compose: river, page: '/posts/2026/river' })
+    expect(mocks.pens).toHaveBeenCalledWith({ path: '/posts/2026/river' })
     expect(mocks.sound).toHaveBeenCalledWith({
       rooms: { head: 'article', body: 'article', art: 'river', compose: river },
       url: '/posts/2026/river',
@@ -150,6 +162,7 @@ describe('LookShell', () => {
     act(() => root.render(<LookShell>Preview</LookShell>))
     expect(container.querySelector('.wc-header')?.getAttribute('data-small')).toBe('true')
     expect(mocks.paintedSheet).toHaveBeenLastCalledWith({ compose: mosaic, page: '/posts/preview' })
+    expect(mocks.pens).toHaveBeenLastCalledWith({ path: '/posts/preview' })
   })
 
   it('renders LookChooser with ARTS (?art=), strips existing query params, and marks active art', () => {
@@ -164,6 +177,7 @@ describe('LookShell', () => {
     act(() => root.render(<LookShell>Article</LookShell>))
 
     expect(mocks.paintedSheet).toHaveBeenCalledWith({ compose: book, page: '/posts/essay?art=wide&utm=1' })
+    expect(mocks.pens).toHaveBeenCalledWith({ path: '/posts/essay' })
     expect(container.querySelector('.wc-chooser')?.getAttribute('aria-label')).toBe('Look')
     expect(chooserLinks()).toEqual(
       ARTS.map((one) => ({
@@ -176,9 +190,10 @@ describe('LookShell', () => {
 
   it.each([
     { look: 'mosaic' as Look, url: '/about?look=score&x=1', component: 'about', expectedPath: '/about' },
+    { look: 'long' as Look, url: '/about#bio', component: 'about', expectedPath: '/about' },
     { look: 'blocks' as Look, url: '/posts?look=long', component: 'posts/index', expectedPath: '/posts' },
   ])(
-    'renders LookChooser with LOOKS (?look=) for $look look, stripping query params and marking active choice',
+    'renders LookChooser with LOOKS (?look=) for $look look, stripping query and hash from path and marking active choice',
     ({ look, url, component, expectedPath }) => {
       setPage({ look, chooseLook: true, url, component })
 
@@ -192,6 +207,11 @@ describe('LookShell', () => {
           current: one.look === look ? 'true' : null,
         })),
       )
+      if (look === 'blocks') {
+        expect(mocks.pens).not.toHaveBeenCalled()
+      } else {
+        expect(mocks.pens).toHaveBeenCalledWith({ path: expectedPath })
+      }
     },
   )
 })
