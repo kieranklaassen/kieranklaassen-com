@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { around, book, paintedTitle, river, wide } from './article'
-import { PAPER, type Page, type PaintBox } from './compose'
+import { PAPER, type Composition, type Page, type PaintBox } from './compose'
 import { Cutter } from './mask'
 import { Kind, type RGB, type Rect, type Wash } from './painter'
 import { seeded } from './pigments'
@@ -52,6 +52,54 @@ function expectValidWashes(washes: Wash[]) {
     expectValidRgb(wash.ink2)
     expect(wash.seed).toHaveLength(4)
   }
+}
+
+function expectSameBytes(actual: Uint8Array, expected: Uint8Array) {
+  expect(actual).toBeInstanceOf(Uint8Array)
+  expect(expected).toBeInstanceOf(Uint8Array)
+  expect(actual.length).toBe(expected.length)
+  const len = actual.length
+  const words = len >>> 2
+  const alignedBytes = words << 2
+  if ((actual.byteOffset & 3) === 0 && (expected.byteOffset & 3) === 0) {
+    const a32 = new Uint32Array(actual.buffer, actual.byteOffset, words)
+    const b32 = new Uint32Array(expected.buffer, expected.byteOffset, words)
+    for (let i = 0; i < words; i++) {
+      if (a32[i] !== b32[i]) {
+        const start = i << 2
+        for (let j = start; j < start + 4; j++) {
+          if (actual[j] !== expected[j]) {
+            expect(actual[j], `mask.field byte mismatch at index ${j}`).toBe(expected[j])
+          }
+        }
+      }
+    }
+  } else {
+    for (let i = 0; i < alignedBytes; i++) {
+      if (actual[i] !== expected[i]) {
+        expect(actual[i], `mask.field byte mismatch at index ${i}`).toBe(expected[i])
+      }
+    }
+  }
+  for (let i = alignedBytes; i < len; i++) {
+    if (actual[i] !== expected[i]) {
+      expect(actual[i], `mask.field byte mismatch at index ${i}`).toBe(expected[i])
+    }
+  }
+}
+
+function expectSameComposition(actual: Composition, expected: Composition) {
+  const { mask: actualMask, ...actualRest } = actual
+  const { mask: expectedMask, ...expectedRest } = expected
+  expect(actualRest).toEqual(expectedRest)
+  if (!actualMask || !expectedMask) {
+    expect(actualMask).toEqual(expectedMask)
+    return
+  }
+  const { field: actualField, ...actualMaskRest } = actualMask
+  const { field: expectedField, ...expectedMaskRest } = expectedMask
+  expect(actualMaskRest).toEqual(expectedMaskRest)
+  expectSameBytes(actualField, expectedField)
 }
 
 const originalRangeRect = Object.getOwnPropertyDescriptor(Range.prototype, 'getBoundingClientRect')
@@ -348,7 +396,7 @@ describe('article compositions', () => {
     const a = book(makeArticlePage(opts))
     const b = book(makeArticlePage(opts))
 
-    expect(a).toEqual(b)
+    expectSameComposition(a, b)
     expect(a.paper).toEqual(PAPER)
     expect(a.course).toBeUndefined()
     expect(a.mask).toBeDefined()
@@ -375,7 +423,7 @@ describe('article compositions', () => {
     const a = wide(makeArticlePage(wideOpts))
     const b = wide(makeArticlePage(wideOpts))
 
-    expect(a).toEqual(b)
+    expectSameComposition(a, b)
     expect(a.paper).toEqual(PAPER)
     expect(a.course).toBeUndefined()
     expect(a.mask).toBeDefined()
@@ -403,7 +451,7 @@ describe('article compositions', () => {
     const a = around(makeArticlePage(wideOpts))
     const b = around(makeArticlePage(wideOpts))
 
-    expect(a).toEqual(b)
+    expectSameComposition(a, b)
     expect(a.paper).toEqual(PAPER)
     expect(a.course).toBeUndefined()
     expect(a.mask).toBeDefined()
@@ -434,7 +482,7 @@ describe('article compositions', () => {
     const a = river(pageA)
     const b = river(makeArticlePage(wideOpts))
 
-    expect(a).toEqual(b)
+    expectSameComposition(a, b)
     expect(a.paper).toEqual(PAPER)
     expect(a.mask).toBeDefined()
     expect(a.course).toBeDefined()
