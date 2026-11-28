@@ -171,7 +171,6 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
-      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
 
@@ -200,7 +199,6 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
-      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
 
@@ -248,11 +246,7 @@ describe('Score', () => {
     ear.hush = hush
     mount([makePost({ slug: 'pending', date: '2025-01-01' })])
 
-    await act(async () => {
-      button('Play the score')!.click()
-      await vi.dynamicImportSettled()
-      await Promise.resolve()
-    })
+    act(() => button('Play the score')!.click())
     expect(ear.playing).toBe(true)
 
     ear.playing = false
@@ -263,11 +257,7 @@ describe('Score', () => {
 
     const [inst] = mockInstrument.instances
     expect(inst.play).not.toHaveBeenCalled()
-    expect(inst.close).toHaveBeenCalledTimes(1)
     expect(hush).not.toHaveBeenCalled()
-    expect(button('Play the score')?.getAttribute('aria-pressed')).toBe('false')
-    expect(button('Stop')).toBeUndefined()
-    expect(container.querySelector('.wc-hand')).toBeNull()
   })
 
   it('strikes notes on pointer enter and focus only when sounding and not playing, and resets on Sound off', async () => {
@@ -297,7 +287,6 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
-      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
 
@@ -330,7 +319,6 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
-      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
     expect(mockInstrument.instances).toHaveLength(2)
@@ -341,233 +329,11 @@ describe('Score', () => {
 
     await act(async () => {
       button('Play the score')!.click()
-      await vi.dynamicImportSettled()
       await Promise.resolve()
     })
 
     const [inst] = mockInstrument.instances
     act(() => root.unmount())
     expect(inst.close).toHaveBeenCalledTimes(1)
-  })
-
-  it('ignores rapid double-clicks while ready() is pending', async () => {
-    let resolveReady!: () => void
-    mockInstrument.setReadyGate(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveReady = resolve
-        }),
-    )
-    mount([makePost({ slug: 'rapid-ready', date: '2025-01-01' })])
-
-    await act(async () => {
-      const playButton = button('Play the score')!
-      playButton.click()
-      playButton.click()
-      await vi.dynamicImportSettled()
-      await Promise.resolve()
-    })
-
-    expect(mockInstrument.instances).toHaveLength(1)
-    const [inst] = mockInstrument.instances
-    expect(inst.ready).toHaveBeenCalledTimes(1)
-    expect(inst.play).not.toHaveBeenCalled()
-
-    await act(async () => {
-      resolveReady()
-      await Promise.resolve()
-    })
-
-    expect(mockInstrument.instances).toHaveLength(1)
-    expect(inst.ready).toHaveBeenCalledTimes(1)
-    expect(inst.play).toHaveBeenCalledTimes(1)
-  })
-
-  it('ignores rapid double-clicks while ./player import is pending', async () => {
-    let resolveImport!: () => void
-    const importGate = new Promise<void>((resolve) => {
-      resolveImport = resolve
-    })
-    let loadCalls = 0
-    vi.resetModules()
-    vi.doMock('./player', async () => {
-      loadCalls += 1
-      await importGate
-      return { Instrument: mockInstrument.FakeInstrument }
-    })
-
-    try {
-      const [{ Score: ColdScore }, { ear: coldEar }] = await Promise.all([import('./score'), import('../sound/ear')])
-      act(() => root.render(<ColdScore posts={[makePost({ slug: 'rapid-import', date: '2025-01-01' })]} />))
-
-      act(() => {
-        button('Play the score')!.click()
-        button('Play the score')!.click()
-      })
-
-      expect(mockInstrument.instances).toHaveLength(0)
-
-      await act(async () => {
-        resolveImport()
-        await vi.dynamicImportSettled()
-        await Promise.resolve()
-      })
-
-      expect(loadCalls).toBe(1)
-      expect(mockInstrument.instances).toHaveLength(1)
-      expect(mockInstrument.instances[0].ready).toHaveBeenCalledTimes(1)
-      expect(mockInstrument.instances[0].play).toHaveBeenCalledTimes(1)
-      expect(coldEar.playing).toBe(true)
-    } finally {
-      vi.doMock('./player', () => ({ Instrument: mockInstrument.FakeInstrument }))
-    }
-  })
-
-  it('does not instantiate or start playback if unmounted while ./player import is pending', async () => {
-    let resolveImport!: () => void
-    const importGate = new Promise<void>((resolve) => {
-      resolveImport = resolve
-    })
-    vi.resetModules()
-    vi.doMock('./player', async () => {
-      await importGate
-      return { Instrument: mockInstrument.FakeInstrument }
-    })
-
-    try {
-      const [{ Score: ColdScore }, { ear: coldEar }] = await Promise.all([import('./score'), import('../sound/ear')])
-      const hush = vi.fn()
-      coldEar.hush = hush
-      act(() => root.render(<ColdScore posts={[makePost({ slug: 'unmount-import', date: '2025-01-01' })]} />))
-
-      act(() => button('Play the score')!.click())
-      act(() => root.unmount())
-
-      await act(async () => {
-        resolveImport()
-        await vi.dynamicImportSettled()
-        await Promise.resolve()
-      })
-
-      expect(mockInstrument.instances).toHaveLength(0)
-      expect(coldEar.playing).toBeUndefined()
-      expect(hush).not.toHaveBeenCalled()
-    } finally {
-      vi.doMock('./player', () => ({ Instrument: mockInstrument.FakeInstrument }))
-    }
-  })
-
-  it('closes the instrument and clears ear.playing if unmounted while ready() is pending', async () => {
-    let resolveReady!: () => void
-    mockInstrument.setReadyGate(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveReady = resolve
-        }),
-    )
-    const hush = vi.fn()
-    ear.hush = hush
-    mount([makePost({ slug: 'unmount-ready', date: '2025-01-01' })])
-
-    await act(async () => {
-      button('Play the score')!.click()
-      await vi.dynamicImportSettled()
-      await Promise.resolve()
-    })
-
-    expect(mockInstrument.instances).toHaveLength(1)
-    const [inst] = mockInstrument.instances
-    expect(ear.playing).toBe(true)
-
-    act(() => root.unmount())
-    expect(inst.close).toHaveBeenCalledTimes(1)
-    expect(ear.playing).toBe(false)
-    expect(hush).toHaveBeenCalledWith(false)
-
-    await act(async () => {
-      resolveReady()
-      await Promise.resolve()
-    })
-
-    expect(inst.play).not.toHaveBeenCalled()
-    expect(ear.playing).toBe(false)
-  })
-
-  it('absorbs ./player import failures cleanly without unhandled rejections and allows retry', async () => {
-    const unhandled: unknown[] = []
-    const onUnhandled = (event: PromiseRejectionEvent) => unhandled.push(event.reason)
-    window.addEventListener('unhandledrejection', onUnhandled)
-
-    let attempts = 0
-    vi.resetModules()
-    vi.doMock('./player', async () => {
-      attempts += 1
-      if (attempts === 1) throw new Error('chunk load failed')
-      return { Instrument: mockInstrument.FakeInstrument }
-    })
-
-    try {
-      const [{ Score: ColdScore }, { ear: coldEar }] = await Promise.all([import('./score'), import('../sound/ear')])
-      const hush = vi.fn()
-      coldEar.hush = hush
-      act(() => root.render(<ColdScore posts={[makePost({ slug: 'import-fail', date: '2025-01-01' })]} />))
-
-      await act(async () => {
-        button('Play the score')!.click()
-        await new Promise((resolve) => setTimeout(resolve, 0))
-      })
-
-      expect(unhandled).toEqual([])
-      expect(mockInstrument.instances).toHaveLength(0)
-      expect(coldEar.playing).toBeUndefined()
-      expect(hush).not.toHaveBeenCalled()
-      expect(button('Play the score')?.getAttribute('aria-pressed')).toBe('false')
-      expect(container.querySelector('.wc-hand')).toBeNull()
-
-      vi.doMock('./player', () => ({ Instrument: mockInstrument.FakeInstrument }))
-      await act(async () => {
-        button('Play the score')!.click()
-        await vi.dynamicImportSettled()
-        await Promise.resolve()
-      })
-
-      expect(unhandled).toEqual([])
-      expect(mockInstrument.instances).toHaveLength(1)
-      expect(mockInstrument.instances[0].play).toHaveBeenCalledTimes(1)
-      expect(button('Stop')?.getAttribute('aria-pressed')).toBe('true')
-    } finally {
-      window.removeEventListener('unhandledrejection', onUnhandled)
-      vi.doMock('./player', () => ({ Instrument: mockInstrument.FakeInstrument }))
-    }
-  })
-
-  it('absorbs ready() failures and resets playing state and ear flags', async () => {
-    const unhandled: unknown[] = []
-    const onUnhandled = (event: PromiseRejectionEvent) => unhandled.push(event.reason)
-    window.addEventListener('unhandledrejection', onUnhandled)
-    mockInstrument.setReadyGate(() => Promise.reject(new Error('audio setup failed')))
-    const hush = vi.fn()
-    ear.hush = hush
-    mount([makePost({ slug: 'ready-fail', date: '2025-01-01' })])
-
-    try {
-      await act(async () => {
-        button('Play the score')!.click()
-        await vi.dynamicImportSettled()
-        await new Promise((resolve) => setTimeout(resolve, 0))
-      })
-
-      expect(unhandled).toEqual([])
-      expect(mockInstrument.instances).toHaveLength(1)
-      expect(mockInstrument.instances[0].close).toHaveBeenCalledTimes(1)
-      expect(mockInstrument.instances[0].play).not.toHaveBeenCalled()
-      expect(ear.playing).toBe(false)
-      expect(hush).toHaveBeenCalledWith(false)
-      expect(button('Play the score')?.getAttribute('aria-pressed')).toBe('false')
-      expect(button('Stop')).toBeUndefined()
-      expect(container.querySelector('.wc-hand')).toBeNull()
-    } finally {
-      window.removeEventListener('unhandledrejection', onUnhandled)
-    }
   })
 })

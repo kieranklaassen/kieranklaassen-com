@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 
-export type Unfolds = 'pens' | 'sound'
+type Unfolds = 'pens' | 'sound'
 
-export const UNFOLDED = 'wc:unfolded'
-export const NARROW = '(max-width: 640px)'
+const UNFOLDED = 'wc:unfolded'
+const NARROW = '(max-width: 640px)'
 
 /** Whether something in a corner of the window is unfolded. A narrow window has room for one such thing at a time. */
-export function useUnfold(mine: Unfolds, initial = false): [open: boolean, toggle: () => void] {
-  const [open, setOpen] = useState(initial)
+export function useUnfold(mine: Unfolds): [open: boolean, toggle: () => void] {
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     const told = (event: Event) => {

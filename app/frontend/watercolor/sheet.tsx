@@ -11,6 +11,7 @@ export function PaintedSheet({ compose, room, page }: { compose?: Compose; room?
   const art = room?.art
 
   useEffect(() => {
+    if (!holder.current) return undefined
     seed.current ||= seedOfVisit()
     const layout: RoomLayout | undefined =
       body === 'long'
@@ -21,7 +22,7 @@ export function PaintedSheet({ compose, room, page }: { compose?: Compose; room?
             ? { head, body }
             : undefined
     const source = compose ?? (layout ? loadCompose(layout) : undefined)
-    return holder.current && source ? laySheet(holder.current, source, seed.current) : undefined
+    return source ? laySheet(holder.current, source, seed.current) : undefined
   }, [compose, head, body, art, page])
 
   return <div ref={holder} className="painted-sheet" aria-hidden="true" />

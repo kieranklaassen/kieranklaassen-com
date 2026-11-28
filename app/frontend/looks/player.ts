@@ -57,7 +57,6 @@ export class Instrument {
   private level = this.context.createGain()
   private timers: number[] = []
   private ended: (() => void) | undefined
-  private closed = false
 
   static get possible() {
     return 'AudioContext' in window
@@ -98,7 +97,6 @@ export class Instrument {
 
   /** Sounds one note with its voices, now or a little ahead. */
   strike({ lane, year, length }: Note, at = 0.5, ahead = 0) {
-    if (this.closed) return
     const { context } = this
     if (context.state === 'suspended') void context.resume()
     const center = CENTERS[year % CENTERS.length]
@@ -134,7 +132,6 @@ export class Instrument {
 
   /** Plays from left to right. */
   play(notes: Timed[], ended: () => void) {
-    if (this.closed) return
     this.stop()
     this.ended = ended
     this.level.gain.setTargetAtTime(0.8, this.context.currentTime, 0.02)
@@ -160,7 +157,6 @@ export class Instrument {
   }
 
   close() {
-    this.closed = true
     this.stop()
     this.keys?.hush()
     this.level.gain.setTargetAtTime(0, this.context.currentTime, 0.05)

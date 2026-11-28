@@ -53,7 +53,10 @@ export function seedOfVisit() {
 export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>, seed = seedOfVisit()): (() => void) | undefined {
   const shell = sheet.parentElement
   const painter = Painter.get()
-  if (!shell || !painter) return undefined
+  if (!shell || !painter) {
+    if (typeof compose !== 'function') void compose.catch(() => {})
+    return undefined
+  }
 
   let composeFn: Compose | undefined = typeof compose === 'function' ? compose : undefined
   const loaded =
@@ -72,6 +75,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
   let frameAsked = 0
   let composeAsked = 0
   let gone = false
+  let started = false
   let ratio = 1
   let size = ''
   let under: Wash | undefined
@@ -213,6 +217,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
   }
 
   const lay = () => {
+    cancelAnimationFrame(composeAsked)
     composeAsked = 0
     if (gone || !composeFn) return
     const width = shell.clientWidth
@@ -406,6 +411,7 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
   const scrolled = () => ask()
   const restored = () => {
     painter.setUp()
+    if (!started) return
     size = ''
     layAgain()
   }
@@ -419,8 +425,9 @@ export function laySheet(sheet: HTMLElement, compose: Compose | Promise<Compose>
   })
   const faced = Promise.race([faces, new Promise((done) => window.setTimeout(done, 2500))])
   void Promise.all([painter.ready(), faced, loaded]).then(([paints]) => {
-    if (gone || composition.washes.length) return
+    if (gone || started) return
     if (!paints || !composeFn) return leave()
+    started = true
     lay()
     observer.observe(shell)
   })

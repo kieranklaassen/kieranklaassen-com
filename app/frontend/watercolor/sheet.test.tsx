@@ -18,6 +18,7 @@ vi.mock('./lay', () => ({
   seedOfVisit: mocks.seedOfVisit,
 }))
 
+import * as rooms from '../looks/rooms'
 import { PaintedSheet } from './sheet'
 
 const makeCompose = (): Compose => () => ({ washes: [], paper: [1, 1, 1] })
@@ -125,10 +126,13 @@ describe('PaintedSheet', () => {
     const cleanup = vi.fn()
     mocks.seedOfVisit.mockReturnValue(314)
     mocks.laySheet.mockReturnValue(cleanup)
+    const loadSpy = vi.spyOn(rooms, 'loadCompose')
 
     act(() => root.render(<PaintedSheet room={{ head: 'name', body: 'long' }} page="/" />))
     act(() => root.render(<PaintedSheet room={{ head: 'name', body: 'long' }} page="/" />))
 
+    expect(loadSpy).toHaveBeenCalledTimes(1)
+    expect(loadSpy).toHaveBeenCalledWith({ head: 'name', body: 'long' })
     expect(mocks.laySheet).toHaveBeenCalledTimes(1)
     const [, source, seed] = mocks.laySheet.mock.calls[0]
     expect(seed).toBe(314)
@@ -136,6 +140,50 @@ describe('PaintedSheet', () => {
     const resolved = await source
     expect(typeof resolved).toBe('function')
     expect(cleanup).not.toHaveBeenCalled()
+
+    act(() => root.unmount())
+    expect(cleanup).toHaveBeenCalledTimes(1)
+  })
+
+  it('reuses seedOfVisit across room layout changes and invokes each prior cleanup', async () => {
+    const firstCleanup = vi.fn()
+    const secondCleanup = vi.fn()
+    mocks.seedOfVisit.mockReturnValueOnce(512).mockReturnValueOnce(999)
+    mocks.laySheet.mockReturnValueOnce(firstCleanup).mockReturnValueOnce(secondCleanup)
+    const loadSpy = vi.spyOn(rooms, 'loadCompose')
+
+    act(() => root.render(<PaintedSheet room={{ head: 'name', body: 'long' }} page="/" />))
+    const holder = container.querySelector('div.painted-sheet')
+    expect(mocks.seedOfVisit).toHaveBeenCalledTimes(1)
+    expect(loadSpy).toHaveBeenNthCalledWith(1, { head: 'name', body: 'long' })
+    expect(mocks.laySheet).toHaveBeenNthCalledWith(1, holder, expect.any(Promise), 512)
+    expect(typeof (await mocks.laySheet.mock.calls[0][1])).toBe('function')
+
+    act(() => root.render(<PaintedSheet room={{ head: 'article', body: 'article', art: 'wide' }} page="/posts/slug" />))
+    expect(firstCleanup).toHaveBeenCalledTimes(1)
+    expect(secondCleanup).not.toHaveBeenCalled()
+    expect(mocks.seedOfVisit).toHaveBeenCalledTimes(1)
+    expect(loadSpy).toHaveBeenNthCalledWith(2, { head: 'article', body: 'article', art: 'wide' })
+    expect(mocks.laySheet).toHaveBeenNthCalledWith(2, holder, expect.any(Promise), 512)
+    expect(typeof (await mocks.laySheet.mock.calls[1][1])).toBe('function')
+
+    act(() => root.unmount())
+    expect(secondCleanup).toHaveBeenCalledTimes(1)
+  })
+
+  it('prefers an explicit compose prop over room and does not invoke loadCompose', () => {
+    const cleanup = vi.fn()
+    mocks.seedOfVisit.mockReturnValue(88)
+    mocks.laySheet.mockReturnValue(cleanup)
+    const loadSpy = vi.spyOn(rooms, 'loadCompose')
+    const compose = makeCompose()
+
+    act(() => root.render(<PaintedSheet compose={compose} room={{ head: 'name', body: 'long' }} page="/" />))
+
+    const holder = container.querySelector('div.painted-sheet')
+    expect(loadSpy).not.toHaveBeenCalled()
+    expect(mocks.laySheet).toHaveBeenCalledTimes(1)
+    expect(mocks.laySheet).toHaveBeenCalledWith(holder, compose, 88)
 
     act(() => root.unmount())
     expect(cleanup).toHaveBeenCalledTimes(1)

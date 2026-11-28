@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type SyntheticEvent } from 'react'
 import { ear } from '../sound/ear'
-import type { Instrument } from './player'
+import { Instrument } from './player'
 import type { PostSummary } from '../types/page'
 
 const LANES: [string, RegExp][] = [
@@ -43,28 +43,10 @@ export function Score({ posts }: { posts: PostSummary[] }) {
 
   const staff = useRef<HTMLDivElement>(null)
   const instrument = useRef<Instrument>(undefined)
-  const loading = useRef(false)
-  const mounted = useRef(false)
-  const run = useRef(0)
-  const owned = useRef(false)
   const heard = useRef<Element>(undefined)
   const [playing, setPlaying] = useState(false)
   const [sounding, setSounding] = useState(false)
-  useEffect(() => {
-    mounted.current = true
-    return () => {
-      mounted.current = false
-      run.current += 1
-      const current = instrument.current
-      instrument.current = undefined
-      current?.close()
-      if (owned.current) {
-        owned.current = false
-        ear.playing = false
-        ear.hush?.(false)
-      }
-    }
-  }, [])
+  useEffect(() => () => instrument.current?.close(), [])
 
   const note = (post: PostSummary, lane: number) => ({ lane, year: years.indexOf(post.date.slice(0, 4)), length: post.title.length })
   const show = (mark?: Element) => {
@@ -75,81 +57,25 @@ export function Score({ posts }: { posts: PostSummary[] }) {
   }
 
   const press = async () => {
-    if (playing) {
-      if (loading.current) {
-        run.current += 1
-        const current = instrument.current
-        instrument.current = undefined
-        current?.close()
-        if (owned.current) {
-          owned.current = false
-          ear.playing = false
-        }
+    if (playing) return instrument.current?.stop()
+    if (!Instrument.possible) return
+    const mine = (instrument.current ??= new Instrument())
+    ear.playing = true
+    setPlaying(true)
+    await mine.ready()
+    if (instrument.current !== mine || !ear.playing) return
+    const marks = [...(staff.current?.querySelectorAll('.wc-note') ?? [])]
+    mine.play(
+      laid.map(({ post, lane, left }, i) => ({ ...note(post, lane), at: left, heard: () => show(marks[i]) })),
+      () => {
+        show()
         setPlaying(false)
-        setSounding(false)
-        return
-      }
-      return instrument.current?.stop()
-    }
-    if (loading.current) return
-    loading.current = true
-    const token = ++run.current
-    let setPlayback = false
-    try {
-      const { Instrument } = await import('./player')
-      if (!mounted.current || run.current !== token || !Instrument.possible) return
-      const mine = (instrument.current ??= new Instrument())
-      owned.current = true
-      setPlayback = true
-      ear.playing = true
-      setPlaying(true)
-      await mine.ready()
-      if (!mounted.current || run.current !== token || instrument.current !== mine || !ear.playing) {
-        if (instrument.current === mine) {
-          instrument.current = undefined
-          mine.close()
-        }
-        if (owned.current) {
-          owned.current = false
-          ear.playing = false
-        }
-        if (mounted.current) {
-          setPlaying(false)
-          setSounding(false)
-        }
-        return
-      }
-      const marks = [...(staff.current?.querySelectorAll('.wc-note') ?? [])]
-      mine.play(
-        laid.map(({ post, lane, left }, i) => ({ ...note(post, lane), at: left, heard: () => show(marks[i]) })),
-        () => {
-          show()
-          owned.current = false
-          if (mounted.current) setPlaying(false)
-          ear.playing = false
-          ear.hush?.(false)
-        },
-      )
-      ear.hush?.(true)
-      setSounding(true)
-    } catch {
-      if (setPlayback) {
-        const current = instrument.current
-        instrument.current = undefined
-        current?.close()
-        if (owned.current) {
-          owned.current = false
-          ear.playing = false
-          ear.hush?.(false)
-        }
-        if (mounted.current) {
-          setPlaying(false)
-          setSounding(false)
-        }
-      }
-    } finally {
-      loading.current = false
-    }
+        ear.playing = false
+        ear.hush?.(false)
+      },
+    )
+    ear.hush?.(true)
+    setSounding(true)
   }
 
   // Once it has been played, the strokes sound under the hand too.
@@ -160,16 +86,8 @@ export function Score({ posts }: { posts: PostSummary[] }) {
   }
 
   const quiet = () => {
-    run.current += 1
-    const current = instrument.current
+    instrument.current?.close()
     instrument.current = undefined
-    current?.close()
-    if (owned.current) {
-      owned.current = false
-      ear.playing = false
-      ear.hush?.(false)
-    }
-    setPlaying(false)
     setSounding(false)
   }
 
