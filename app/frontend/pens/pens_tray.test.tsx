@@ -17,7 +17,12 @@ let narrow = false
 const layer = () => shell.querySelector<HTMLElement>('.wc-ink')!
 const inked = () => [...shell.querySelectorAll('path[data-stroke]')]
 const button = (name: string) => [...shell.querySelectorAll('button')].find((one) => (one.getAttribute('aria-label') ?? one.textContent) === name)
-const press = (name: string) => act(() => button(name)!.click())
+const press = async (name: string) => {
+  await act(async () => {
+    button(name)!.click()
+    await vi.dynamicImportSettled()
+  })
+}
 
 function point(type: string, x: number, y: number, { id = 1, kind = 'mouse' } = {}) {
   const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y })
@@ -68,23 +73,23 @@ describe('Pens', () => {
     expect(markup).not.toContain('data-stroke')
   })
 
-  it('takes up a pen and puts it down by pressing it again, by Escape and by Put down', () => {
-    press('Pens')
-    press('Marker')
+  it('takes up a pen and puts it down by pressing it again, by Escape and by Put down', async () => {
+    await press('Pens')
+    await press('Marker')
     expect(button('Marker')!.getAttribute('aria-pressed')).toBe('true')
     expect(layer().dataset.held).toBe('marker')
-    press('Marker')
+    await press('Marker')
     expect(layer().dataset.held).toBeUndefined()
 
-    press('Pencil')
+    await press('Pencil')
     act(() => void window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })))
     expect(layer().dataset.held).toBeUndefined()
 
-    press('Brush pen')
-    press('Pens, holding the brush pen')
+    await press('Brush pen')
+    await press('Pens, holding the brush pen')
     expect(button('Pencil')).toBeUndefined()
     expect(layer().dataset.held).toBe('brush')
-    press('Put down')
+    await press('Put down')
     expect(layer().dataset.held).toBeUndefined()
   })
 
@@ -93,10 +98,10 @@ describe('Pens', () => {
     expect(inked()).toHaveLength(0)
   })
 
-  it('draws a stroke, keeps it for its page, and takes it back', () => {
-    press('Pens')
-    press('Fineliner')
-    press('Red ink')
+  it('draws a stroke, keeps it for its page, and takes it back', async () => {
+    await press('Pens')
+    await press('Fineliner')
+    await press('Red ink')
     draw([10, 10], [200, 100])
     expect(inked()).toHaveLength(1)
     expect(inked()[0].getAttribute('stroke')).toBe('#b4473a')
@@ -107,48 +112,48 @@ describe('Pens', () => {
     mount('/a')
     expect(inked()).toHaveLength(1)
 
-    press('Pens')
-    press('Highlighter')
+    await press('Pens')
+    await press('Highlighter')
     draw([300, 300], [400, 400])
     expect(keptInk('/a')).toHaveLength(2)
-    press('Undo')
+    await press('Undo')
     expect(keptInk('/a')).toHaveLength(1)
   })
 
-  it('erases what it touches and nothing else, and can take that back', () => {
-    press('Pens')
-    press('Marker')
+  it('erases what it touches and nothing else, and can take that back', async () => {
+    await press('Pens')
+    await press('Marker')
     draw([10, 10], [200, 10])
     draw([10, 300], [200, 300])
-    press('Eraser')
+    await press('Eraser')
     draw([100, 0], [100, 40])
     expect(inked()).toHaveLength(1)
-    press('Undo')
+    await press('Undo')
     expect(inked()).toHaveLength(2)
     expect(keptInk('/a')).toHaveLength(2)
   })
 
-  it('erases in one movement what one press of Undo brings back', () => {
-    press('Pens')
-    press('Marker')
+  it('erases in one movement what one press of Undo brings back', async () => {
+    await press('Pens')
+    await press('Marker')
     draw([10, 10], [200, 10])
     draw([10, 300], [200, 300])
-    press('Eraser')
+    await press('Eraser')
     point('pointerdown', 100, 0)
     point('pointermove', 100, 40)
     point('pointermove', 100, 320)
     point('pointerup', 100, 320)
     expect(inked()).toHaveLength(0)
-    press('Undo')
+    await press('Undo')
     expect(inked()).toHaveLength(2)
   })
 
-  it('brings back what a finger erased when it was the first of two', () => {
+  it('brings back what a finger erased when it was the first of two', async () => {
     vi.stubGlobal('scrollBy', vi.fn())
-    press('Pens')
-    press('Marker')
+    await press('Pens')
+    await press('Marker')
     draw([10, 10], [200, 10])
-    press('Eraser')
+    await press('Eraser')
     point('pointerdown', 100, 10, { id: 1, kind: 'touch' })
     expect(inked()).toHaveLength(0)
     point('pointerdown', 300, 400, { id: 2, kind: 'touch' })
@@ -156,37 +161,37 @@ describe('Pens', () => {
     expect(keptInk('/a')).toHaveLength(1)
     point('pointerup', 100, 10, { id: 1, kind: 'touch' })
     point('pointerup', 300, 400, { id: 2, kind: 'touch' })
-    press('Undo')
+    await press('Undo')
     expect(inked()).toHaveLength(0)
   })
 
-  it('clears what another tab has drawn since, too', () => {
-    press('Pens')
-    press('Marker')
+  it('clears what another tab has drawn since, too', async () => {
+    await press('Pens')
+    await press('Marker')
     draw([10, 10], [200, 10])
     const [mine] = keptInk('/a')
     keepChange('/a', { added: [{ ...mine, id: 'theirs' }], removed: [] })
-    press('Clear page')
+    await press('Clear page')
     expect(keptInk('/a')).toEqual([])
-    press('Undo')
+    await press('Undo')
     expect(keptInk('/a')).toHaveLength(2)
   })
 
-  it('clears the page, and can take that back', () => {
-    press('Pens')
-    press('Marker')
+  it('clears the page, and can take that back', async () => {
+    await press('Pens')
+    await press('Marker')
     draw([10, 10], [200, 10])
     draw([10, 300], [200, 300])
-    press('Clear page')
+    await press('Clear page')
     expect(inked()).toHaveLength(0)
     expect(keptInk('/a')).toEqual([])
-    press('Undo')
+    await press('Undo')
     expect(inked()).toHaveLength(2)
   })
 
-  it('leaves nothing of a stroke that is called off', () => {
-    press('Pens')
-    press('Marker')
+  it('leaves nothing of a stroke that is called off', async () => {
+    await press('Pens')
+    await press('Marker')
     point('pointerdown', 10, 10)
     point('pointermove', 90, 90)
     point('pointercancel', 90, 90)
@@ -195,11 +200,11 @@ describe('Pens', () => {
     expect(shell.querySelector('.wc-ink svg')).toBeNull()
   })
 
-  it('scrolls with two fingers instead of drawing, until both are lifted', () => {
+  it('scrolls with two fingers instead of drawing, until both are lifted', async () => {
     const scrolled = vi.fn()
     vi.stubGlobal('scrollBy', scrolled)
-    press('Pens')
-    press('Marker')
+    await press('Pens')
+    await press('Marker')
     const finger = (id: number) => ({ id, kind: 'touch' })
     point('pointerdown', 100, 400, finger(1))
     point('pointermove', 100, 390, finger(1))
@@ -217,9 +222,9 @@ describe('Pens', () => {
     expect(inked()).toHaveLength(1)
   })
 
-  it('folds when Sound unfolds on a narrow window, and keeps the pen', () => {
-    press('Pens')
-    press('Pencil')
+  it('folds when Sound unfolds on a narrow window, and keeps the pen', async () => {
+    await press('Pens')
+    await press('Pencil')
     const unfolded = () => act(() => void window.dispatchEvent(new CustomEvent('wc:unfolded', { detail: 'sound' })))
     unfolded()
     expect(button('Pencil')).toBeDefined()
@@ -227,5 +232,26 @@ describe('Pens', () => {
     unfolded()
     expect(button('Pencil')).toBeUndefined()
     expect(layer().dataset.held).toBe('pencil')
+  })
+
+  it('loads saved ink automatically on mount when storage already has strokes for the page', async () => {
+    keepChange('/saved', {
+      added: [
+        {
+          id: 'saved-1',
+          pen: 'liner',
+          colour: '#b4473a',
+          points: [[0.1, 0.1, 1], [0.2, 0.2, 1]],
+          at: { block: -1, starts: '', w: 1000, h: 1000 },
+        },
+      ],
+      removed: [],
+    })
+    await act(async () => {
+      root.render(<Pens key="/saved" path="/saved" />)
+      await vi.dynamicImportSettled()
+    })
+    expect(inked()).toHaveLength(1)
+    expect(inked()[0].getAttribute('stroke')).toBe('#b4473a')
   })
 })

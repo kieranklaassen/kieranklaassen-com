@@ -6,8 +6,12 @@ const UNFOLDED = 'wc:unfolded'
 const NARROW = '(max-width: 640px)'
 
 /** Whether something in a corner of the window is unfolded. A narrow window has room for one such thing at a time. */
-export function useUnfold(mine: Unfolds): [open: boolean, toggle: () => void] {
-  const [open, setOpen] = useState(false)
+export function useUnfold(mine: Unfolds, initial = false): [open: boolean, toggle: () => void] {
+  const [open, setOpen] = useState(initial)
+
+  useEffect(() => {
+    if (initial) window.dispatchEvent(new CustomEvent<Unfolds>(UNFOLDED, { detail: mine }))
+  }, [initial, mine])
 
   useEffect(() => {
     const told = (event: Event) => {
