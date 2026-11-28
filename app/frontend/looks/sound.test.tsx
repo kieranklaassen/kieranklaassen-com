@@ -231,23 +231,29 @@ describe('Sound', () => {
     act(() => root.render(<Sound rooms={ARTICLE_ROOMS} url="/posts/bread" />))
     expect(switchState.moveTo).not.toHaveBeenCalled()
 
+    const firstPlace = placeOf(ARTICLE_ROOMS, '/posts/bread')
+    const secondPlace = placeOf(ARTICLE_ROOMS, '/posts/silence')
+    expect(secondPlace).not.toEqual(firstPlace)
+
     await act(async () => {
       toggleButton().click()
     })
-    expect(switchState.moveTo).toHaveBeenLastCalledWith(placeOf(ARTICLE_ROOMS, '/posts/bread'))
+    expect(switchState.moveTo).toHaveBeenCalledTimes(1)
+    expect(switchState.moveTo).toHaveBeenLastCalledWith(firstPlace)
 
-    act(() => root.render(<Sound rooms={ARTICLE_ROOMS} url="/posts/rails" />))
-    expect(switchState.moveTo).toHaveBeenLastCalledWith(placeOf(ARTICLE_ROOMS, '/posts/rails'))
+    act(() => root.render(<Sound rooms={ARTICLE_ROOMS} url="/posts/silence" />))
+    expect(switchState.moveTo).toHaveBeenCalledTimes(2)
+    expect(switchState.moveTo).toHaveBeenLastCalledWith(secondPlace)
 
-    act(() => root.render(<Sound rooms={HOME_ROOMS} url="/posts/rails" />))
-    expect(switchState.moveTo).toHaveBeenLastCalledWith(placeOf(HOME_ROOMS, '/posts/rails'))
+    act(() => root.render(<Sound rooms={HOME_ROOMS} url="/posts/silence" />))
+    expect(switchState.moveTo).toHaveBeenCalledTimes(3)
+    expect(switchState.moveTo).toHaveBeenLastCalledWith(placeOf(HOME_ROOMS, '/posts/silence'))
 
-    const callsBeforeOff = switchState.moveTo.mock.calls.length
     await act(async () => {
       toggleButton().click()
     })
     act(() => root.render(<Sound rooms={ARTICLE_ROOMS} url="/posts/other" />))
-    expect(switchState.moveTo).toHaveBeenCalledTimes(callsBeforeOff)
+    expect(switchState.moveTo).toHaveBeenCalledTimes(3)
   })
 
   it('fades on visibilitychange only while on and removes its listener on close and unmount', async () => {
