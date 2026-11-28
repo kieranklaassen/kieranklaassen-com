@@ -50,4 +50,32 @@ class InertiaSsrTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'src="https://w.soundcloud.com/player/?url='
     refute_includes response.body, 'src="[https://w.soundcloud.com/player/'
   end
+
+  test "production client and SSR bundles exclude test files and vitest chunks" do
+    skip "set INERTIA_SSR_URL and SSR_STRICT=1 after building the SSR bundle" unless ENV["SSR_STRICT"] == "1"
+
+    manifest_path = Rails.root.join("public/vite/.vite/manifest.json")
+    assert manifest_path.exist?, "expected production Vite manifest at #{manifest_path}"
+
+    forbidden_pattern = /(?:\.test(?:[.-]|$)|(?:^|\/|_)test\.|vitest|magic-string)/i
+
+    manifest = JSON.parse(manifest_path.read)
+    assert manifest.key?("entrypoints/inertia.tsx"), "expected entrypoints/inertia.tsx in client manifest"
+
+    manifest_paths = manifest.flat_map do |key, entry|
+      [ key, entry["file"], entry["src"], *entry["dynamicImports"] ].compact
+    end.uniq
+
+    offending_client_entries = manifest_paths.grep(forbidden_pattern)
+    assert_empty offending_client_entries, "unexpected test or vitest entries in client manifest: #{offending_client_entries.inspect}"
+
+    ssr_assets_dir = Rails.root.join("public/vite-ssr/assets")
+    assert ssr_assets_dir.exist?, "expected production SSR assets directory at #{ssr_assets_dir}"
+
+    ssr_assets = Dir.children(ssr_assets_dir)
+    refute_empty ssr_assets, "expected production SSR chunks in #{ssr_assets_dir}"
+
+    offending_ssr_assets = ssr_assets.grep(forbidden_pattern)
+    assert_empty offending_ssr_assets, "unexpected test or vitest chunks in SSR assets: #{offending_ssr_assets.inspect}"
+  end
 end

@@ -30,7 +30,7 @@ vi.mock('react-dom/client', () => ({
   hydrateRoot: mocks.hydrateRoot,
 }))
 
-vi.mock('../looks/shell', () => ({
+vi.mock('../../looks/shell', () => ({
   LookShell: function MockLookShell() {
     return null
   },
@@ -72,8 +72,8 @@ afterEach(() => {
 
 describe('inertia entrypoint', () => {
   it('wires createInertiaApp with LookShell as the layout', async () => {
-    const { LookShell } = await import('../looks/shell')
-    await import('./inertia')
+    const { LookShell } = await import('../../looks/shell')
+    await import('../../entrypoints/inertia')
 
     expect(mocks.createInertiaApp).toHaveBeenCalledTimes(1)
     const config = mocks.createInertiaApp.mock.calls[0][0]
@@ -81,7 +81,7 @@ describe('inertia entrypoint', () => {
   })
 
   it('returns the rendered tree without mounting when el is null (SSR)', async () => {
-    await import('./inertia')
+    await import('../../entrypoints/inertia')
     const config = mocks.createInertiaApp.mock.calls[0][0]
     const App = (props: Record<string, unknown>) => <div data-props={String(props.title)} />
     const props = { title: 'Hello' }
@@ -96,7 +96,7 @@ describe('inertia entrypoint', () => {
   })
 
   it('hydrates when el.dataset.serverRendered is "true"', async () => {
-    await import('./inertia')
+    await import('../../entrypoints/inertia')
     const config = mocks.createInertiaApp.mock.calls[0][0]
     const App = (props: Record<string, unknown>) => <main>{String(props.page)}</main>
     const el = document.createElement('div')
@@ -117,7 +117,7 @@ describe('inertia entrypoint', () => {
   it.each<string | undefined>([undefined, 'false'])(
     'creates a fresh root and renders when el.dataset.serverRendered is %s',
     async (serverRendered) => {
-      await import('./inertia')
+      await import('../../entrypoints/inertia')
       const config = mocks.createInertiaApp.mock.calls[0][0]
       const App = (props: Record<string, unknown>) => <main>{String(props.page)}</main>
       const el = document.createElement('div')
@@ -145,7 +145,7 @@ describe('inertia entrypoint', () => {
     const deferred = createDeferredPromise()
     mocks.createInertiaApp.mockReturnValue(deferred.promise)
 
-    await import('./inertia')
+    await import('../../entrypoints/inertia')
 
     const boom = new Error('inertia boot failed')
     const caught = deferred.getCaught()
@@ -159,7 +159,7 @@ describe('inertia entrypoint', () => {
     const deferred = createDeferredPromise()
     mocks.createInertiaApp.mockReturnValue(deferred.promise)
 
-    await import('./inertia')
+    await import('../../entrypoints/inertia')
 
     const caught = deferred.getCaught()
     expect(caught).toBeDefined()
