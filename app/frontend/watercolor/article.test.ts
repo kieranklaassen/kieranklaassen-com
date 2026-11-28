@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { around, book, paintedTitle, river, wide } from './article'
-import { PAPER, type Page, type PaintBox } from './compose'
+import { PAPER, type Composition, type Page, type PaintBox } from './compose'
 import { Cutter } from './mask'
 import { Kind, type RGB, type Rect, type Wash } from './painter'
 import { seeded } from './pigments'
@@ -31,6 +31,15 @@ function makeShell(width: number, height: number): HTMLElement {
   return shell
 }
 
+function isValidRgb(rgb: RGB): boolean {
+  if (rgb.length !== 3) return false
+  for (let i = 0; i < 3; i++) {
+    const ch = rgb[i]
+    if (!Number.isFinite(ch) || ch < 0 || ch > 1) return false
+  }
+  return true
+}
+
 function expectValidRgb(rgb: RGB) {
   expect(rgb).toHaveLength(3)
   for (const ch of rgb) {
@@ -42,16 +51,76 @@ function expectValidRgb(rgb: RGB) {
 
 function expectValidWashes(washes: Wash[]) {
   expect(washes.length).toBeGreaterThan(0)
-  for (const wash of washes) {
-    expect(wash.w).toBeGreaterThan(0)
-    expect(wash.h).toBeGreaterThan(0)
-    expect(Number.isFinite(wash.x)).toBe(true)
-    expect(Number.isFinite(wash.y)).toBe(true)
-    expect(wash.density).toBeGreaterThan(0)
-    expectValidRgb(wash.ink)
-    expectValidRgb(wash.ink2)
-    expect(wash.seed).toHaveLength(4)
+  for (let i = 0; i < washes.length; i++) {
+    const wash = washes[i]
+    if (
+      !(wash.w > 0) ||
+      !(wash.h > 0) ||
+      !Number.isFinite(wash.x) ||
+      !Number.isFinite(wash.y) ||
+      !(wash.density > 0) ||
+      !isValidRgb(wash.ink) ||
+      !isValidRgb(wash.ink2) ||
+      wash.seed.length !== 4
+    ) {
+      expect(wash.w, `wash[${i}].w`).toBeGreaterThan(0)
+      expect(wash.h, `wash[${i}].h`).toBeGreaterThan(0)
+      expect(Number.isFinite(wash.x), `wash[${i}].x`).toBe(true)
+      expect(Number.isFinite(wash.y), `wash[${i}].y`).toBe(true)
+      expect(wash.density, `wash[${i}].density`).toBeGreaterThan(0)
+      expectValidRgb(wash.ink)
+      expectValidRgb(wash.ink2)
+      expect(wash.seed, `wash[${i}].seed`).toHaveLength(4)
+    }
   }
+}
+
+function expectSameBytes(actual: Uint8Array, expected: Uint8Array) {
+  expect(actual).toBeInstanceOf(Uint8Array)
+  expect(expected).toBeInstanceOf(Uint8Array)
+  expect(actual.length).toBe(expected.length)
+  const len = actual.length
+  const words = len >>> 2
+  const alignedBytes = words << 2
+  if ((actual.byteOffset & 3) === 0 && (expected.byteOffset & 3) === 0) {
+    const a32 = new Uint32Array(actual.buffer, actual.byteOffset, words)
+    const b32 = new Uint32Array(expected.buffer, expected.byteOffset, words)
+    for (let i = 0; i < words; i++) {
+      if (a32[i] !== b32[i]) {
+        const start = i << 2
+        for (let j = start; j < start + 4; j++) {
+          if (actual[j] !== expected[j]) {
+            expect(actual[j], `mask.field byte mismatch at index ${j}`).toBe(expected[j])
+          }
+        }
+      }
+    }
+  } else {
+    for (let i = 0; i < alignedBytes; i++) {
+      if (actual[i] !== expected[i]) {
+        expect(actual[i], `mask.field byte mismatch at index ${i}`).toBe(expected[i])
+      }
+    }
+  }
+  for (let i = alignedBytes; i < len; i++) {
+    if (actual[i] !== expected[i]) {
+      expect(actual[i], `mask.field byte mismatch at index ${i}`).toBe(expected[i])
+    }
+  }
+}
+
+function expectSameComposition(actual: Composition, expected: Composition) {
+  const { mask: actualMask, ...actualRest } = actual
+  const { mask: expectedMask, ...expectedRest } = expected
+  expect(actualRest).toEqual(expectedRest)
+  if (!actualMask || !expectedMask) {
+    expect(actualMask).toEqual(expectedMask)
+    return
+  }
+  const { field: actualField, ...actualMaskRest } = actualMask
+  const { field: expectedField, ...expectedMaskRest } = expectedMask
+  expect(actualMaskRest).toEqual(expectedMaskRest)
+  expectSameBytes(actualField, expectedField)
 }
 
 const originalRangeRect = Object.getOwnPropertyDescriptor(Range.prototype, 'getBoundingClientRect')
@@ -96,21 +165,25 @@ function stubCanvasAndRanges(defaultShapeBox: Rect = { x: 20, y: 15, w: 60, h: 4
     let sx = 1
     let sy = 1
     let composite = 'source-over'
-    let buffer = new Uint8ClampedArray(Math.max(1, canvas.width * canvas.height) * 4)
+    let cw = canvas.width
+    let ch = canvas.height
+    let alpha = new Uint8Array(Math.max(1, cw * ch))
 
-    const ensureBuffer = () => {
-      const size = Math.max(1, canvas.width * canvas.height) * 4
-      if (buffer.length !== size) buffer = new Uint8ClampedArray(size)
+    const syncDimensions = () => {
+      cw = canvas.width
+      ch = canvas.height
+      const size = Math.max(1, cw * ch)
+      if (alpha.length !== size) alpha = new Uint8Array(size)
     }
 
     const rasterize = (box: Rect) => {
-      ensureBuffer()
+      syncDimensions()
       const x0 = Math.max(0, Math.floor(box.x * sx + tx))
       const y0 = Math.max(0, Math.floor(box.y * sy + ty))
-      const x1 = Math.min(canvas.width, Math.ceil((box.x + box.w) * sx + tx))
-      const y1 = Math.min(canvas.height, Math.ceil((box.y + box.h) * sy + ty))
-      for (let y = y0; y < y1; y++)
-        for (let x = x0; x < x1; x++) buffer[(y * canvas.width + x) * 4 + 3] = 255
+      const x1 = Math.min(cw, Math.ceil((box.x + box.w) * sx + tx))
+      const y1 = Math.min(ch, Math.ceil((box.y + box.h) * sy + ty))
+      if (x0 >= x1 || y0 >= y1) return
+      for (let y = y0; y < y1; y++) alpha.fill(255, y * cw + x0, y * cw + x1)
     }
 
     return {
@@ -140,8 +213,8 @@ function stubCanvasAndRanges(defaultShapeBox: Rect = { x: 20, y: 15, w: 60, h: 4
         sy *= fy
       },
       clearRect() {
-        ensureBuffer()
-        buffer.fill(0)
+        syncDimensions()
+        alpha.fill(0)
       },
       measureText(text: string) {
         return { width: Math.max(10, text.length * 16), fontBoundingBoxAscent: 36 }
@@ -160,14 +233,16 @@ function stubCanvasAndRanges(defaultShapeBox: Rect = { x: 20, y: 15, w: 60, h: 4
         rasterize(defaultShapeBox)
       },
       getImageData(x: number, y: number, w: number, h: number) {
-        ensureBuffer()
+        syncDimensions()
         const out = new Uint8ClampedArray(w * h * 4)
-        for (let row = 0; row < h; row++)
-          for (let col = 0; col < w; col++) {
-            const src = ((y + row) * canvas.width + (x + col)) * 4
-            const dst = (row * w + col) * 4
-            out[dst + 3] = buffer[src + 3] ?? 0
+        for (let row = 0; row < h; row++) {
+          const srcRow = (y + row) * cw + x
+          let dst = row * w * 4 + 3
+          for (let col = 0; col < w; col++, dst += 4) {
+            const a = alpha[srcRow + col]
+            if (a) out[dst] = a
           }
+        }
         return { data: out }
       },
     } as unknown as CanvasRenderingContext2D
@@ -348,7 +423,7 @@ describe('article compositions', () => {
     const a = book(makeArticlePage(opts))
     const b = book(makeArticlePage(opts))
 
-    expect(a).toEqual(b)
+    expectSameComposition(a, b)
     expect(a.paper).toEqual(PAPER)
     expect(a.course).toBeUndefined()
     expect(a.mask).toBeDefined()
@@ -375,7 +450,7 @@ describe('article compositions', () => {
     const a = wide(makeArticlePage(wideOpts))
     const b = wide(makeArticlePage(wideOpts))
 
-    expect(a).toEqual(b)
+    expectSameComposition(a, b)
     expect(a.paper).toEqual(PAPER)
     expect(a.course).toBeUndefined()
     expect(a.mask).toBeDefined()
@@ -403,7 +478,7 @@ describe('article compositions', () => {
     const a = around(makeArticlePage(wideOpts))
     const b = around(makeArticlePage(wideOpts))
 
-    expect(a).toEqual(b)
+    expectSameComposition(a, b)
     expect(a.paper).toEqual(PAPER)
     expect(a.course).toBeUndefined()
     expect(a.mask).toBeDefined()
@@ -434,7 +509,7 @@ describe('article compositions', () => {
     const a = river(pageA)
     const b = river(makeArticlePage(wideOpts))
 
-    expect(a).toEqual(b)
+    expectSameComposition(a, b)
     expect(a.paper).toEqual(PAPER)
     expect(a.mask).toBeDefined()
     expect(a.course).toBeDefined()
