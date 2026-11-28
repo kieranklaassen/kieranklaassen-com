@@ -60,7 +60,9 @@ function makeShell(width: number, height: number): HTMLElement {
 
 const originalRangeRect = Object.getOwnPropertyDescriptor(Range.prototype, 'getBoundingClientRect')
 
-function stubCanvasAndRanges(defaultShapeBox: Rect = { x: 20, y: 15, w: 60, h: 40 }) {
+const DEFAULT_SHAPE_BOX: Rect = { x: 20, y: 15, w: 60, h: 40 }
+
+function stubCanvasAndRanges() {
   const fillTextCalls: string[] = []
 
   class FakePath2D {
@@ -181,10 +183,10 @@ function stubCanvasAndRanges(defaultShapeBox: Rect = { x: 20, y: 15, w: 60, h: 4
       lineTo() {},
       fill() {
         if (composite === 'destination-out') return
-        rasterize(defaultShapeBox)
+        rasterize(DEFAULT_SHAPE_BOX)
       },
       stroke() {
-        rasterize(defaultShapeBox)
+        rasterize(DEFAULT_SHAPE_BOX)
       },
       getImageData(x: number, y: number, w: number, h: number) {
         syncDimensions()
@@ -825,14 +827,22 @@ describe('mosaic and linesOf', () => {
       boxes: () => [phrase, narrowName],
       random: seeded(61),
     })
+    const narrowSheetOnly = mosaic({
+      width: 500,
+      height: 360,
+      shell: makeShell(500, 360),
+      boxes: () => [phrase],
+      random: seeded(61),
+    }).washes
 
     const narrowA = mosaic(makeNarrow())
     expect(fillTextCalls).toEqual(['k', 'i', 'r', 'a'])
     const narrowB = mosaic(makeNarrow())
     expect(narrowA).toEqual(narrowB)
     expectValidWashes(narrowA.washes)
+    expect(narrowA.washes.slice(0, narrowSheetOnly.length)).toEqual(narrowSheetOnly)
 
-    const narrowMosaic = narrowA.washes.slice(sheetOnly.length)
+    const narrowMosaic = narrowA.washes.slice(narrowSheetOnly.length)
     expect(narrowMosaic.every((w) => w.kind === Kind.Square)).toBe(true)
     expect(narrowMosaic.some((w) => w.density >= 1)).toBe(true)
     expect(narrowMosaic.some((w) => w.density < 0.85)).toBe(true)
@@ -937,7 +947,6 @@ describe('paintedName with letter rasterization', () => {
     const unblockedRuns = unblocked.washes.filter((w) => w.kind === Kind.Run)
     expect(unblockedRuns.length).toBeGreaterThan(0)
     expect(unblockedRuns.every((w) => w.density === 0.62 && w.still === true && w.lasts === 3200)).toBe(true)
-    // All runs must originate from the bottom line's feet (around y=292), never from the top line (around y=152).
     expect(unblockedRuns.every((w) => w.y > 240)).toBe(true)
 
     const blocker = makeBox('intro', { x: 60, y: 340, w: 600, h: 60 }, 'intro')
@@ -1002,8 +1011,9 @@ describe('paintedName with letter rasterization', () => {
       for (const box of blockedBoxes) {
         expect(meets(grown(puddle, 6), box)).toBe(false)
       }
-      // First line letter feet span name.x..name.x+w in the top half of nameBox (y: 60..125)
-      expect(meets(puddle, { x: 80, y: 60, w: 52, h: 65 })).toBe(false)
+      for (let i = 0; i < 6; i++) {
+        expect(meets(puddle, { x: 80 + i * 78, y: 60, w: 52, h: 65 })).toBe(false)
+      }
     }
 
     const narrow = paintedName({
@@ -1031,8 +1041,7 @@ describe('paintedName with letter rasterization', () => {
   it('connects name feet through swatches with Kind.Run washes when !long and omits the chain when long is true', () => {
     stubCanvasAndRanges()
 
-    // Use fontSize <= 90 so runsOf does not fire and every Kind.Run belongs to the swatch-connecting chain.
-    const nameBox = makeTextBox('name', 'Kieran', { x: 80, y: 60, w: 360, h: 80 }, { fontSize: '80px' })
+    const smallNameBox = makeTextBox('name', 'Kieran', { x: 80, y: 60, w: 360, h: 80 }, { fontSize: '80px' })
     const swatches = [
       makeBox('swatch', { x: 96, y: 200, w: 20, h: 20 }, 'capturing-flow'),
       makeBox('swatch', { x: 96, y: 260, w: 20, h: 20 }, 'tool-tailor'),
@@ -1043,7 +1052,7 @@ describe('paintedName with letter rasterization', () => {
       width: 1000,
       height: 600,
       shell: makeShell(1000, 600),
-      boxes: () => [nameBox, ...swatches],
+      boxes: () => [smallNameBox, ...swatches],
       random: seeded(43),
     })
     expectValidWashes(short.washes)
@@ -1055,7 +1064,6 @@ describe('paintedName with letter rasterization', () => {
       expect(run.lasts).toBe(1800)
       expect(run.still).toBe(true)
     }
-    // First run drops from a letter foot down to swatch[0] midpoint; subsequent runs link swatch to swatch.
     expect(chainRuns[0].y).toBeLessThan(swatches[0].y)
     expect(chainRuns[0].y + chainRuns[0].h).toBeCloseTo(swatches[0].y + swatches[0].h * 0.5, 5)
     expect(chainRuns[1].y).toBe(swatches[0].y + swatches[0].h - 5)
@@ -1063,7 +1071,6 @@ describe('paintedName with letter rasterization', () => {
     expect(chainRuns[2].y).toBe(swatches[1].y + swatches[1].h - 5)
     expect(chainRuns[2].y + chainRuns[2].h).toBeCloseTo(swatches[2].y + swatches[2].h * 0.5, 5)
 
-    // When swatches[0] is far from any letter foot, the first run is skipped while swatch-to-swatch runs still connect.
     const offsetSwatches = [
       makeBox('swatch', { x: 650, y: 200, w: 20, h: 20 }, 'capturing-flow'),
       makeBox('swatch', { x: 650, y: 260, w: 20, h: 20 }, 'tool-tailor'),
@@ -1072,7 +1079,7 @@ describe('paintedName with letter rasterization', () => {
       width: 1000,
       height: 600,
       shell: makeShell(1000, 600),
-      boxes: () => [nameBox, ...offsetSwatches],
+      boxes: () => [smallNameBox, ...offsetSwatches],
       random: seeded(43),
     })
     expect(offsetShort.washes.filter((w) => w.kind === Kind.Run)).toHaveLength(1)
@@ -1081,7 +1088,7 @@ describe('paintedName with letter rasterization', () => {
       width: 1000,
       height: 600,
       shell: makeShell(1000, 600),
-      boxes: () => [nameBox, ...swatches],
+      boxes: () => [smallNameBox, ...swatches],
       random: seeded(43),
       long: true,
     })
