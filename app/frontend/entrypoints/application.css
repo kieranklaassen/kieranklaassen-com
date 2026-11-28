@@ -4,6 +4,7 @@
 @import "@fontsource-variable/inter/wght.css";
 @import "../looks/watercolor.css";
 @import "../looks/article.css";
+@import "../pens/pens.css";
 @plugin "@tailwindcss/typography";
 
 @theme {

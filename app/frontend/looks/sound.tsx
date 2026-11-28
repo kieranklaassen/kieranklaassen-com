@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { placeOf } from '../sound/place'
 import { ALL, arm, close, fade, keep, kept, listen, moveTo, NAMES, open, sounding, turn, want, type Parts } from '../sound/switch'
 import type { Part } from '../sound/studio'
+import { useUnfold } from './fold'
 import type { Rooms } from './looks'
 
 /** Three small drops. */
@@ -10,7 +11,7 @@ const THREE = [5, 12, 19].map((x, i) => `M${x} ${i === 1 ? 5.5 : 8}c1.3 1.9 2.8 
 export function Sound({ rooms, url }: { rooms: Rooms; url: string }) {
   const on = useSyncExternalStore(listen, sounding, () => false)
   const [parts, setParts] = useState<Parts>(ALL)
-  const [shown, setShown] = useState(false)
+  const [shown, unfold] = useUnfold('sound')
 
   const { art, body } = rooms
   useEffect(
@@ -61,7 +62,7 @@ export function Sound({ rooms, url }: { rooms: Rooms; url: string }) {
                 {name}
               </button>
             ))}
-          <button type="button" className="wc-more" aria-expanded={shown} aria-label="Music, weather and paint" onClick={() => setShown(!shown)}>
+          <button type="button" className="wc-more" aria-expanded={shown} aria-label="Music, weather and paint" onClick={unfold}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d={THREE} />
             </svg>
