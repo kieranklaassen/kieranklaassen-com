@@ -677,4 +677,148 @@ describe('laySheet', () => {
       window.removeEventListener('unhandledrejection', onUnhandled)
     }
   })
+
+  describe('once it is laid', () => {
+    async function laid(washes: Wash[]) {
+      const { shell, sheet } = makeSheet()
+      const leave = track(laySheet(sheet, () => ({ washes, paper: [1, 1, 1] }), 17))!
+      painterReady.resolve(true)
+      fontsReady.resolve()
+      await flushMicrotasks()
+      runFrames(0)
+      runFrames(5000)
+      vi.spyOn(performance, 'now').mockReturnValue(10_000)
+      vi.mocked(sheet.getBoundingClientRect).mockReturnValue({ ...sheet.getBoundingClientRect(), left: 10, top: 20 })
+      return { shell, leave }
+    }
+
+    const point = (type: string, clientX = 0, clientY = 0) => new PointerEvent(type, { bubbles: true, clientX, clientY })
+
+    it('drops water on the topmost open wash under the pointer', async () => {
+      const below = makeWash()
+      const open = makeWash()
+      const still = makeWash({ still: true })
+      await laid([below, open, still])
+      const hears = vi.fn()
+      ear.hears = hears
+
+      window.dispatchEvent(point('pointerdown', 90, 120))
+      vi.mocked(performance.now).mockReturnValue(10_500)
+      window.dispatchEvent(point('pointerdown', 100, 120))
+      runFrames(10_500 + 1700)
+
+      expect(open.drop).toEqual([90, 100, 48, 1])
+      expect(below.drop).toBeUndefined()
+      expect(still.drop).toBeUndefined()
+      expect(rafQueue.size).toBe(0)
+      expect(hears).toHaveBeenCalledTimes(2)
+      const heard = hears.mock.calls[0][0]
+      expect(heard.gesture).toBe('drop')
+      expect(heard.light).toBeCloseTo(0.4)
+      expect(heard.warmth).toBeCloseTo(0.05)
+    })
+
+    it('takes a point on the left and top edge of a wash for in it, and on the right and bottom edge for out', async () => {
+      await laid([makeWash()])
+      const hears = vi.fn()
+      ear.hears = hears
+      const on = (x: number, y: number) => {
+        hears.mockClear()
+        window.dispatchEvent(point('pointerdown', x + 10, y + 20))
+        return hears.mock.calls.length
+      }
+      expect([on(40, 40), on(159, 159), on(39, 40), on(40, 39), on(160, 40), on(40, 160)]).toEqual([1, 1, 0, 0, 0, 0])
+    })
+
+    it('rains on an open wash, choosing the wash before the place', async () => {
+      const rainedOn = makeWash({ x: 100, y: 100, w: 100, h: 200 })
+      await laid([makeWash(), rainedOn, makeWash({ still: true })])
+      vi.spyOn(Math, 'random').mockReturnValueOnce(0.9).mockReturnValueOnce(0.25).mockReturnValueOnce(0.75)
+
+      window.dispatchEvent(new Event('wc:rain'))
+      runFrames(10_000 + 1700)
+
+      expect(Math.random).toHaveBeenCalledTimes(3)
+      expect(rainedOn.drop).toEqual([140, 220, 28, 0.9])
+    })
+
+    it('drops water on a stroke that sounded, and later on its other voices, in place of any drop there', async () => {
+      const staff = document.createElement('div')
+      const stroke = document.createElement('i')
+      staff.dataset.paint = 'staff'
+      staff.append(stroke)
+      const own = makeWash({ x: 100, y: 100, w: 20, h: 40, stands: stroke })
+      const mirrored = makeWash({ x: 100, y: 260, w: 20, h: 40 })
+      const { shell } = await laid([own, mirrored])
+      shell.append(staff)
+      vi.spyOn(staff, 'getBoundingClientRect').mockReturnValue({ ...staff.getBoundingClientRect(), top: 120, height: 200 })
+
+      window.dispatchEvent(point('pointerdown', 120, 300)) // the drop that is to fall takes the place of this one
+      stroke.dispatchEvent(new Event('wc:heard', { bubbles: true }))
+      runFrames(10_059)
+      expect(own.drop?.[0]).toBe(110)
+      expect(mirrored.drop).toBeUndefined()
+
+      runFrames(10_060 + 1700)
+      expect(own.drop).toEqual([110, 120, 20, 1])
+      expect(mirrored.drop).toEqual([110, 280, 16.8, 1.1])
+    })
+
+    it('leads to what the pressed square stands for', async () => {
+      const to = document.createElement('p')
+      to.scrollIntoView = vi.fn()
+      const { shell } = await laid([makeWash({ leads: to })])
+      const article = document.createElement('div')
+      article.dataset.of = 'article'
+      shell.append(article)
+
+      article.dispatchEvent(point('click', 400, 400))
+      expect(to.scrollIntoView).not.toHaveBeenCalled()
+      article.dispatchEvent(point('click', 100, 120))
+      expect(to.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+    })
+
+    it('floods from where the pointer came in, and dries when it goes', async () => {
+      const link = document.createElement('a')
+      const wash = makeWash({ flood: link })
+      const { shell } = await laid([wash])
+      shell.append(link)
+
+      link.dispatchEvent(point('pointerover', 80, 150))
+      runFrames(10_900)
+      expect(wash.from).toEqual([0.25, 0.75])
+      expect(wash.grow).toBe(1)
+
+      link.dispatchEvent(point('pointerout'))
+      runFrames(10_500)
+      expect(wash.grow).toBe(0)
+    })
+
+    it('weighs the light and warmth of what the window holds', async () => {
+      await laid([makeWash({ w: 100, h: 100, ink: [1, 1, 1] }), makeWash({ w: 100, h: 300, ink: [0.5, 0, 0] }), makeWash({ kind: Kind.Pencil, ink: [0, 0, 1] })])
+      const view = ear.view?.()
+      expect(view?.light).toBeCloseTo((1 + 3 * 0.15) / 4)
+      expect(view?.warmth).toBeCloseTo((0.5 + 3 * 0.95) / 4)
+    })
+
+    it('listens to nothing after it leaves', async () => {
+      const link = document.createElement('a')
+      const { shell, leave } = await laid([makeWash({ flood: link, stands: link }), makeWash()])
+      const staff = document.createElement('div')
+      staff.dataset.paint = 'staff'
+      staff.append(link)
+      shell.append(staff)
+      const hears = vi.fn()
+      ear.hears = hears
+      leave()
+
+      window.dispatchEvent(point('pointermove', 100, 120))
+      window.dispatchEvent(point('pointerdown', 100, 120))
+      for (const type of ['pointerover', 'pointerout', 'focusin', 'focusout', 'wc:heard', 'click']) link.dispatchEvent(point(type, 100, 120))
+
+      expect(hears).not.toHaveBeenCalled()
+      expect(performance.now).not.toHaveBeenCalled()
+      expect(rafQueue.size).toBe(0)
+    })
+  })
 })
